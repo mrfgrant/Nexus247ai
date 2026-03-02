@@ -29,7 +29,7 @@ VetLetters is a SaaS application that helps veterans generate professional, CFR-
 - `server/index.ts` — Express app setup
 - `server/routes.ts` — All API routes (profile, conditions, incidents, documents, generate, chat, support, knowledge base, rating, dashboard)
 - `server/storage.ts` — DatabaseStorage with IStorage interface
-- `server/prompts.ts` — CFR-grounded AI prompts for 8 document types + RPA scoring + chat
+- `server/prompts.ts` — CFR-grounded AI prompts for 8 document types + RPA scoring + chat + decision letter analysis
 - `server/replit_integrations/auth/` — Replit Auth OIDC integration
 
 ### Frontend (client/src/)
@@ -44,6 +44,7 @@ VetLetters is a SaaS application that helps veterans generate professional, CFR-
   - `documents.tsx` — Document list with filtering
   - `chat.tsx` — AI Claims Advisor chat
   - `rating-estimator.tsx` — Combined VA disability rating calculator
+  - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis (PDF or text)
   - `pricing.tsx` — 3-tier pricing comparison
   - `support.tsx` — Human assistance request form
   - `settings.tsx` — Account and subscription management

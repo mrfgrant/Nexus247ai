@@ -19,6 +19,7 @@ import Support from "@/pages/support";
 import Settings from "@/pages/settings";
 import AdminKnowledgeBase from "@/pages/admin-knowledge-base";
 import AdminSupport from "@/pages/admin-support";
+import AnalyzeLetter from "@/pages/analyze-letter";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -36,6 +37,7 @@ function AuthenticatedLayout() {
             <Route path="/documents" component={Documents} />
             <Route path="/chat" component={Chat} />
             <Route path="/rating" component={RatingEstimator} />
+            <Route path="/analyze" component={AnalyzeLetter} />
             <Route path="/pricing" component={Pricing} />
             <Route path="/support" component={Support} />
             <Route path="/settings" component={Settings} />

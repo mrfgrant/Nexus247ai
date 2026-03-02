@@ -2,8 +2,11 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT } from "./prompts";
+import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT, DECISION_LETTER_ANALYSIS_PROMPT } from "./prompts";
 import Anthropic from "@anthropic-ai/sdk";
+import multer from "multer";
+import * as pdfParseModule from "pdf-parse";
+const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 
 const TIER_LIMITS: Record<string, number> = {
   none: 0,
@@ -671,6 +674,73 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Dashboard error:", error);
       res.status(500).json({ error: "Failed to load dashboard" });
+    }
+  });
+
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+  app.post("/api/analyze-letter", isAuthenticated, upload.single("file"), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let letterText = "";
+
+      if (req.file) {
+        if (req.file.mimetype === "application/pdf") {
+          const pdfData = await pdfParse(req.file.buffer);
+          letterText = pdfData.text;
+        } else if (req.file.mimetype === "text/plain" || req.file.mimetype?.startsWith("text/")) {
+          letterText = req.file.buffer.toString("utf-8");
+        } else {
+          return res.status(400).json({ error: "Unsupported file type. Please upload a PDF or text file." });
+        }
+      } else if (req.body.text) {
+        letterText = req.body.text;
+      } else {
+        return res.status(400).json({ error: "Please upload a file or paste the letter text." });
+      }
+
+      if (letterText.trim().length < 100) {
+        return res.status(400).json({ error: "The letter text is too short to analyze. Please upload the complete decision letter." });
+      }
+
+      const profile = await storage.getVeteranProfile(userId);
+      let veteranContext = "";
+      if (profile) {
+        const conditions = await storage.getConditions(userId);
+        veteranContext = `Veteran's branch: ${profile.branch || "Unknown"}
+Current VA rating: ${profile.currentRating || 0}%
+Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None on file"}`;
+      }
+
+      const anthropic = getAnthropicClient();
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: DECISION_LETTER_ANALYSIS_PROMPT.system,
+        messages: [{ role: "user", content: DECISION_LETTER_ANALYSIS_PROMPT.getUserPrompt(letterText, veteranContext) }],
+      });
+
+      const rawText = response.content[0].type === "text" ? response.content[0].text : "";
+
+      let analysis;
+      try {
+        analysis = JSON.parse(rawText);
+      } catch {
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          analysis = JSON.parse(jsonMatch[0]);
+        } else {
+          return res.status(500).json({ error: "Failed to parse analysis. Please try again." });
+        }
+      }
+
+      res.json({ analysis, letterLength: letterText.length });
+    } catch (error: any) {
+      console.error("Analysis error:", error);
+      if (error?.message?.includes("api_key") || error?.status === 401) {
+        return res.status(401).json({ error: "Invalid Anthropic API key. Please check your settings." });
+      }
+      res.status(500).json({ error: "Failed to analyze letter. Please try again." });
     }
   });
 

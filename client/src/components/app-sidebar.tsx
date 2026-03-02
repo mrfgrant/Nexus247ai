@@ -24,6 +24,7 @@ import {
   HeadphonesIcon,
   LogOut,
   Shield,
+  FileSearch,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -40,6 +41,7 @@ const mainItems = [
   { title: "My Documents", url: "/documents", icon: FolderOpen },
   { title: "Claims Chat", url: "/chat", icon: MessageCircle },
   { title: "Rating Estimator", url: "/rating", icon: Calculator },
+  { title: "Analyze Letter", url: "/analyze", icon: FileSearch },
 ];
 
 const bottomItems = [
