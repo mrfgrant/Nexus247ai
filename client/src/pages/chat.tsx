@@ -60,7 +60,7 @@ const SUGGESTED_QUESTIONS = [
 export default function Chat() {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages"],
@@ -85,8 +85,8 @@ export default function Chat() {
   });
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, sendMutation.isPending]);
 
@@ -116,7 +116,7 @@ export default function Chat() {
 
       <Card className="flex-1 flex flex-col min-h-0">
         <CardContent className="flex-1 flex flex-col min-h-0 p-0">
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+          <ScrollArea className="flex-1 p-4">
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -189,6 +189,7 @@ export default function Chat() {
                   </div>
                 ))}
                 {sendMutation.isPending && <ThinkingIndicator />}
+                <div ref={bottomRef} />
               </div>
             )}
           </ScrollArea>
