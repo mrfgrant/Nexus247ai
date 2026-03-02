@@ -1,16 +1,675 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT } from "./prompts";
+import Anthropic from "@anthropic-ai/sdk";
+
+const TIER_LIMITS: Record<string, number> = {
+  none: 0,
+  basic: 5,
+  pro: 50,
+  concierge: 999,
+};
+
+const MONTHLY_RATES: Record<number, number> = {
+  0: 0, 10: 175, 20: 346, 30: 537, 40: 774,
+  50: 1102, 60: 1395, 70: 1759, 80: 2044,
+  90: 2297, 100: 3737,
+};
+
+const PROFILE_ALLOWED_FIELDS = [
+  "branch", "rank", "mosRate", "serviceStartDate", "serviceEndDate",
+  "dischargeType", "deploymentLocations", "vaFileNumber", "currentRating",
+  "dateOfBirth", "ssnLast4", "address", "city", "state", "zip",
+  "agentOrangeExposure", "campLejeune", "burnPitExposure", "gulfWarService",
+];
+
+function pick(obj: any, keys: string[]) {
+  const result: any = {};
+  for (const key of keys) {
+    if (key in obj) result[key] = obj[key];
+  }
+  return result;
+}
+
+function calculateCombinedRating(ratings: number[]): number {
+  if (!ratings.length) return 0;
+  const sorted = [...ratings].sort((a, b) => b - a);
+  let remaining = 100;
+  for (const rating of sorted) {
+    const disability = (rating / 100) * remaining;
+    remaining -= disability;
+  }
+  const combined = Math.round(100 - remaining);
+  return Math.round(combined / 10) * 10;
+}
+
+function getAnthropicClient(): Anthropic {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
+
+const isAdmin: RequestHandler = async (req: any, res, next) => {
+  try {
+    const userId = req.user.claims.sub;
+    const profile = await storage.getVeteranProfile(userId);
+    if (profile?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    next();
+  } catch {
+    res.status(500).json({ error: "Authorization check failed" });
+  }
+};
 
 export async function registerRoutes(
   httpServer: Server,
-  app: Express
+  app: Express,
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  await setupAuth(app);
+  registerAuthRoutes(app);
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  app.get("/api/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getVeteranProfile(userId);
+      res.json(profile || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
+  app.post("/api/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const safeData = pick(req.body, PROFILE_ALLOWED_FIELDS);
+      if (safeData.serviceStartDate === "") safeData.serviceStartDate = null;
+      if (safeData.serviceEndDate === "") safeData.serviceEndDate = null;
+      if (safeData.dateOfBirth === "") safeData.dateOfBirth = null;
+      const profile = await storage.upsertVeteranProfile({
+        ...safeData,
+        userId,
+      });
+      res.json(profile);
+    } catch (error) {
+      console.error("Profile error:", error);
+      res.status(500).json({ error: "Failed to save profile" });
+    }
+  });
+
+  app.get("/api/conditions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const result = await storage.getConditions(userId);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch conditions" });
+    }
+  });
+
+  app.post("/api/conditions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { conditionName, icd10Code, diagnosticCode, currentRating, claimedRating, serviceConnected, dateOfDiagnosis, treatingPhysician, notes } = req.body;
+      if (!conditionName?.trim()) {
+        return res.status(400).json({ error: "Condition name required" });
+      }
+      const condition = await storage.createCondition({
+        userId, conditionName,
+        icd10Code: icd10Code || null,
+        diagnosticCode: diagnosticCode || null,
+        currentRating: currentRating || 0,
+        claimedRating: claimedRating || null,
+        serviceConnected: !!serviceConnected,
+        dateOfDiagnosis: dateOfDiagnosis || null,
+        treatingPhysician: treatingPhysician || null,
+        notes: notes || null,
+      });
+      res.json(condition);
+    } catch (error) {
+      console.error("Condition error:", error);
+      res.status(500).json({ error: "Failed to create condition" });
+    }
+  });
+
+  app.patch("/api/conditions/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const existing = await storage.getCondition(req.params.id);
+      if (!existing || existing.userId !== userId) {
+        return res.status(404).json({ error: "Condition not found" });
+      }
+      const { conditionName, icd10Code, diagnosticCode, currentRating, claimedRating, serviceConnected, dateOfDiagnosis, treatingPhysician, notes } = req.body;
+      const condition = await storage.updateCondition(req.params.id, {
+        conditionName,
+        icd10Code: icd10Code || null,
+        diagnosticCode: diagnosticCode || null,
+        currentRating: currentRating || 0,
+        claimedRating: claimedRating || null,
+        serviceConnected: !!serviceConnected,
+        dateOfDiagnosis: dateOfDiagnosis || null,
+        treatingPhysician: treatingPhysician || null,
+        notes: notes || null,
+      });
+      res.json(condition);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update condition" });
+    }
+  });
+
+  app.delete("/api/conditions/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const existing = await storage.getCondition(req.params.id);
+      if (!existing || existing.userId !== userId) {
+        return res.status(404).json({ error: "Condition not found" });
+      }
+      await storage.deleteCondition(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete condition" });
+    }
+  });
+
+  app.get("/api/incidents", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const result = await storage.getIncidents(userId);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch incidents" });
+    }
+  });
+
+  app.get("/api/incidents/condition/:conditionId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const condition = await storage.getCondition(req.params.conditionId);
+      if (!condition || condition.userId !== userId) {
+        return res.status(404).json({ error: "Condition not found" });
+      }
+      const result = await storage.getIncidentsByCondition(req.params.conditionId);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch incidents" });
+    }
+  });
+
+  app.post("/api/incidents", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { conditionId, incidentDate, location, description, documented } = req.body;
+      if (conditionId) {
+        const condition = await storage.getCondition(conditionId);
+        if (!condition || condition.userId !== userId) {
+          return res.status(404).json({ error: "Condition not found" });
+        }
+      }
+      const incident = await storage.createIncident({
+        userId, conditionId: conditionId || null,
+        incidentDate: incidentDate || null,
+        location: location || null,
+        description,
+        documented: !!documented,
+      });
+      res.json(incident);
+    } catch (error) {
+      console.error("Incident error:", error);
+      res.status(500).json({ error: "Failed to create incident" });
+    }
+  });
+
+  app.patch("/api/incidents/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const incidents = await storage.getIncidents(userId);
+      const existing = incidents.find((i) => i.id === req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Incident not found" });
+      }
+      const { incidentDate, location, description, documented } = req.body;
+      const incident = await storage.updateIncident(req.params.id, {
+        incidentDate, location, description, documented,
+      });
+      res.json(incident);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update incident" });
+    }
+  });
+
+  app.delete("/api/incidents/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const incidents = await storage.getIncidents(userId);
+      const existing = incidents.find((i) => i.id === req.params.id);
+      if (!existing) {
+        return res.status(404).json({ error: "Incident not found" });
+      }
+      await storage.deleteIncident(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete incident" });
+    }
+  });
+
+  app.get("/api/documents", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const docs = await storage.getDocuments(userId);
+      res.json(docs);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch documents" });
+    }
+  });
+
+  app.get("/api/documents/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const doc = await storage.getDocument(req.params.id);
+      if (!doc || doc.userId !== userId) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      res.json(doc);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch document" });
+    }
+  });
+
+  app.delete("/api/documents/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const doc = await storage.getDocument(req.params.id);
+      if (!doc || doc.userId !== userId) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+      await storage.deleteDocument(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
+  app.get("/api/documents/count/month", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const count = await storage.getDocumentCountThisMonth(userId);
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get count" });
+    }
+  });
+
+  app.post("/api/generate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { documentType, conditionId, additionalContext } = req.body;
+
+      const profile = await storage.getVeteranProfile(userId);
+      const tier = profile?.subscriptionTier || "none";
+
+      if (tier === "none") {
+        return res.status(403).json({ error: "Active subscription required" });
+      }
+
+      const conciergeDocs = ["aod_motion", "good_cause_letter"];
+      if (conciergeDocs.includes(documentType) && tier !== "concierge") {
+        return res.status(403).json({ error: "Concierge tier required for this document type" });
+      }
+
+      const monthCount = await storage.getDocumentCountThisMonth(userId);
+      const limit = TIER_LIMITS[tier] || 0;
+      if (monthCount >= limit) {
+        return res.status(403).json({ error: `Monthly limit reached (${limit} documents)` });
+      }
+
+      const promptBuilder = DOCUMENT_PROMPTS[documentType];
+      if (!promptBuilder) {
+        return res.status(400).json({ error: "Invalid document type" });
+      }
+
+      let condition = null;
+      let incidents: any[] = [];
+      if (conditionId) {
+        condition = await storage.getCondition(conditionId);
+        if (condition && condition.userId !== userId) {
+          return res.status(404).json({ error: "Condition not found" });
+        }
+        if (condition) {
+          incidents = await storage.getIncidentsByCondition(conditionId);
+        }
+      }
+
+      const knowledgeBase = await storage.getRelevantKnowledgeBase(
+        condition?.conditionName,
+      );
+
+      const { system, user } = promptBuilder({
+        vetProfile: profile,
+        condition,
+        incidents,
+        knowledgeBase,
+        additionalContext,
+      });
+
+      const anthropic = getAnthropicClient();
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 3000,
+        system,
+        messages: [{ role: "user", content: user }],
+      });
+
+      const content =
+        response.content[0].type === "text" ? response.content[0].text : "";
+
+      let scores: any = {};
+      try {
+        const scoreResponse = await anthropic.messages.create({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 500,
+          system: RPA_SCORING_PROMPT.system,
+          messages: [
+            {
+              role: "user",
+              content: RPA_SCORING_PROMPT.getUserPrompt(content, documentType),
+            },
+          ],
+        });
+        const scoreText =
+          scoreResponse.content[0].type === "text"
+            ? scoreResponse.content[0].text
+            : "{}";
+        scores = JSON.parse(scoreText);
+      } catch (e) {
+        console.error("Scoring error:", e);
+        scores = {
+          cfrScore: 0,
+          evidenceScore: 0,
+          nexusScore: 0,
+          raterReadinessScore: 0,
+          overallScore: 0,
+          improvementSuggestions: "Scoring unavailable",
+        };
+      }
+
+      const title = `${documentType.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())} - ${condition?.conditionName || "General"}`;
+
+      const doc = await storage.createDocument({
+        userId,
+        documentType,
+        title,
+        conditionId: conditionId || null,
+        content,
+        status: "draft",
+        wordCount: content.split(/\s+/).length,
+        cfrScore: scores.cfrScore || 0,
+        evidenceScore: scores.evidenceScore || 0,
+        nexusScore: scores.nexusScore || 0,
+        raterReadinessScore: scores.raterReadinessScore || 0,
+        overallScore: scores.overallScore || 0,
+        improvementSuggestions: scores.improvementSuggestions || "",
+      });
+
+      await storage.logUsage(userId, "generate_document", {
+        documentType,
+        conditionId,
+      });
+
+      res.json({ document: doc, content });
+    } catch (error: any) {
+      console.error("Generate error:", error);
+      res.status(500).json({ error: "Generation failed", details: error.message });
+    }
+  });
+
+  app.post("/api/rating/estimate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { conditions: conditionsList } = req.body;
+
+      if (!conditionsList?.length) {
+        return res.status(400).json({ error: "Conditions required" });
+      }
+
+      const ratings = conditionsList
+        .map((c: any) => c.rating)
+        .filter((r: number) => r > 0);
+      const combined = calculateCombinedRating(ratings);
+      const monthly = MONTHLY_RATES[combined] || 0;
+      const nextTier = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].find(
+        (r) => r > combined,
+      );
+
+      const result = {
+        combinedRating: combined,
+        estimatedMonthly: monthly,
+        individualRatings: conditionsList,
+        nextTier,
+        nextTierMonthly: nextTier ? MONTHLY_RATES[nextTier] : null,
+        monthlyIncreasePotential: nextTier
+          ? MONTHLY_RATES[nextTier] - monthly
+          : 0,
+        tdiuEligible:
+          combined >= 60 && ratings.some((r: number) => r >= 60),
+        smcEligible: combined === 100,
+      };
+
+      const estimate = await storage.createRatingEstimate({
+        userId,
+        conditions: conditionsList,
+        combinedRating: combined,
+        estimatedMonthlyBenefit: monthly,
+        breakdown: result,
+      });
+
+      res.json({ ...result, id: estimate.id });
+    } catch (error) {
+      console.error("Rating error:", error);
+      res.status(500).json({ error: "Rating estimation failed" });
+    }
+  });
+
+  app.get("/api/chat/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const messages = await storage.getChatMessages(userId);
+      res.json(messages);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/chat/send", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { message } = req.body;
+
+      if (!message?.trim()) {
+        return res.status(400).json({ error: "Message required" });
+      }
+
+      const profile = await storage.getVeteranProfile(userId);
+      const tier = profile?.subscriptionTier || "none";
+      if (tier === "none") {
+        return res.status(403).json({ error: "Active subscription required" });
+      }
+
+      await storage.createChatMessage({
+        userId,
+        role: "user",
+        content: message,
+      });
+
+      const history = await storage.getChatMessages(userId);
+      const recentHistory = history.slice(-20);
+
+      const knowledgeBase = await storage.getRelevantKnowledgeBase();
+      let kbContext = "";
+      if (knowledgeBase.length) {
+        kbContext = `\n\nKNOWLEDGE BASE CONTEXT:\n${knowledgeBase
+          .map((e) => `[${e.category}] ${e.title}: ${e.content.slice(0, 300)}`)
+          .join("\n")}`;
+      }
+
+      const anthropic = getAnthropicClient();
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        system: CHAT_SYSTEM_PROMPT + kbContext,
+        messages: recentHistory.map((m) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+      });
+
+      const aiContent =
+        response.content[0].type === "text" ? response.content[0].text : "";
+
+      const aiMessage = await storage.createChatMessage({
+        userId,
+        role: "assistant",
+        content: aiContent,
+      });
+
+      await storage.logUsage(userId, "chat_message", {});
+
+      res.json(aiMessage);
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      res.status(500).json({ error: "Chat failed", details: error.message });
+    }
+  });
+
+  app.get("/api/support", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getVeteranProfile(userId);
+      const requests =
+        profile?.role === "admin"
+          ? await storage.getSupportRequests()
+          : await storage.getSupportRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch support requests" });
+    }
+  });
+
+  app.post("/api/support", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { subject, description } = req.body;
+      if (!subject?.trim() || !description?.trim()) {
+        return res.status(400).json({ error: "Subject and description required" });
+      }
+      const profile = await storage.getVeteranProfile(userId);
+      const priority =
+        profile?.subscriptionTier === "concierge"
+          ? "priority"
+          : profile?.subscriptionTier === "pro"
+            ? "standard"
+            : "low";
+
+      const request = await storage.createSupportRequest({
+        userId,
+        subject,
+        description,
+        priority,
+      });
+      res.json(request);
+    } catch (error) {
+      console.error("Support error:", error);
+      res.status(500).json({ error: "Failed to create support request" });
+    }
+  });
+
+  app.patch("/api/support/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { status, adminResponse } = req.body;
+      const request = await storage.updateSupportRequest(req.params.id, {
+        status, adminResponse,
+      });
+      res.json(request);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update support request" });
+    }
+  });
+
+  app.get("/api/knowledge-base", isAuthenticated, async (req: any, res) => {
+    try {
+      const entries = await storage.getKnowledgeBaseEntries();
+      res.json(entries);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch knowledge base" });
+    }
+  });
+
+  app.post("/api/knowledge-base", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { title, category, conditionType, content, denialReasons, cfrSections, outcome } = req.body;
+      if (!title?.trim() || !content?.trim() || !category) {
+        return res.status(400).json({ error: "Title, category, and content required" });
+      }
+      const entry = await storage.createKnowledgeBaseEntry({
+        title, category, conditionType, content, denialReasons, cfrSections, outcome,
+      });
+      res.json(entry);
+    } catch (error) {
+      console.error("KB error:", error);
+      res.status(500).json({ error: "Failed to create entry" });
+    }
+  });
+
+  app.patch("/api/knowledge-base/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { title, category, conditionType, content, denialReasons, cfrSections, outcome } = req.body;
+      const entry = await storage.updateKnowledgeBaseEntry(req.params.id, {
+        title, category, conditionType, content, denialReasons, cfrSections, outcome,
+      });
+      res.json(entry);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update entry" });
+    }
+  });
+
+  app.delete("/api/knowledge-base/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteKnowledgeBaseEntry(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete entry" });
+    }
+  });
+
+  app.get("/api/dashboard", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const [profile, conditionsList, docs, monthCount] = await Promise.all([
+        storage.getVeteranProfile(userId),
+        storage.getConditions(userId),
+        storage.getDocuments(userId),
+        storage.getDocumentCountThisMonth(userId),
+      ]);
+
+      const ratings = conditionsList
+        .map((c) => c.currentRating || 0)
+        .filter((r) => r > 0);
+      const combinedRating = calculateCombinedRating(ratings);
+
+      res.json({
+        profile,
+        conditionsCount: conditionsList.length,
+        combinedRating,
+        estimatedMonthly: MONTHLY_RATES[combinedRating] || 0,
+        documentsThisMonth: monthCount,
+        recentDocuments: docs.slice(0, 5),
+        tier: profile?.subscriptionTier || "none",
+        tierLimit: TIER_LIMITS[profile?.subscriptionTier || "none"] || 0,
+      });
+    } catch (error) {
+      console.error("Dashboard error:", error);
+      res.status(500).json({ error: "Failed to load dashboard" });
+    }
+  });
 
   return httpServer;
 }
