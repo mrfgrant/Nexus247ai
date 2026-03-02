@@ -803,7 +803,7 @@ export async function registerRoutes(
       ]);
 
       const ratings = conditionsList
-        .map((c) => c.currentRating || 0)
+        .map((c) => c.currentRating || c.claimedRating || 0)
         .filter((r) => r > 0);
       const combinedRating = calculateCombinedRating(ratings);
 
