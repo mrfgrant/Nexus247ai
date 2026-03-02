@@ -30,9 +30,9 @@ function getEffectiveTier(profile: any): string {
 }
 
 const MONTHLY_RATES: Record<number, number> = {
-  0: 0, 10: 175, 20: 346, 30: 537, 40: 774,
-  50: 1102, 60: 1395, 70: 1759, 80: 2044,
-  90: 2297, 100: 3737,
+  0: 0, 10: 171, 20: 338, 30: 524, 40: 755,
+  50: 1075, 60: 1362, 70: 1716, 80: 1995,
+  90: 2242, 100: 3738,
 };
 
 const PROFILE_ALLOWED_FIELDS = [
