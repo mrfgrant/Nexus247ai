@@ -72,6 +72,7 @@ function ConditionDialog({
       conditionName: entry.name,
       icd10Code: entry.icd10,
       diagnosticCode: entry.diagnosticCode,
+      claimedRating: !condition ? entry.maxRating : form.claimedRating,
     });
     setAutoFilled(true);
     setShowSuggestions(false);
@@ -164,8 +165,14 @@ function ConditionDialog({
             <Input type="number" min={0} max={100} value={form.currentRating} onChange={(e) => setForm({ ...form, currentRating: parseInt(e.target.value) || 0 })} data-testid="input-current-rating" />
           </div>
           <div className="space-y-2">
-            <Label>Claimed Rating (%)</Label>
-            <Input type="number" min={0} max={100} value={form.claimedRating} onChange={(e) => setForm({ ...form, claimedRating: parseInt(e.target.value) || 0 })} data-testid="input-claimed-rating" />
+            <Label className="flex items-center gap-1.5">
+              Claimed Rating (%)
+              {autoFilled && !condition && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"><Zap className="w-3 h-3" />Auto</span>}
+            </Label>
+            <Input type="number" min={0} max={100} value={form.claimedRating} onChange={(e) => setForm({ ...form, claimedRating: parseInt(e.target.value) || 0 })} className={autoFilled && !condition && form.claimedRating ? "border-emerald-500/40 bg-emerald-500/5" : ""} data-testid="input-claimed-rating" />
+            {autoFilled && !condition && (
+              <p className="text-[10px] text-muted-foreground leading-tight">This is the maximum possible rating under the VA schedule for this diagnostic code. Actual ratings depend on symptom severity and evidence. This is not a guarantee.</p>
+            )}
           </div>
         </div>
         <div className="space-y-2">
@@ -271,6 +278,7 @@ export default function Conditions() {
   const { toast } = useToast();
   const [editCondition, setEditCondition] = useState<Condition | undefined>();
   const [showConditionDialog, setShowConditionDialog] = useState(false);
+  const [dialogKey, setDialogKey] = useState(0);
   const [showIncidentDialog, setShowIncidentDialog] = useState<string | null>(null);
   const [editIncident, setEditIncident] = useState<ServiceIncident | undefined>();
 
@@ -310,11 +318,11 @@ export default function Conditions() {
           <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-conditions-title">Conditions & Incidents</h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1 hidden sm:block">Track your service-connected conditions and linking incidents.</p>
         </div>
-        <Dialog open={showConditionDialog} onOpenChange={(o) => { setShowConditionDialog(o); if (!o) setEditCondition(undefined); }}>
+        <Dialog open={showConditionDialog} onOpenChange={(o) => { setShowConditionDialog(o); if (!o) { setEditCondition(undefined); setDialogKey((k) => k + 1); } }}>
           <DialogTrigger asChild>
             <Button className="shrink-0 text-xs sm:text-sm" data-testid="button-add-condition"><Plus className="w-4 h-4 mr-1 sm:mr-2" /> Add Condition</Button>
           </DialogTrigger>
-          <ConditionDialog condition={editCondition} onClose={() => { setShowConditionDialog(false); setEditCondition(undefined); }} />
+          <ConditionDialog key={editCondition?.id || `new-${dialogKey}`} condition={editCondition} onClose={() => { setShowConditionDialog(false); setEditCondition(undefined); }} />
         </Dialog>
       </div>
 

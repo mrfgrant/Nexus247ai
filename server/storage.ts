@@ -8,6 +8,7 @@ import {
   supportRequests,
   ratingEstimates,
   usageLogs,
+  supportingDocuments,
   type VeteranProfile,
   type InsertVeteranProfile,
   type Condition,
@@ -24,6 +25,8 @@ import {
   type InsertSupportRequest,
   type RatingEstimate,
   type InsertRatingEstimate,
+  type SupportingDocument,
+  type InsertSupportingDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, gte } from "drizzle-orm";
@@ -72,6 +75,10 @@ export interface IStorage {
 
   getAllProfiles(): Promise<VeteranProfile[]>;
   adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined>;
+
+  createSupportingDocument(data: InsertSupportingDocument): Promise<SupportingDocument>;
+  getSupportingDocuments(userId: string): Promise<SupportingDocument[]>;
+  deleteSupportingDocument(id: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -259,6 +266,19 @@ export class DatabaseStorage implements IStorage {
       .where(eq(veteranProfiles.userId, userId))
       .returning();
     return profile;
+  }
+
+  async createSupportingDocument(data: InsertSupportingDocument): Promise<SupportingDocument> {
+    const [doc] = await db.insert(supportingDocuments).values(data).returning();
+    return doc;
+  }
+
+  async getSupportingDocuments(userId: string): Promise<SupportingDocument[]> {
+    return db.select().from(supportingDocuments).where(eq(supportingDocuments.userId, userId)).orderBy(desc(supportingDocuments.createdAt));
+  }
+
+  async deleteSupportingDocument(id: string, userId: string): Promise<void> {
+    await db.delete(supportingDocuments).where(and(eq(supportingDocuments.id, id), eq(supportingDocuments.userId, userId)));
   }
 }
 

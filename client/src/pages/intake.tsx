@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,16 +16,25 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CheckCircle, ChevronRight, ChevronLeft, Save } from "lucide-react";
+import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle } from "lucide-react";
+import type { SupportingDocument } from "@shared/schema";
 
 const BRANCHES = ["Army", "Navy", "Air Force", "Marines", "Coast Guard", "Space Force"];
 const DISCHARGE_TYPES = ["Honorable", "General (Under Honorable)", "Other Than Honorable", "Bad Conduct", "Dishonorable"];
-const STEPS = ["Military Service", "Deployments & Exposures", "VA Info", "Review & Save"];
+const STEPS = ["Military Service", "Deployments & Exposures", "VA Info", "Supporting Documents", "Review & Save"];
+
+const DOC_CATEGORIES = [
+  { value: "decision_letter", label: "VA Decision Letter", accept: ".pdf", description: "Upload your VA rating decision letter (PDF)" },
+  { value: "denial_letter", label: "VA Denial Letter", accept: ".pdf", description: "Upload any VA denial letters (PDF)" },
+  { value: "medical_records", label: "Medical Records", accept: ".txt", description: "Upload medical records as text files (.txt only)" },
+];
 
 export default function Intake() {
   const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<any>({});
+  const [uploadCategory, setUploadCategory] = useState("decision_letter");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery<any>({
     queryKey: ["/api/profile"],
@@ -35,6 +44,10 @@ export default function Intake() {
       }
       return data;
     },
+  });
+
+  const { data: supportingDocs = [], isLoading: docsLoading } = useQuery<SupportingDocument[]>({
+    queryKey: ["/api/supporting-documents"],
   });
 
   const saveMutation = useMutation({
@@ -53,9 +66,53 @@ export default function Intake() {
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: async ({ file, category }: { file: File; category: string }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("category", category);
+      const res = await fetch("/api/supporting-documents", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Upload failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/supporting-documents"] });
+      toast({ title: "Document uploaded", description: "Your file has been saved." });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+    onError: (error: any) => {
+      toast({ title: "Upload failed", description: error.message || "Please try again.", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/supporting-documents/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/supporting-documents"] });
+      toast({ title: "Document removed" });
+    },
+  });
+
   const update = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploadMutation.mutate({ file, category: uploadCategory });
+  };
+
+  const categoryLabel = (cat: string) => DOC_CATEGORIES.find((c) => c.value === cat)?.label || cat;
 
   if (isLoading) {
     return (
@@ -213,6 +270,87 @@ export default function Intake() {
           )}
 
           {step === 3 && (
+            <>
+              <div className="p-3 rounded-md bg-muted/50 border border-border">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    Upload any VA decision letters, denial letters, or medical records you have. These help the AI generate more accurate and effective documents for your claims. Medical records must be in text (.txt) format. Decision and denial letters can be PDF files.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Document Type</Label>
+                <Select value={uploadCategory} onValueChange={setUploadCategory}>
+                  <SelectTrigger data-testid="select-doc-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DOC_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {DOC_CATEGORIES.find((c) => c.value === uploadCategory)?.description}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={DOC_CATEGORIES.find((c) => c.value === uploadCategory)?.accept || ".pdf,.txt"}
+                  onChange={handleFileUpload}
+                  className="flex-1"
+                  data-testid="input-file-upload"
+                />
+                {uploadMutation.isPending && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Uploading...
+                  </div>
+                )}
+              </div>
+
+              {docsLoading ? (
+                <Skeleton className="h-20" />
+              ) : supportingDocs.length > 0 ? (
+                <div className="space-y-2 pt-2">
+                  <Label>Uploaded Documents</Label>
+                  {supportingDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between gap-2 p-3 rounded-md border border-border bg-muted/20" data-testid={`doc-${doc.id}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="w-4 h-4 text-primary shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{doc.fileName}</p>
+                          <p className="text-xs text-muted-foreground">{categoryLabel(doc.category)} · {doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : ""}</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => deleteMutation.mutate(doc.id)}
+                        disabled={deleteMutation.isPending}
+                        data-testid={`button-delete-doc-${doc.id}`}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Upload className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No documents uploaded yet.</p>
+                  <p className="text-xs mt-1">This step is optional. You can add documents later.</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {step === 4 && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">Review your information before saving.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
@@ -238,6 +376,19 @@ export default function Intake() {
                 {formData.burnPitExposure && <Badge variant="outline">Burn Pit</Badge>}
                 {formData.gulfWarService && <Badge variant="outline">Gulf War</Badge>}
               </div>
+              {supportingDocs.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-sm text-muted-foreground mb-2">Supporting Documents ({supportingDocs.length})</p>
+                  <div className="flex flex-wrap gap-2">
+                    {supportingDocs.map((doc) => (
+                      <Badge key={doc.id} variant="outline" className="text-xs">
+                        <FileText className="w-3 h-3 mr-1" />
+                        {doc.fileName}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

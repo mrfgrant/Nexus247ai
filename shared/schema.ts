@@ -216,3 +216,23 @@ export type SupportRequest = typeof supportRequests.$inferSelect;
 export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;
 export type RatingEstimate = typeof ratingEstimates.$inferSelect;
 export type InsertRatingEstimate = z.infer<typeof insertRatingEstimateSchema>;
+
+export const supportingDocuments = pgTable("supporting_documents", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  category: text("category").notNull(),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  content: text("content"),
+  fileSize: integer("file_size"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSupportingDocumentSchema = createInsertSchema(supportingDocuments).omit({
+  id: true,
+  createdAt: true,
+});
+export type SupportingDocument = typeof supportingDocuments.$inferSelect;
+export type InsertSupportingDocument = z.infer<typeof insertSupportingDocumentSchema>;

@@ -8,8 +8,45 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Send, MessageCircle, Bot, User, Loader2, Lightbulb } from "lucide-react";
+import { Send, MessageCircle, Bot, User, Loader2, Lightbulb, BookOpen } from "lucide-react";
 import type { ChatMessage } from "@shared/schema";
+
+const THINKING_MESSAGES = [
+  "Analyzing your question...",
+  "Reviewing CFR references...",
+  "Checking VA regulations...",
+  "Researching claim strategies...",
+  "Preparing your response...",
+];
+
+function ThinkingIndicator() {
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMsgIndex((i) => (i + 1) % THINKING_MESSAGES.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex gap-3 justify-start" data-testid="chat-thinking-indicator">
+      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+        <BookOpen className="w-4 h-4 text-primary animate-pulse" />
+      </div>
+      <div className="bg-muted/50 border border-border rounded-lg p-3 max-w-[80%]">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-2 h-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+          <span className="text-sm text-muted-foreground">{THINKING_MESSAGES[msgIndex]}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const SUGGESTED_QUESTIONS = [
   "What are the strongest arguments for PTSD service connection?",
@@ -151,16 +188,7 @@ export default function Chat() {
                     )}
                   </div>
                 ))}
-                {sendMutation.isPending && (
-                  <div className="flex gap-3 justify-start">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Bot className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="bg-muted/50 border border-border rounded-lg p-3">
-                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                    </div>
-                  </div>
-                )}
+                {sendMutation.isPending && <ThinkingIndicator />}
               </div>
             )}
           </ScrollArea>

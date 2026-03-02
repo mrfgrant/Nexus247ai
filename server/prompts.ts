@@ -1,5 +1,9 @@
 import type { VeteranProfile, Condition, ServiceIncident, KnowledgeBaseEntry } from "@shared/schema";
 
+const PLAIN_TEXT_INSTRUCTION = `
+
+FORMATTING RULES: Output clean, professional plain text only. Do not use markdown formatting such as asterisks, hashtags, bullet symbols, or any special characters for emphasis. Use capitalization, spacing, and line breaks for structure instead.`;
+
 interface PromptContext {
   vetProfile?: VeteranProfile | null;
   condition?: Condition | null;
@@ -86,7 +90,7 @@ Your letters MUST:
 - Use precise medical terminology
 - Structure arguments for maximum persuasiveness to VA raters
 - Never make false claims — only support what evidence shows
-- Format as a professional letter with date, salutation, body, and closing`,
+- Format as a professional letter with date, salutation, body, and closing${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a nexus letter for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}
@@ -112,7 +116,7 @@ Your statements MUST:
 - Document the progression from in-service to current symptoms
 - Describe impact on daily activities, work, and relationships
 - Be emotionally compelling yet factually accurate
-- Include specific dates, locations, and examples where possible`,
+- Include specific dates, locations, and examples where possible${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a personal statement for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}
@@ -138,7 +142,7 @@ Your buddy letters MUST:
 - Establish the witness's relationship to the veteran and basis of knowledge
 - Be factually consistent with the veteran's account
 - Include a statement that the witness is providing information under penalty of perjury
-- Reference 38 CFR § 3.303(a) regarding competent lay evidence`,
+- Reference 38 CFR § 3.303(a) regarding competent lay evidence${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a buddy letter template for this veteran's claim:
 
 ${formatVeteranInfo(ctx.vetProfile)}
@@ -164,7 +168,7 @@ Your NODs MUST:
 - Address each denial reason with specific counter-evidence
 - Cite M21-1 Adjudication Manual guidance the rater should have followed
 - Be structured for persuasive effect in the appeals process
-- Request appropriate review lane (Higher-Level Review, Supplemental Claim, or Board Appeal)`,
+- Request appropriate review lane (Higher-Level Review, Supplemental Claim, or Board Appeal)${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a Notice of Disagreement for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}
@@ -190,7 +194,7 @@ Your letters MUST:
 - Reference applicable diagnostic codes from 38 CFR Part 4
 - Apply the "at least as likely as not" standard per 38 CFR § 3.102
 - Include a clear nexus statement linking the secondary condition to the primary
-- Use the IMO format for maximum credibility`,
+- Use the IMO format for maximum credibility${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a secondary condition letter for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}
@@ -216,7 +220,7 @@ Your letters MUST:
 - Cite 38 CFR § 4.7 (higher rating when disability picture more nearly approximates)
 - Include specific examples of how the condition has worsened since last rating
 - Compare current symptoms to the criteria for the current AND next higher rating
-- Apply 38 CFR § 3.102 Benefit of the Doubt where evidence is in equipoise`,
+- Apply 38 CFR § 3.102 Benefit of the Doubt where evidence is in equipoise${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate an increased rating letter for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}
@@ -245,7 +249,7 @@ Your AOD motions MUST:
   * Other sufficient cause per BVA precedent
 - Include supporting evidence for the claimed hardship
 - Be formatted as a formal legal motion
-- Request expedited consideration with specific relief sought`,
+- Request expedited consideration with specific relief sought${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate an Advancement on Docket (AOD) motion for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}
@@ -270,7 +274,7 @@ Your Good Cause letters MUST:
 - Cite BVA precedent for what constitutes "good cause"
 - Include a timeline showing the impact of delay
 - Be emotionally compelling while maintaining professional credibility
-- Request specific relief with clear justification`,
+- Request specific relief with clear justification${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a Good Cause letter for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}

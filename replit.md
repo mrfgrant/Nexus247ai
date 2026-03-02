@@ -24,6 +24,7 @@ VetLetters is a SaaS application that helps veterans generate professional, CFR-
 - `supportRequests` — human assistance tickets
 - `ratingEstimates` — saved rating calculations
 - `usageLogs` — usage tracking
+- `supportingDocuments` — uploaded VA decision letters, denial letters, medical records
 
 ### Backend (server/)
 - `server/index.ts` — Express app setup
