@@ -229,7 +229,10 @@ export async function registerRoutes(
       }
       const { incidentDate, location, description, documented } = req.body;
       const incident = await storage.updateIncident(req.params.id, {
-        incidentDate, location, description, documented,
+        incidentDate: incidentDate || null,
+        location: location || null,
+        description,
+        documented: !!documented,
       });
       res.json(incident);
     } catch (error) {

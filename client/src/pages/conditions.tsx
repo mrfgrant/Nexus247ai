@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, Stethoscope, Trash2, Edit, AlertTriangle, MapPin, Calendar } from "lucide-react";
+import { Plus, Stethoscope, Trash2, Edit, AlertTriangle, MapPin, Calendar, Search, Zap } from "lucide-react";
 import type { Condition, ServiceIncident } from "@shared/schema";
+import { searchConditions, type ConditionCodeEntry } from "@/lib/condition-codes";
 
 function ConditionDialog({
   condition,
@@ -39,6 +40,42 @@ function ConditionDialog({
     treatingPhysician: condition?.treatingPhysician || "",
     notes: condition?.notes || "",
   });
+
+  const [suggestions, setSuggestions] = useState<ConditionCodeEntry[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
+          inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleConditionInput(value: string) {
+    setForm({ ...form, conditionName: value });
+    setAutoFilled(false);
+    const results = searchConditions(value);
+    setSuggestions(results);
+    setShowSuggestions(results.length > 0);
+  }
+
+  function selectCondition(entry: ConditionCodeEntry) {
+    setForm({
+      ...form,
+      conditionName: entry.name,
+      icd10Code: entry.icd10,
+      diagnosticCode: entry.diagnosticCode,
+    });
+    setAutoFilled(true);
+    setShowSuggestions(false);
+  }
 
   const mutation = useMutation({
     mutationFn: async (data: any) => {
@@ -66,20 +103,61 @@ function ConditionDialog({
         <DialogTitle>{condition ? "Edit Condition" : "Add Condition"}</DialogTitle>
       </DialogHeader>
       <div className="space-y-4">
-        <div className="space-y-2">
+        <div className="space-y-2 relative">
           <Label>Condition Name</Label>
-          <Input value={form.conditionName} onChange={(e) => setForm({ ...form, conditionName: e.target.value })} placeholder="e.g., PTSD, Tinnitus, Lumbar Strain" data-testid="input-condition-name" />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              ref={inputRef}
+              value={form.conditionName}
+              onChange={(e) => handleConditionInput(e.target.value)}
+              onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+              placeholder="Start typing... e.g., PTSD, back pain, tinnitus"
+              className="pl-9"
+              data-testid="input-condition-name"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Type your condition and we'll auto-fill the medical codes for you.</p>
+          {showSuggestions && suggestions.length > 0 && (
+            <div ref={suggestionsRef} className="absolute z-50 left-0 right-0 top-[calc(100%-4px)] bg-popover border border-border rounded-md shadow-lg max-h-64 overflow-y-auto" data-testid="condition-suggestions">
+              {suggestions.map((entry, idx) => (
+                <button
+                  key={entry.name}
+                  className="w-full text-left px-3 py-2.5 hover:bg-accent transition-colors flex items-center justify-between gap-2 border-b border-border/50 last:border-0"
+                  onClick={() => selectCondition(entry)}
+                  data-testid={`suggestion-${idx}`}
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm text-foreground">{entry.name}</div>
+                    <div className="text-xs text-muted-foreground">{entry.category}</div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">ICD: {entry.icd10}</Badge>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">DC: {entry.diagnosticCode}</Badge>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>ICD-10 Code</Label>
-            <Input value={form.icd10Code} onChange={(e) => setForm({ ...form, icd10Code: e.target.value })} placeholder="e.g., F43.10" data-testid="input-icd10" />
+            <Label className="flex items-center gap-1.5">
+              ICD-10 Code
+              {autoFilled && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"><Zap className="w-3 h-3" />Auto</span>}
+            </Label>
+            <Input value={form.icd10Code} onChange={(e) => setForm({ ...form, icd10Code: e.target.value })} placeholder="Auto-filled" className={autoFilled && form.icd10Code ? "border-emerald-500/40 bg-emerald-500/5" : ""} data-testid="input-icd10" />
           </div>
           <div className="space-y-2">
-            <Label>Diagnostic Code</Label>
-            <Input value={form.diagnosticCode} onChange={(e) => setForm({ ...form, diagnosticCode: e.target.value })} placeholder="e.g., 9411" data-testid="input-diagnostic-code" />
+            <Label className="flex items-center gap-1.5">
+              Diagnostic Code
+              {autoFilled && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"><Zap className="w-3 h-3" />Auto</span>}
+            </Label>
+            <Input value={form.diagnosticCode} onChange={(e) => setForm({ ...form, diagnosticCode: e.target.value })} placeholder="Auto-filled" className={autoFilled && form.diagnosticCode ? "border-emerald-500/40 bg-emerald-500/5" : ""} data-testid="input-diagnostic-code" />
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Current Rating (%)</Label>
