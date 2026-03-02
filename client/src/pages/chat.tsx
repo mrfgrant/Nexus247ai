@@ -67,12 +67,12 @@ export default function Chat() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto flex flex-col h-[calc(100vh-2rem)]">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-foreground" data-testid="text-chat-title">
+    <div className="p-3 sm:p-6 max-w-3xl mx-auto flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-2rem)]">
+      <div className="mb-2 sm:mb-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-chat-title">
           AI Claims Advisor
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1">
           Get expert guidance on VA claims, CFR regulations, and filing strategy.
         </p>
       </div>

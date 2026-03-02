@@ -75,18 +75,18 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-6xl mx-auto">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-dashboard-title">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-dashboard-title">
             Welcome back, {user?.firstName || "Veteran"}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
             Your VA claims command center
           </p>
         </div>
         <Badge
-          className={`${tierColors[dashboard?.tier || "none"]} text-sm px-3 py-1`}
+          className={`${tierColors[dashboard?.tier || "none"]} text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 shrink-0`}
           data-testid="badge-tier"
         >
           <Shield className="w-3 h-3 mr-1" />
@@ -94,133 +94,114 @@ export default function Dashboard() {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card className="hover-elevate">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between gap-1">
-              <div>
-                <p className="text-sm text-muted-foreground">Combined Rating</p>
-                <p className="text-3xl font-bold text-foreground" data-testid="text-combined-rating">
-                  {dashboard?.combinedRating || 0}%
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs text-muted-foreground">Rating</p>
+            <p className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-combined-rating">
+              {dashboard?.combinedRating || 0}%
+            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
               Est. ${dashboard?.estimatedMonthly || 0}/mo
             </p>
           </CardContent>
         </Card>
 
         <Card className="hover-elevate">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between gap-1">
-              <div>
-                <p className="text-sm text-muted-foreground">Documents This Month</p>
-                <p className="text-3xl font-bold text-foreground" data-testid="text-docs-count">
-                  {dashboard?.documentsThisMonth || 0}
-                  <span className="text-base text-muted-foreground font-normal">
-                    /{dashboard?.tierLimit || 0}
-                  </span>
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-primary" />
-              </div>
-            </div>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs text-muted-foreground">Documents</p>
+            <p className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-docs-count">
+              {dashboard?.documentsThisMonth || 0}
+              <span className="text-sm sm:text-base text-muted-foreground font-normal">
+                /{dashboard?.tierLimit || 0}
+              </span>
+            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">This month</p>
           </CardContent>
         </Card>
 
         <Card className="hover-elevate">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between gap-1">
-              <div>
-                <p className="text-sm text-muted-foreground">Conditions</p>
-                <p className="text-3xl font-bold text-foreground" data-testid="text-conditions-count">
-                  {dashboard?.conditionsCount || 0}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Stethoscope className="w-6 h-6 text-primary" />
-              </div>
-            </div>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs text-muted-foreground">Conditions</p>
+            <p className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-conditions-count">
+              {dashboard?.conditionsCount || 0}
+            </p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Tracked</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-3 gap-2">
         <Link href="/generate">
-          <Button data-testid="button-quick-generate">
-            <FileText className="w-4 h-4 mr-2" />
-            Generate Letter
+          <Button className="w-full text-xs sm:text-sm h-9 sm:h-10" data-testid="button-quick-generate">
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Generate
           </Button>
         </Link>
         <Link href="/chat">
-          <Button variant="outline" data-testid="button-quick-chat">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Claims Chat
+          <Button variant="outline" className="w-full text-xs sm:text-sm h-9 sm:h-10" data-testid="button-quick-chat">
+            <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Chat
           </Button>
         </Link>
         <Link href="/conditions">
-          <Button variant="outline" data-testid="button-quick-condition">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Condition
+          <Button variant="outline" className="w-full text-xs sm:text-sm h-9 sm:h-10" data-testid="button-quick-condition">
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Condition
           </Button>
         </Link>
       </div>
 
       <Card>
-        <CardContent className="p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-md bg-accent/20 flex items-center justify-center shrink-0">
-            <Lightbulb className="w-4 h-4 text-accent" />
+        <CardContent className="p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-accent/20 flex items-center justify-center shrink-0">
+            <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent" />
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground">Tip of the Day</p>
-            <p className="text-sm text-muted-foreground mt-1">{tip}</p>
+            <p className="text-xs sm:text-sm font-medium text-foreground">Tip of the Day</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">{tip}</p>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center justify-between gap-1">
+        <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="text-base sm:text-lg flex items-center justify-between gap-1">
             Recent Documents
             <Link href="/documents">
-              <Button variant="ghost" size="sm" data-testid="link-view-all-docs">
+              <Button variant="ghost" size="sm" className="text-xs sm:text-sm h-7 sm:h-9" data-testid="link-view-all-docs">
                 View All <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </Link>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           {!dashboard?.recentDocuments?.length ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">No documents yet. Generate your first letter!</p>
+            <div className="text-center py-6 sm:py-8 text-muted-foreground">
+              <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3 opacity-40" />
+              <p className="text-xs sm:text-sm">No documents yet. Generate your first letter!</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {dashboard.recentDocuments.map((doc: any) => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-md bg-muted/30"
+                  className="flex items-center justify-between gap-2 sm:gap-3 p-2 sm:p-3 rounded-md bg-muted/30"
                   data-testid={`card-document-${doc.id}`}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-xs sm:text-sm font-medium text-foreground truncate">
                       {doc.title}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
                       {new Date(doc.createdAt).toLocaleDateString()} · {doc.wordCount} words
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     {doc.overallScore > 0 && (
                       <ScoreIndicator score={doc.overallScore} label="Score" />
                     )}
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-[10px] sm:text-xs">
                       {doc.status}
                     </Badge>
                   </div>

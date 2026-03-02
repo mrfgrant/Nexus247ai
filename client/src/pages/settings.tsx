@@ -15,7 +15,7 @@ export default function Settings() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto space-y-4">
+      <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-48" />
         <Skeleton className="h-48" />
@@ -31,9 +31,9 @@ export default function Settings() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground" data-testid="text-settings-title">Settings</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-settings-title">Settings</h1>
         <p className="text-muted-foreground text-sm mt-1">Manage your account and subscription.</p>
       </div>
 

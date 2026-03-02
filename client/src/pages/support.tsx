@@ -57,7 +57,7 @@ export default function Support() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto space-y-4">
+      <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
         {[1, 2].map((i) => <Skeleton key={i} className="h-24" />)}
       </div>
@@ -65,10 +65,10 @@ export default function Support() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-support-title">Get Help</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-support-title">Get Help</h1>
           <p className="text-muted-foreground text-sm mt-1">Request human assistance with your claims.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

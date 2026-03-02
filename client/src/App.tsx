@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import Landing from "@/pages/landing";
@@ -29,6 +29,10 @@ function AuthenticatedLayout() {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto">
+          <div className="md:hidden flex items-center gap-3 p-3 border-b border-border bg-background sticky top-0 z-30">
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <span className="text-sm font-semibold text-foreground">VetLetters</span>
+          </div>
           <Switch>
             <Route path="/dashboard" component={Dashboard} />
             <Route path="/intake" component={Intake} />

@@ -296,7 +296,7 @@ export default function Conditions() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-4">
+      <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
         {[1, 2, 3].map((i) => (<Skeleton key={i} className="h-40" />))}
       </div>
@@ -304,15 +304,15 @@ export default function Conditions() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-conditions-title">Conditions & Incidents</h1>
-          <p className="text-muted-foreground text-sm mt-1">Track your service-connected conditions and linking incidents.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-conditions-title">Conditions & Incidents</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1 hidden sm:block">Track your service-connected conditions and linking incidents.</p>
         </div>
         <Dialog open={showConditionDialog} onOpenChange={(o) => { setShowConditionDialog(o); if (!o) setEditCondition(undefined); }}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-condition"><Plus className="w-4 h-4 mr-2" /> Add Condition</Button>
+            <Button className="shrink-0 text-xs sm:text-sm" data-testid="button-add-condition"><Plus className="w-4 h-4 mr-1 sm:mr-2" /> Add Condition</Button>
           </DialogTrigger>
           <ConditionDialog condition={editCondition} onClose={() => { setShowConditionDialog(false); setEditCondition(undefined); }} />
         </Dialog>

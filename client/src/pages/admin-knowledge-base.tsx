@@ -139,7 +139,7 @@ export default function AdminKnowledgeBase() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-4">
+      <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
         {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32" />)}
       </div>
@@ -147,10 +147,10 @@ export default function AdminKnowledgeBase() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-kb-title">Knowledge Base</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-kb-title">Knowledge Base</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Upload real claim submissions and VA decisions to train AI letter generation.
           </p>
@@ -169,7 +169,7 @@ export default function AdminKnowledgeBase() {
           return (
             <Card key={cat}>
               <CardContent className="p-3 text-center">
-                <p className="text-2xl font-bold text-foreground">{count}</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{count}</p>
                 <p className="text-xs text-muted-foreground capitalize">{cat}</p>
               </CardContent>
             </Card>

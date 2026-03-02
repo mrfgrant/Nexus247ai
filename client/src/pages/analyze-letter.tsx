@@ -176,10 +176,10 @@ export default function AnalyzeLetter() {
 
   if (analysis) {
     return (
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="p-3 sm:p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground" data-testid="text-analysis-title">Decision Letter Analysis</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-analysis-title">Decision Letter Analysis</h1>
             <p className="text-sm text-muted-foreground mt-1">AI-powered review of your VA decision</p>
           </div>
           <Button variant="outline" onClick={() => { setAnalysis(null); setSelectedFile(null); setPastedText(""); }} data-testid="button-new-analysis">
@@ -477,9 +477,9 @@ export default function AnalyzeLetter() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground" data-testid="text-analyze-title">Analyze Decision Letter</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-analyze-title">Analyze Decision Letter</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Upload your VA decision letter and get an expert AI analysis with specific next steps, identified errors, and recommended appeal paths.
         </p>

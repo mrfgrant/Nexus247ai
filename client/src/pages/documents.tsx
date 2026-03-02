@@ -83,7 +83,7 @@ export default function Documents() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-4">
+      <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
         {[1, 2, 3].map((i) => (
           <Skeleton key={i} className="h-32" />
@@ -93,10 +93,10 @@ export default function Documents() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground" data-testid="text-documents-title">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-documents-title">
             My Documents
           </h1>
           <p className="text-muted-foreground text-sm mt-1">

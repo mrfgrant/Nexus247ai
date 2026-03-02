@@ -50,7 +50,7 @@ export default function AdminSupport() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-4">
+      <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
         {[1, 2, 3].map((i) => <Skeleton key={i} className="h-40" />)}
       </div>
@@ -64,18 +64,18 @@ export default function AdminSupport() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground" data-testid="text-admin-support-title">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-admin-support-title">
           Support Requests
         </h1>
         <p className="text-muted-foreground text-sm mt-1">Manage veteran assistance requests.</p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <Card><CardContent className="p-3 text-center"><p className="text-2xl font-bold text-yellow-600">{stats.open}</p><p className="text-xs text-muted-foreground">Open</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p><p className="text-xs text-muted-foreground">In Progress</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-2xl font-bold text-green-600">{stats.resolved}</p><p className="text-xs text-muted-foreground">Resolved</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xl sm:text-2xl font-bold text-yellow-600">{stats.open}</p><p className="text-xs text-muted-foreground">Open</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xl sm:text-2xl font-bold text-blue-600">{stats.inProgress}</p><p className="text-xs text-muted-foreground">In Progress</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xl sm:text-2xl font-bold text-green-600">{stats.resolved}</p><p className="text-xs text-muted-foreground">Resolved</p></CardContent></Card>
       </div>
 
       {!requests.length ? (

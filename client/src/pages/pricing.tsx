@@ -74,17 +74,17 @@ export default function Pricing() {
   const currentTier = profile?.subscriptionTier || "none";
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-8">
+    <div className="p-3 sm:p-6 max-w-5xl mx-auto space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-foreground" data-testid="text-pricing-title">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-pricing-title">
           Choose Your Plan
         </h1>
-        <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
+        <p className="text-muted-foreground text-sm sm:text-base mt-2 max-w-lg mx-auto">
           Every plan includes RPA quality scoring, AI Claims Chat, and CFR-grounded letter generation.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         {tiers.map((tier) => {
           const isCurrent = currentTier === tier.tier;
           return (
