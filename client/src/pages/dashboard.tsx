@@ -85,13 +85,20 @@ export default function Dashboard() {
             Your VA claims command center
           </p>
         </div>
-        <Badge
-          className={`${tierColors[dashboard?.tier || "none"]} text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 shrink-0`}
-          data-testid="badge-tier"
-        >
-          <Shield className="w-3 h-3 mr-1" />
-          {(dashboard?.tier || "none").toUpperCase()} TIER
-        </Badge>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge
+            className={`${tierColors[dashboard?.tier || "none"]} text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1`}
+            data-testid="badge-tier"
+          >
+            <Shield className="w-3 h-3 mr-1" />
+            {(dashboard?.tier || "none").toUpperCase()} TIER
+          </Badge>
+          {dashboard?.trialEndsAt && new Date(dashboard.trialEndsAt) > new Date() && (
+            <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-[10px] sm:text-xs px-2 py-0.5" data-testid="badge-trial">
+              Trial · {Math.ceil((new Date(dashboard.trialEndsAt).getTime() - Date.now()) / 86400000)}d left
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4">

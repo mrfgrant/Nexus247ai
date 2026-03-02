@@ -19,6 +19,7 @@ import Support from "@/pages/support";
 import Settings from "@/pages/settings";
 import AdminKnowledgeBase from "@/pages/admin-knowledge-base";
 import AdminSupport from "@/pages/admin-support";
+import AdminUsers from "@/pages/admin-users";
 import AnalyzeLetter from "@/pages/analyze-letter";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
@@ -47,6 +48,7 @@ function AuthenticatedLayout() {
             <Route path="/settings" component={Settings} />
             <Route path="/admin/knowledge-base" component={AdminKnowledgeBase} />
             <Route path="/admin/support" component={AdminSupport} />
+            <Route path="/admin/users" component={AdminUsers} />
             <Route component={Dashboard} />
           </Switch>
         </main>

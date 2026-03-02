@@ -15,6 +15,20 @@ const TIER_LIMITS: Record<string, number> = {
   concierge: 999,
 };
 
+const VALID_TIERS = ["none", "basic", "pro", "concierge"];
+const VALID_ROLES = ["user", "admin"];
+
+function getEffectiveTier(profile: any): string {
+  const tier = profile?.subscriptionTier || "none";
+  if (tier !== "none") {
+    if (profile?.trialEndsAt && new Date(profile.trialEndsAt) < new Date()) {
+      return "none";
+    }
+    return tier;
+  }
+  return "none";
+}
+
 const MONTHLY_RATES: Record<number, number> = {
   0: 0, 10: 175, 20: 346, 30: 537, 40: 774,
   50: 1102, 60: 1395, 70: 1759, 80: 2044,
@@ -311,7 +325,7 @@ export async function registerRoutes(
       const { documentType, conditionId, additionalContext } = req.body;
 
       const profile = await storage.getVeteranProfile(userId);
-      const tier = profile?.subscriptionTier || "none";
+      const tier = getEffectiveTier(profile);
 
       if (tier === "none") {
         return res.status(403).json({ error: "Active subscription required" });
@@ -495,7 +509,7 @@ export async function registerRoutes(
       }
 
       const profile = await storage.getVeteranProfile(userId);
-      const tier = profile?.subscriptionTier || "none";
+      const tier = getEffectiveTier(profile);
       if (tier === "none") {
         return res.status(403).json({ error: "Active subscription required" });
       }
@@ -646,6 +660,62 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const profiles = await storage.getAllProfiles();
+      res.json(profiles);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.patch("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const { subscriptionTier, role, trialDays } = req.body;
+      const updateData: any = {};
+
+      if (subscriptionTier !== undefined) {
+        if (!VALID_TIERS.includes(subscriptionTier)) {
+          return res.status(400).json({ error: `Invalid tier. Must be one of: ${VALID_TIERS.join(", ")}` });
+        }
+        updateData.subscriptionTier = subscriptionTier;
+      }
+
+      if (role !== undefined) {
+        if (!VALID_ROLES.includes(role)) {
+          return res.status(400).json({ error: `Invalid role. Must be one of: ${VALID_ROLES.join(", ")}` });
+        }
+        updateData.role = role;
+      }
+
+      if (trialDays !== undefined) {
+        const days = parseInt(trialDays);
+        if (isNaN(days) || days < 0 || days > 30) {
+          return res.status(400).json({ error: "Trial days must be between 0 and 30" });
+        }
+        if (days > 0) {
+          const trialEnd = new Date();
+          trialEnd.setDate(trialEnd.getDate() + days);
+          updateData.trialEndsAt = trialEnd;
+          if (!updateData.subscriptionTier || updateData.subscriptionTier === "none") {
+            updateData.subscriptionTier = "basic";
+          }
+        } else {
+          updateData.trialEndsAt = null;
+        }
+      }
+
+      const profile = await storage.adminUpdateProfile(req.params.userId, updateData);
+      if (!profile) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error("Admin update error:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
   app.get("/api/dashboard", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -668,8 +738,9 @@ export async function registerRoutes(
         estimatedMonthly: MONTHLY_RATES[combinedRating] || 0,
         documentsThisMonth: monthCount,
         recentDocuments: docs.slice(0, 5),
-        tier: profile?.subscriptionTier || "none",
-        tierLimit: TIER_LIMITS[profile?.subscriptionTier || "none"] || 0,
+        tier: getEffectiveTier(profile),
+        tierLimit: TIER_LIMITS[getEffectiveTier(profile)] || 0,
+        trialEndsAt: profile?.trialEndsAt || null,
       });
     } catch (error) {
       console.error("Dashboard error:", error);

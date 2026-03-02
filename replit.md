@@ -50,6 +50,7 @@ VetLetters is a SaaS application that helps veterans generate professional, CFR-
   - `settings.tsx` — Account and subscription management
   - `admin-knowledge-base.tsx` — Admin: manage knowledge base entries
   - `admin-support.tsx` — Admin: manage support requests
+  - `admin-users.tsx` — Admin: user management with tier/role/trial controls
 
 ### Document Types (8)
 All tiers: nexus_letter, personal_statement, buddy_letter, nod, secondary_condition, increase_claim
@@ -60,6 +61,13 @@ Concierge only: aod_motion, good_cause_letter
 - Basic ($19/mo): 5 docs/mo
 - Pro ($49/mo): 50 docs/mo
 - Concierge ($149/mo): 999 docs/mo + AOD/Good Cause
+
+### Trial System
+- Admin can grant time-limited trials (1-30 days) via Admin > Manage Users
+- Trials auto-set tier to Basic if user has no tier
+- `getEffectiveTier()` in routes.ts checks trialEndsAt — expired trials revert to "none"
+- Dashboard shows trial badge with remaining days
+- `veteranProfiles.trialEndsAt` timestamp field tracks trial expiry
 
 ### Design Theme
 Navy blue primary (#1a3a6b), warm gold accent (#d4a017), dark sidebar, military/veteran aesthetic

@@ -69,6 +69,9 @@ export interface IStorage {
   getRatingEstimates(userId: string): Promise<RatingEstimate[]>;
 
   logUsage(userId: string, action: string, metadata?: any): Promise<void>;
+
+  getAllProfiles(): Promise<VeteranProfile[]>;
+  adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -243,6 +246,19 @@ export class DatabaseStorage implements IStorage {
 
   async logUsage(userId: string, action: string, metadata?: any): Promise<void> {
     await db.insert(usageLogs).values({ userId, action, metadata });
+  }
+
+  async getAllProfiles(): Promise<VeteranProfile[]> {
+    return db.select().from(veteranProfiles).orderBy(desc(veteranProfiles.createdAt));
+  }
+
+  async adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined> {
+    const [profile] = await db
+      .update(veteranProfiles)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(veteranProfiles.userId, userId))
+      .returning();
+    return profile;
   }
 }
 

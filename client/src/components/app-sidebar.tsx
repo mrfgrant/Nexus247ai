@@ -51,6 +51,7 @@ const bottomItems = [
 ];
 
 const adminItems = [
+  { title: "Manage Users", url: "/admin/users", icon: Shield },
   { title: "Knowledge Base", url: "/admin/knowledge-base", icon: BookOpen },
   { title: "Support Requests", url: "/admin/support", icon: HeadphonesIcon },
 ];
