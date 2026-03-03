@@ -29,7 +29,9 @@ import {
   Shield,
   Calendar,
   AlertTriangle,
+  Printer,
 } from "lucide-react";
+import { useLocation } from "wouter";
 import type { Document } from "@shared/schema";
 
 function getScoreColor(score: number): string {
@@ -46,6 +48,7 @@ function getScoreBg(score: number): string {
 
 export default function Documents() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [filter, setFilter] = useState("all");
   const [viewDoc, setViewDoc] = useState<Document | null>(null);
 
@@ -172,6 +175,9 @@ export default function Documents() {
                       <Button size="icon" variant="ghost" onClick={() => setViewDoc(doc)} data-testid={`button-view-${doc.id}`}>
                         <Eye className="w-4 h-4" />
                       </Button>
+                      <Button size="icon" variant="ghost" onClick={() => navigate(`/documents/${doc.id}/print`)} data-testid={`button-print-${doc.id}`}>
+                        <Printer className="w-4 h-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => handleDownload(doc)} data-testid={`button-download-${doc.id}`}>
                         <Download className="w-4 h-4" />
                       </Button>
@@ -232,6 +238,9 @@ export default function Documents() {
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => handleDownload(viewDoc)} data-testid="button-download-modal">
                   <Download className="w-3 h-3 mr-1" /> Download
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => { setViewDoc(null); navigate(`/documents/${viewDoc.id}/print`); }} data-testid="button-print-modal">
+                  <Printer className="w-3 h-3 mr-1" /> Print / PDF
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground italic">

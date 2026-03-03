@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT, DECISION_LETTER_ANALYSIS_PROMPT } from "./prompts";
+import { MONTHLY_RATES, SMC_RATES, SMC_INFO } from "@shared/va-rates";
 import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
 import * as pdfParseModule from "pdf-parse";
@@ -29,11 +30,6 @@ function getEffectiveTier(profile: any): string {
   return "none";
 }
 
-const MONTHLY_RATES: Record<number, number> = {
-  0: 0, 10: 171, 20: 338, 30: 524, 40: 755,
-  50: 1075, 60: 1362, 70: 1808, 80: 2102,
-  90: 2362, 100: 3939,
-};
 
 const PROFILE_ALLOWED_FIELDS = [
   "branch", "rank", "mosRate", "serviceStartDate", "serviceEndDate",
@@ -474,6 +470,9 @@ export async function registerRoutes(
         (r) => r > combined,
       );
 
+      const sortedRatings = [...ratings].sort((a, b) => b - a);
+      const smcSEligible = combined === 100 && sortedRatings.length >= 2 && sortedRatings[1] >= 60;
+
       const result = {
         combinedRating: combined,
         estimatedMonthly: monthly,
@@ -486,6 +485,10 @@ export async function registerRoutes(
         tdiuEligible:
           combined >= 60 && ratings.some((r: number) => r >= 60),
         smcEligible: combined === 100,
+        smcSEligible,
+        smcSRate: SMC_RATES.S,
+        smcKRate: SMC_RATES.K,
+        smcLevels: SMC_INFO,
       };
 
       const estimate = await storage.createRatingEstimate({
@@ -806,6 +809,8 @@ export async function registerRoutes(
         .map((c) => c.currentRating || c.claimedRating || 0)
         .filter((r) => r > 0);
       const combinedRating = calculateCombinedRating(ratings);
+      const sortedDash = [...ratings].sort((a, b) => b - a);
+      const smcSEligible = combinedRating === 100 && sortedDash.length >= 2 && sortedDash[1] >= 60;
 
       res.json({
         profile,
@@ -817,6 +822,8 @@ export async function registerRoutes(
         tier: getEffectiveTier(profile),
         tierLimit: TIER_LIMITS[getEffectiveTier(profile)] || 0,
         trialEndsAt: profile?.trialEndsAt || null,
+        smcSEligible,
+        smcSRate: smcSEligible ? SMC_RATES.S : null,
       });
     } catch (error) {
       console.error("Dashboard error:", error);

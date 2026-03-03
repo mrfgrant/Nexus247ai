@@ -1,14 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Send, MessageCircle, Bot, User, Loader2, Lightbulb, BookOpen } from "lucide-react";
+import { Send, MessageCircle, Bot, User, Lightbulb, BookOpen } from "lucide-react";
 import type { ChatMessage } from "@shared/schema";
 
 const THINKING_MESSAGES = [
@@ -46,6 +45,167 @@ function ThinkingIndicator() {
       </div>
     </div>
   );
+}
+
+function isBulletLine(line: string): boolean {
+  return /^\s*[-*]\s+/.test(line);
+}
+
+function isOrderedLine(line: string): boolean {
+  return /^\s*\d+[.)]\s+/.test(line);
+}
+
+function FormattedMessage({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const elements: JSX.Element[] = [];
+  let i = 0;
+  let key = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+
+    if (/^```/.test(line.trim())) {
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i].trim())) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++;
+      elements.push(
+        <pre key={key++} className="bg-muted rounded p-3 text-xs font-mono overflow-x-auto my-2 whitespace-pre-wrap">
+          {codeLines.join("\n")}
+        </pre>
+      );
+      continue;
+    }
+
+    if (/^-{3,}$/.test(line.trim()) || /^\*{3,}$/.test(line.trim())) {
+      elements.push(<hr key={key++} className="my-2 border-border" />);
+      i++;
+      continue;
+    }
+
+    if (/^#{1,4}\s+/.test(line)) {
+      const text = line.replace(/^#{1,4}\s+/, "").replace(/\*{2,3}/g, "");
+      elements.push(
+        <p key={key++} className="font-semibold text-foreground text-[0.9rem] mt-3 first:mt-0 mb-1">
+          {formatInline(text)}
+        </p>
+      );
+      i++;
+      continue;
+    }
+
+    const trimmed = line.trim();
+    if (/^\*{2,3}.+\*{2,3}:?$/.test(trimmed)) {
+      const text = trimmed.replace(/^\*{2,3}/, "").replace(/\*{2,3}:?$/, "").replace(/:$/, "") + (trimmed.endsWith(":**") || trimmed.endsWith(":***") ? ":" : "");
+      elements.push(
+        <p key={key++} className="font-semibold text-foreground mt-2.5 first:mt-0 mb-0.5">
+          {formatInline(text)}
+        </p>
+      );
+      i++;
+      continue;
+    }
+
+    if (isBulletLine(line)) {
+      const items: { text: string; indent: number }[] = [];
+      while (i < lines.length && isBulletLine(lines[i])) {
+        const match = lines[i].match(/^(\s*)[-*]\s+(.*)/);
+        if (match) {
+          items.push({ text: match[2], indent: match[1].length });
+        }
+        i++;
+      }
+      const baseIndent = items.length > 0 ? Math.min(...items.map(it => it.indent)) : 0;
+      elements.push(
+        <ul key={key++} className="ml-4 space-y-1 my-1.5">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex gap-2 text-sm leading-relaxed" style={{ marginLeft: Math.max(0, (item.indent - baseIndent) * 6) }}>
+              <span className="text-primary/60 mt-1.5 shrink-0">&#8226;</span>
+              <span>{formatInline(item.text)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    if (isOrderedLine(line)) {
+      const items: string[] = [];
+      while (i < lines.length && isOrderedLine(lines[i])) {
+        items.push(lines[i].replace(/^\s*\d+[.)]\s+/, ""));
+        i++;
+      }
+      elements.push(
+        <ol key={key++} className="ml-4 space-y-1 my-1.5">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex gap-2 text-sm leading-relaxed">
+              <span className="text-primary/60 font-medium shrink-0 min-w-[1.2rem]">{idx + 1}.</span>
+              <span>{formatInline(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    elements.push(
+      <p key={key++} className="text-sm leading-relaxed my-1">
+        {formatInline(line)}
+      </p>
+    );
+    i++;
+  }
+
+  return <div className="space-y-0">{elements}</div>;
+}
+
+function formatInline(text: string): (string | JSX.Element)[] {
+  const parts: (string | JSX.Element)[] = [];
+  let remaining = text;
+  let k = 0;
+
+  while (remaining.length > 0) {
+    const boldMatch = remaining.match(/\*{2}(.+?)\*{2}/);
+    const italicMatch = remaining.match(/(?<!\*)\*([^*]+?)\*(?!\*)/);
+
+    let firstMatch: { index: number; full: string; inner: string; type: "bold" | "italic" } | null = null;
+
+    if (boldMatch && boldMatch.index !== undefined) {
+      firstMatch = { index: boldMatch.index, full: boldMatch[0], inner: boldMatch[1], type: "bold" };
+    }
+    if (italicMatch && italicMatch.index !== undefined) {
+      if (!firstMatch || italicMatch.index < firstMatch.index) {
+        firstMatch = { index: italicMatch.index, full: italicMatch[0], inner: italicMatch[1], type: "italic" };
+      }
+    }
+
+    if (!firstMatch) {
+      if (remaining) parts.push(remaining);
+      break;
+    }
+
+    if (firstMatch.index > 0) {
+      parts.push(remaining.slice(0, firstMatch.index));
+    }
+
+    if (firstMatch.type === "bold") {
+      parts.push(<strong key={`b${k++}`} className="font-semibold text-foreground">{firstMatch.inner}</strong>);
+    } else {
+      parts.push(<em key={`i${k++}`} className="italic">{firstMatch.inner}</em>);
+    }
+
+    remaining = remaining.slice(firstMatch.index + firstMatch.full.length);
+  }
+
+  return parts;
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -170,13 +330,17 @@ export default function Chat() {
                       </div>
                     )}
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 text-sm leading-relaxed ${
+                      className={`max-w-[80%] rounded-lg p-3 ${
                         msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-primary text-primary-foreground text-sm leading-relaxed"
                           : "bg-muted/50 text-foreground border border-border"
                       }`}
                     >
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                      {msg.role === "assistant" ? (
+                        <FormattedMessage content={msg.content} />
+                      ) : (
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                      )}
                       <p className="text-xs opacity-60 mt-2">
                         {new Date(msg.createdAt!).toLocaleTimeString()}
                       </p>

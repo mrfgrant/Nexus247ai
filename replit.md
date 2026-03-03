@@ -33,18 +33,22 @@ VetLetters is a SaaS application that helps veterans generate professional, CFR-
 - `server/prompts.ts` — CFR-grounded AI prompts for 8 document types + RPA scoring + chat + decision letter analysis
 - `server/replit_integrations/auth/` — Replit Auth OIDC integration
 
+### Shared Modules
+- `shared/va-rates.ts` — Centralized 2026 VA compensation rates (MONTHLY_RATES, SMC_RATES, SMC_INFO)
+
 ### Frontend (client/src/)
-- `App.tsx` — Routes + auth-gated layout
+- `App.tsx` — Routes + auth-gated layout (print page rendered outside sidebar)
 - `components/app-sidebar.tsx` — Navigation sidebar with logo
 - **Pages:**
   - `landing.tsx` — Public landing page with hero, features, pricing
-  - `dashboard.tsx` — Veteran command center with stats and quick actions
-  - `intake.tsx` — Multi-step veteran profile wizard
+  - `dashboard.tsx` — Veteran command center with stats, quick actions, SMC-S eligibility
+  - `intake.tsx` — Multi-step veteran profile wizard (5 steps including supporting docs upload)
   - `conditions.tsx` — Conditions + service incidents CRUD
   - `generate-document.tsx` — Document generation with RPA scoring
-  - `documents.tsx` — Document list with filtering
-  - `chat.tsx` — AI Claims Advisor chat
-  - `rating-estimator.tsx` — Combined VA disability rating calculator
+  - `documents.tsx` — Document list with filtering, copy/download/print actions
+  - `document-print.tsx` — Print-ready document layout for browser Save as PDF
+  - `chat.tsx` — AI Claims Advisor chat with rich-text message rendering
+  - `rating-estimator.tsx` — Combined VA disability rating calculator with SMC levels reference
   - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis (PDF or text)
   - `pricing.tsx` — 3-tier pricing comparison
   - `support.tsx` — Human assistance request form

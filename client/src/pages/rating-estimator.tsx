@@ -15,6 +15,11 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Star,
+  Home,
+  Hand,
 } from "lucide-react";
 import type { Condition } from "@shared/schema";
 
@@ -24,6 +29,7 @@ export default function RatingEstimator() {
     { name: "", rating: 0 },
   ]);
   const [result, setResult] = useState<any>(null);
+  const [showSmcTable, setShowSmcTable] = useState(false);
 
   const { data: conditionsList = [] } = useQuery<Condition[]>({
     queryKey: ["/api/conditions"],
@@ -157,7 +163,7 @@ export default function RatingEstimator() {
                   <p className="text-sm text-muted-foreground">Estimated Monthly</p>
                   <p className="text-4xl font-bold text-foreground" data-testid="text-monthly-benefit">
                     <DollarSign className="w-7 h-7 inline" />
-                    {result.estimatedMonthly}
+                    {result.estimatedMonthly?.toLocaleString()}
                   </p>
                 </div>
                 <div>
@@ -183,8 +189,8 @@ export default function RatingEstimator() {
                       Next Rating Tier: {result.nextTier}%
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Monthly increase potential: +${result.monthlyIncreasePotential}/mo
-                      (${result.nextTierMonthly}/mo total)
+                      Monthly increase potential: +${result.monthlyIncreasePotential?.toLocaleString()}/mo
+                      (${result.nextTierMonthly?.toLocaleString()}/mo total)
                     </p>
                   </div>
                 </div>
@@ -206,7 +212,7 @@ export default function RatingEstimator() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {result.tdiuEligible
-                      ? "You may be eligible for Total Disability based on Individual Unemployability (38 CFR § 4.16)"
+                      ? "You may be eligible for Total Disability based on Individual Unemployability (38 CFR § 4.16). TDIU pays at the 100% rate ($3,939/mo)."
                       : "Requires 60%+ combined with at least one 60%+ condition, or 70%+ combined with one 40%+ condition"}
                   </p>
                 </div>
@@ -215,19 +221,23 @@ export default function RatingEstimator() {
 
             <Card>
               <CardContent className="p-4 flex items-center gap-3">
-                {result.smcEligible ? (
+                {result.smcSEligible ? (
                   <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                ) : result.smcEligible ? (
+                  <Star className="w-5 h-5 text-yellow-500 shrink-0" />
                 ) : (
                   <AlertCircle className="w-5 h-5 text-muted-foreground shrink-0" />
                 )}
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    SMC Eligibility
+                    SMC-S (Housebound)
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {result.smcEligible
-                      ? "You may qualify for Special Monthly Compensation"
-                      : "Requires 100% schedular rating to begin SMC analysis"}
+                    {result.smcSEligible
+                      ? `Eligible: 100% rating + additional 60%+ condition. SMC-S rate: $${result.smcSRate?.toLocaleString()}/mo`
+                      : result.smcEligible
+                        ? `100% rating achieved. SMC-S requires an additional condition rated 60%+. SMC-S rate: $${result.smcSRate?.toLocaleString()}/mo`
+                        : "Requires 100% schedular rating plus an additional disability rated 60%+ (38 CFR § 3.350)"}
                   </p>
                 </div>
               </CardContent>
@@ -235,11 +245,71 @@ export default function RatingEstimator() {
           </div>
 
           <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Hand className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">SMC-K (Loss of Use)</p>
+                  <p className="text-xs text-muted-foreground">
+                    ${result.smcKRate}/mo added per qualifying loss (hand, foot, eye, reproductive organ). Up to 3 awards.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <button
+                className="flex items-center justify-between w-full"
+                onClick={() => setShowSmcTable(!showSmcTable)}
+                data-testid="button-toggle-smc-table"
+              >
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Home className="w-4 h-4" />
+                  All SMC Levels & Rates (2026)
+                </CardTitle>
+                {showSmcTable ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            </CardHeader>
+            {showSmcTable && result.smcLevels && (
+              <CardContent className="pt-0">
+                <div className="space-y-2">
+                  {result.smcLevels.map((smc: any) => (
+                    <div
+                      key={smc.level}
+                      className={`flex items-start gap-3 p-2.5 rounded-md border ${
+                        smc.level === "S" && result.smcSEligible
+                          ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+                          : "border-border bg-muted/20"
+                      }`}
+                      data-testid={`smc-level-${smc.level}`}
+                    >
+                      <Badge variant="outline" className="shrink-0 font-mono text-xs min-w-[3rem] justify-center">
+                        {smc.level}
+                      </Badge>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground leading-relaxed">{smc.description}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground shrink-0 tabular-nums">
+                        ${smc.rate.toLocaleString()}/mo
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            )}
+          </Card>
+
+          <Card>
             <CardContent className="p-3">
               <p className="text-xs text-muted-foreground italic">
-                This calculator uses the VA's bilateral factor and whole-person impairment methodology.
-                Actual rating may differ. Dependent allowances are not included.
-                Consult your VSO or an accredited VA claims agent for official estimates.
+                This calculator uses the VA's whole-person impairment methodology per 38 CFR § 4.25.
+                Rates shown are 2026 COLA rates (effective Dec 1, 2025) for a single veteran with no dependents.
+                Actual rating and SMC eligibility may differ based on individual circumstances.
+                Consult your VSO or an accredited VA claims agent for official determinations.
               </p>
             </CardContent>
           </Card>

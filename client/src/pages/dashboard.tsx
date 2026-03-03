@@ -109,8 +109,13 @@ export default function Dashboard() {
               {dashboard?.combinedRating || 0}%
             </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-              Est. ${dashboard?.estimatedMonthly || 0}/mo
+              Est. ${dashboard?.estimatedMonthly?.toLocaleString() || 0}/mo
             </p>
+            {dashboard?.smcSEligible && (
+              <p className="text-[10px] sm:text-xs text-green-600 dark:text-green-400 font-medium mt-0.5" data-testid="text-smc-eligible">
+                SMC-S: ${dashboard?.smcSRate?.toLocaleString()}/mo
+              </p>
+            )}
           </CardContent>
         </Card>
 

@@ -21,6 +21,7 @@ import AdminKnowledgeBase from "@/pages/admin-knowledge-base";
 import AdminSupport from "@/pages/admin-support";
 import AdminUsers from "@/pages/admin-users";
 import AnalyzeLetter from "@/pages/analyze-letter";
+import DocumentPrint from "@/pages/document-print";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -80,7 +81,12 @@ function Router() {
     );
   }
 
-  return <AuthenticatedLayout />;
+  return (
+    <Switch>
+      <Route path="/documents/:id/print" component={DocumentPrint} />
+      <Route><AuthenticatedLayout /></Route>
+    </Switch>
+  );
 }
 
 function App() {
