@@ -27,6 +27,9 @@ import {
   type InsertRatingEstimate,
   type SupportingDocument,
   type InsertSupportingDocument,
+  letterAnalyses,
+  type LetterAnalysis,
+  type InsertLetterAnalysis,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, gte } from "drizzle-orm";
@@ -79,6 +82,11 @@ export interface IStorage {
   createSupportingDocument(data: InsertSupportingDocument): Promise<SupportingDocument>;
   getSupportingDocuments(userId: string): Promise<SupportingDocument[]>;
   deleteSupportingDocument(id: string, userId: string): Promise<void>;
+
+  createLetterAnalysis(data: InsertLetterAnalysis): Promise<LetterAnalysis>;
+  getLetterAnalyses(userId: string): Promise<LetterAnalysis[]>;
+  getLetterAnalysis(id: string, userId: string): Promise<LetterAnalysis | undefined>;
+  deleteLetterAnalysis(id: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -279,6 +287,24 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSupportingDocument(id: string, userId: string): Promise<void> {
     await db.delete(supportingDocuments).where(and(eq(supportingDocuments.id, id), eq(supportingDocuments.userId, userId)));
+  }
+
+  async createLetterAnalysis(data: InsertLetterAnalysis): Promise<LetterAnalysis> {
+    const [analysis] = await db.insert(letterAnalyses).values(data).returning();
+    return analysis;
+  }
+
+  async getLetterAnalyses(userId: string): Promise<LetterAnalysis[]> {
+    return db.select().from(letterAnalyses).where(eq(letterAnalyses.userId, userId)).orderBy(desc(letterAnalyses.createdAt));
+  }
+
+  async getLetterAnalysis(id: string, userId: string): Promise<LetterAnalysis | undefined> {
+    const [analysis] = await db.select().from(letterAnalyses).where(and(eq(letterAnalyses.id, id), eq(letterAnalyses.userId, userId)));
+    return analysis;
+  }
+
+  async deleteLetterAnalysis(id: string, userId: string): Promise<void> {
+    await db.delete(letterAnalyses).where(and(eq(letterAnalyses.id, id), eq(letterAnalyses.userId, userId)));
   }
 }
 

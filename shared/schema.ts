@@ -236,3 +236,21 @@ export const insertSupportingDocumentSchema = createInsertSchema(supportingDocum
 });
 export type SupportingDocument = typeof supportingDocuments.$inferSelect;
 export type InsertSupportingDocument = z.infer<typeof insertSupportingDocumentSchema>;
+
+export const letterAnalyses = pgTable("letter_analyses", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  fileName: text("file_name"),
+  summary: text("summary"),
+  analysisData: jsonb("analysis_data").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertLetterAnalysisSchema = createInsertSchema(letterAnalyses).omit({
+  id: true,
+  createdAt: true,
+});
+export type LetterAnalysis = typeof letterAnalyses.$inferSelect;
+export type InsertLetterAnalysis = z.infer<typeof insertLetterAnalysisSchema>;

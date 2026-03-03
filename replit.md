@@ -25,6 +25,7 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
 - `ratingEstimates` — saved rating calculations
 - `usageLogs` — usage tracking
 - `supportingDocuments` — uploaded VA decision letters, denial letters, medical records
+- `letterAnalyses` — saved decision letter analysis results (AI-parsed conditions, errors, appeals, recommendations)
 
 ### Backend (server/)
 - `server/index.ts` — Express app setup
@@ -49,7 +50,7 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
   - `document-print.tsx` — Print-ready document layout for browser Save as PDF
   - `chat.tsx` — AI Claims Advisor chat with rich-text rendering (sidebar: "Ask VA Questions")
   - `rating-estimator.tsx` — Combined rating calculator with 40-condition auto-suggest combobox, CFR diagnostic codes, min ratings, SMC levels
-  - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis (sidebar: "Analyze Decision Letter")
+  - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis with saved history (sidebar: "Analyze Decision Letter")
   - `pricing.tsx` — 3-tier pricing comparison
   - `support.tsx` — Human assistance request form
   - `settings.tsx` — Account and subscription management

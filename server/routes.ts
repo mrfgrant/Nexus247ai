@@ -909,13 +909,57 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
         }
       }
 
-      res.json({ analysis, letterLength: letterText.length });
+      const fileName = req.file?.originalname || null;
+      const saved = await storage.createLetterAnalysis({
+        userId,
+        fileName,
+        summary: analysis.summary || null,
+        analysisData: analysis,
+      });
+
+      res.json({ analysis, letterLength: letterText.length, id: saved.id });
     } catch (error: any) {
       console.error("Analysis error:", error);
       if (error?.message?.includes("api_key") || error?.status === 401) {
         return res.status(401).json({ error: "Invalid Anthropic API key. Please check your settings." });
       }
       res.status(500).json({ error: "Failed to analyze letter. Please try again." });
+    }
+  });
+
+  app.get("/api/letter-analyses", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analyses = await storage.getLetterAnalyses(userId);
+      res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching analyses:", error);
+      res.status(500).json({ error: "Failed to fetch analyses." });
+    }
+  });
+
+  app.get("/api/letter-analyses/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analysis = await storage.getLetterAnalysis(req.params.id, userId);
+      if (!analysis) {
+        return res.status(404).json({ error: "Analysis not found." });
+      }
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error fetching analysis:", error);
+      res.status(500).json({ error: "Failed to fetch analysis." });
+    }
+  });
+
+  app.delete("/api/letter-analyses/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.deleteLetterAnalysis(req.params.id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting analysis:", error);
+      res.status(500).json({ error: "Failed to delete analysis." });
     }
   });
 

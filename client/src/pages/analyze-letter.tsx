@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Upload,
   FileText,
@@ -25,6 +27,9 @@ import {
   FileWarning,
   ChevronRight,
   Clipboard,
+  History,
+  Trash2,
+  Eye,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -77,6 +82,15 @@ interface AnalysisResult {
   overallAssessment: string;
 }
 
+interface SavedAnalysis {
+  id: string;
+  userId: string;
+  fileName: string | null;
+  summary: string | null;
+  analysisData: AnalysisResult;
+  createdAt: string;
+}
+
 function outcomeIcon(outcome: string) {
   switch (outcome) {
     case "granted": return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
@@ -118,15 +132,338 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   good_cause_letter: "Good Cause Letter",
 };
 
+function AnalysisResultView({ analysis, onBack, viewingLabel }: { analysis: AnalysisResult; onBack: () => void; viewingLabel?: string }) {
+  const [, navigate] = useLocation();
+
+  return (
+    <div className="p-3 sm:p-6 max-w-5xl mx-auto space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-analysis-title">Decision Letter Analysis</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {viewingLabel ? viewingLabel : "AI-powered review of your VA decision"}
+          </p>
+        </div>
+        <Button variant="outline" onClick={onBack} data-testid="button-back-to-analyzer">
+          Back
+        </Button>
+      </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <Scale className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-foreground mb-1">Summary</h3>
+              <p className="text-sm text-foreground/90" data-testid="text-summary">{analysis.summary}</p>
+              {analysis.decisionDate && (
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Decision Date: {analysis.decisionDate}
+                </p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Tabs defaultValue="conditions" className="w-full">
+        <TabsList className="w-full grid grid-cols-5" data-testid="analysis-tabs">
+          <TabsTrigger value="conditions">Conditions ({analysis.conditions?.length || 0})</TabsTrigger>
+          <TabsTrigger value="appeals">Appeals ({analysis.appealOptions?.length || 0})</TabsTrigger>
+          <TabsTrigger value="errors">Errors ({(analysis.cfrViolations?.length || 0) + (analysis.overallErrors?.length || 0)})</TabsTrigger>
+          <TabsTrigger value="documents">Documents ({analysis.recommendedDocuments?.length || 0})</TabsTrigger>
+          <TabsTrigger value="dates">Key Dates</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="conditions" className="space-y-4 mt-4">
+          {analysis.conditions?.map((c, idx) => (
+            <Card key={idx} data-testid={`card-condition-result-${idx}`}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    {outcomeIcon(c.outcome)}
+                    <div>
+                      <CardTitle className="text-lg">{c.name}</CardTitle>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant={outcomeBadgeVariant(c.outcome)} className="capitalize">{c.outcome}</Badge>
+                        {c.ratingAssigned !== null && <Badge variant="outline">{c.ratingAssigned}%</Badge>}
+                        {c.diagnosticCode && <Badge variant="outline">DC {c.diagnosticCode}</Badge>}
+                        {c.effectiveDate && <span className="text-xs text-muted-foreground">Effective: {c.effectiveDate}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Rater's Reasoning</h4>
+                  <p className="text-sm text-foreground">{c.raterReasoning}</p>
+                </div>
+
+                {c.errors?.length > 0 && (
+                  <div className="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3">
+                    <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-1.5 flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4" /> Potential Rater Errors
+                    </h4>
+                    <ul className="space-y-1">
+                      {c.errors.map((e, i) => (
+                        <li key={i} className="text-sm text-red-600 dark:text-red-400 flex gap-2">
+                          <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>{e}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {c.missedEvidence?.length > 0 && (
+                  <div className="rounded-md border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 p-3">
+                    <h4 className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-1.5 flex items-center gap-1">
+                      <FileWarning className="w-4 h-4" /> Missed or Overlooked Evidence
+                    </h4>
+                    <ul className="space-y-1">
+                      {c.missedEvidence.map((e, i) => (
+                        <li key={i} className="text-sm text-amber-600 dark:text-amber-400 flex gap-2">
+                          <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>{e}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {c.nextSteps?.length > 0 && (
+                  <div className="rounded-md border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30 p-3">
+                    <h4 className="text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-1.5 flex items-center gap-1">
+                      <TrendingUp className="w-4 h-4" /> Recommended Next Steps
+                    </h4>
+                    <ul className="space-y-1">
+                      {c.nextSteps.map((s, i) => (
+                        <li key={i} className="text-sm text-emerald-600 dark:text-emerald-400 flex gap-2">
+                          <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="appeals" className="space-y-4 mt-4">
+          {analysis.appealOptions?.map((a, idx) => (
+            <Card key={idx} data-testid={`card-appeal-${idx}`}>
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Gavel className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-foreground">{a.type}</h3>
+                      <span className={`text-sm font-semibold ${strengthColor(a.strengthAssessment)}`}>
+                        {a.strengthAssessment} Case
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {a.applicableConditions?.map((c, i) => (
+                        <Badge key={i} variant="outline" className="text-xs">{c}</Badge>
+                      ))}
+                    </div>
+                    <p className="text-sm text-foreground/90">{a.reasoning}</p>
+                    {a.deadline && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {a.deadline}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {(!analysis.appealOptions || analysis.appealOptions.length === 0) && (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No specific appeal paths identified.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="errors" className="space-y-4 mt-4">
+          {analysis.cfrViolations?.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-red-500" /> CFR Violations Found
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {analysis.cfrViolations.map((v, idx) => (
+                  <div key={idx} className="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3" data-testid={`card-violation-${idx}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="destructive" className="text-xs">{v.section}</Badge>
+                      <div className="flex gap-1">
+                        {v.affectedConditions?.map((c, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">{c}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-foreground">{v.description}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {analysis.overallErrors?.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" /> Overall Decision Errors
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {analysis.overallErrors.map((e, idx) => (
+                    <li key={idx} className="text-sm text-foreground flex gap-2">
+                      <ChevronRight className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                      <span>{e}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {(!analysis.cfrViolations?.length && !analysis.overallErrors?.length) && (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No significant errors identified in this decision.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="documents" className="space-y-4 mt-4">
+          {analysis.recommendedDocuments?.map((d, idx) => (
+            <Card key={idx} className="cursor-pointer hover:border-primary/30 transition-colors" data-testid={`card-recommended-doc-${idx}`}>
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold text-foreground">{DOC_TYPE_LABELS[d.type] || d.type}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">For: {d.forCondition}</p>
+                      <p className="text-sm text-foreground/90 mt-2">{d.reasoning}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate("/generate")}
+                    data-testid={`button-generate-doc-${idx}`}
+                  >
+                    Generate
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {(!analysis.recommendedDocuments || analysis.recommendedDocuments.length === 0) && (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No additional documents recommended at this time.
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="dates" className="mt-4">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              {analysis.keyDates?.decisionDate && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Decision Date</p>
+                    <p className="text-sm text-muted-foreground">{analysis.keyDates.decisionDate}</p>
+                  </div>
+                </div>
+              )}
+              {analysis.keyDates?.appealDeadline && (
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-red-500" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Appeal Deadline</p>
+                    <p className="text-sm text-red-600 dark:text-red-400 font-medium">{analysis.keyDates.appealDeadline}</p>
+                  </div>
+                </div>
+              )}
+              {analysis.keyDates?.supplementalDeadline && (
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-amber-500" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Supplemental Claim</p>
+                    <p className="text-sm text-muted-foreground">{analysis.keyDates.supplementalDeadline}</p>
+                  </div>
+                </div>
+              )}
+              {analysis.keyDates?.notes && (
+                <Separator />
+              )}
+              {analysis.keyDates?.notes && (
+                <p className="text-sm text-foreground/90">{analysis.keyDates.notes}</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <Card className="border-primary/20">
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+            <Scale className="w-5 h-5 text-primary" /> Expert Assessment
+          </h3>
+          <p className="text-sm text-foreground/90 leading-relaxed" data-testid="text-overall-assessment">{analysis.overallAssessment}</p>
+          <div className="mt-4 p-3 rounded-md bg-muted/50 border border-border">
+            <p className="text-xs text-muted-foreground italic">
+              This analysis is for informational purposes only and does not constitute legal advice.
+              Consult an accredited VA claims agent or attorney for your specific situation.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function AnalyzeLetter() {
   const { toast } = useToast();
-  const [, navigate] = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pastedText, setPastedText] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [inputMode, setInputMode] = useState<"upload" | "paste">("upload");
+  const [viewingLabel, setViewingLabel] = useState<string | undefined>(undefined);
+
+  const { data: savedAnalyses, isLoading: loadingHistory } = useQuery<SavedAnalysis[]>({
+    queryKey: ["/api/letter-analyses"],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/letter-analyses/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/letter-analyses"] });
+      toast({ title: "Analysis deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete", variant: "destructive" });
+    },
+  });
 
   async function handleAnalyze() {
     setIsAnalyzing(true);
@@ -155,7 +492,9 @@ export default function AnalyzeLetter() {
 
       const data = await res.json();
       setAnalysis(data.analysis);
-      toast({ title: "Analysis complete", description: "Your decision letter has been reviewed." });
+      setViewingLabel(undefined);
+      queryClient.invalidateQueries({ queryKey: ["/api/letter-analyses"] });
+      toast({ title: "Analysis complete", description: "Your decision letter has been reviewed and saved." });
     } catch (error: any) {
       toast({ title: "Analysis failed", description: error.message, variant: "destructive" });
     } finally {
@@ -174,306 +513,21 @@ export default function AnalyzeLetter() {
     }
   }
 
+  function handleViewSaved(saved: SavedAnalysis) {
+    setAnalysis(saved.analysisData);
+    const date = new Date(saved.createdAt).toLocaleDateString();
+    setViewingLabel(`Saved analysis from ${date}${saved.fileName ? ` — ${saved.fileName}` : ""}`);
+  }
+
+  function handleBack() {
+    setAnalysis(null);
+    setSelectedFile(null);
+    setPastedText("");
+    setViewingLabel(undefined);
+  }
+
   if (analysis) {
-    return (
-      <div className="p-3 sm:p-6 max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-analysis-title">Decision Letter Analysis</h1>
-            <p className="text-sm text-muted-foreground mt-1">AI-powered review of your VA decision</p>
-          </div>
-          <Button variant="outline" onClick={() => { setAnalysis(null); setSelectedFile(null); setPastedText(""); }} data-testid="button-new-analysis">
-            Analyze Another Letter
-          </Button>
-        </div>
-
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex gap-3">
-              <Scale className="w-6 h-6 text-primary shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Summary</h3>
-                <p className="text-sm text-foreground/90" data-testid="text-summary">{analysis.summary}</p>
-                {analysis.decisionDate && (
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> Decision Date: {analysis.decisionDate}
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Tabs defaultValue="conditions" className="w-full">
-          <TabsList className="w-full grid grid-cols-5" data-testid="analysis-tabs">
-            <TabsTrigger value="conditions">Conditions ({analysis.conditions?.length || 0})</TabsTrigger>
-            <TabsTrigger value="appeals">Appeals ({analysis.appealOptions?.length || 0})</TabsTrigger>
-            <TabsTrigger value="errors">Errors ({(analysis.cfrViolations?.length || 0) + (analysis.overallErrors?.length || 0)})</TabsTrigger>
-            <TabsTrigger value="documents">Documents ({analysis.recommendedDocuments?.length || 0})</TabsTrigger>
-            <TabsTrigger value="dates">Key Dates</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="conditions" className="space-y-4 mt-4">
-            {analysis.conditions?.map((c, idx) => (
-              <Card key={idx} data-testid={`card-condition-result-${idx}`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      {outcomeIcon(c.outcome)}
-                      <div>
-                        <CardTitle className="text-lg">{c.name}</CardTitle>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant={outcomeBadgeVariant(c.outcome)} className="capitalize">{c.outcome}</Badge>
-                          {c.ratingAssigned !== null && <Badge variant="outline">{c.ratingAssigned}%</Badge>}
-                          {c.diagnosticCode && <Badge variant="outline">DC {c.diagnosticCode}</Badge>}
-                          {c.effectiveDate && <span className="text-xs text-muted-foreground">Effective: {c.effectiveDate}</span>}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Rater's Reasoning</h4>
-                    <p className="text-sm text-foreground">{c.raterReasoning}</p>
-                  </div>
-
-                  {c.errors?.length > 0 && (
-                    <div className="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3">
-                      <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-1.5 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" /> Potential Rater Errors
-                      </h4>
-                      <ul className="space-y-1">
-                        {c.errors.map((e, i) => (
-                          <li key={i} className="text-sm text-red-600 dark:text-red-400 flex gap-2">
-                            <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span>{e}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {c.missedEvidence?.length > 0 && (
-                    <div className="rounded-md border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 p-3">
-                      <h4 className="text-sm font-medium text-amber-700 dark:text-amber-400 mb-1.5 flex items-center gap-1">
-                        <FileWarning className="w-4 h-4" /> Missed or Overlooked Evidence
-                      </h4>
-                      <ul className="space-y-1">
-                        {c.missedEvidence.map((e, i) => (
-                          <li key={i} className="text-sm text-amber-600 dark:text-amber-400 flex gap-2">
-                            <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span>{e}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {c.nextSteps?.length > 0 && (
-                    <div className="rounded-md border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30 p-3">
-                      <h4 className="text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-1.5 flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4" /> Recommended Next Steps
-                      </h4>
-                      <ul className="space-y-1">
-                        {c.nextSteps.map((s, i) => (
-                          <li key={i} className="text-sm text-emerald-600 dark:text-emerald-400 flex gap-2">
-                            <ChevronRight className="w-4 h-4 shrink-0 mt-0.5" />
-                            <span>{s}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
-
-          <TabsContent value="appeals" className="space-y-4 mt-4">
-            {analysis.appealOptions?.map((a, idx) => (
-              <Card key={idx} data-testid={`card-appeal-${idx}`}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Gavel className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-semibold text-foreground">{a.type}</h3>
-                        <span className={`text-sm font-semibold ${strengthColor(a.strengthAssessment)}`}>
-                          {a.strengthAssessment} Case
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {a.applicableConditions?.map((c, i) => (
-                          <Badge key={i} variant="outline" className="text-xs">{c}</Badge>
-                        ))}
-                      </div>
-                      <p className="text-sm text-foreground/90">{a.reasoning}</p>
-                      {a.deadline && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {a.deadline}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {(!analysis.appealOptions || analysis.appealOptions.length === 0) && (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No specific appeal paths identified.
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="errors" className="space-y-4 mt-4">
-            {analysis.cfrViolations?.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-red-500" /> CFR Violations Found
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {analysis.cfrViolations.map((v, idx) => (
-                    <div key={idx} className="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3" data-testid={`card-violation-${idx}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="destructive" className="text-xs">{v.section}</Badge>
-                        <div className="flex gap-1">
-                          {v.affectedConditions?.map((c, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">{c}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-sm text-foreground">{v.description}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
-            {analysis.overallErrors?.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-500" /> Overall Decision Errors
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {analysis.overallErrors.map((e, idx) => (
-                      <li key={idx} className="text-sm text-foreground flex gap-2">
-                        <ChevronRight className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
-                        <span>{e}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
-
-            {(!analysis.cfrViolations?.length && !analysis.overallErrors?.length) && (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No significant errors identified in this decision.
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="documents" className="space-y-4 mt-4">
-            {analysis.recommendedDocuments?.map((d, idx) => (
-              <Card key={idx} className="cursor-pointer hover:border-primary/30 transition-colors" data-testid={`card-recommended-doc-${idx}`}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <BookOpen className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                      <div>
-                        <h3 className="font-semibold text-foreground">{DOC_TYPE_LABELS[d.type] || d.type}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">For: {d.forCondition}</p>
-                        <p className="text-sm text-foreground/90 mt-2">{d.reasoning}</p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate("/generate")}
-                      data-testid={`button-generate-doc-${idx}`}
-                    >
-                      Generate
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {(!analysis.recommendedDocuments || analysis.recommendedDocuments.length === 0) && (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  No additional documents recommended at this time.
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="dates" className="mt-4">
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                {analysis.keyDates?.decisionDate && (
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Decision Date</p>
-                      <p className="text-sm text-muted-foreground">{analysis.keyDates.decisionDate}</p>
-                    </div>
-                  </div>
-                )}
-                {analysis.keyDates?.appealDeadline && (
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-red-500" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Appeal Deadline</p>
-                      <p className="text-sm text-red-600 dark:text-red-400 font-medium">{analysis.keyDates.appealDeadline}</p>
-                    </div>
-                  </div>
-                )}
-                {analysis.keyDates?.supplementalDeadline && (
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-amber-500" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Supplemental Claim</p>
-                      <p className="text-sm text-muted-foreground">{analysis.keyDates.supplementalDeadline}</p>
-                    </div>
-                  </div>
-                )}
-                {analysis.keyDates?.notes && (
-                  <Separator />
-                )}
-                {analysis.keyDates?.notes && (
-                  <p className="text-sm text-foreground/90">{analysis.keyDates.notes}</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        <Card className="border-primary/20">
-          <CardContent className="pt-6">
-            <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-              <Scale className="w-5 h-5 text-primary" /> Expert Assessment
-            </h3>
-            <p className="text-sm text-foreground/90 leading-relaxed" data-testid="text-overall-assessment">{analysis.overallAssessment}</p>
-            <div className="mt-4 p-3 rounded-md bg-muted/50 border border-border">
-              <p className="text-xs text-muted-foreground italic">
-                This analysis is for informational purposes only and does not constitute legal advice.
-                Consult an accredited VA claims agent or attorney for your specific situation.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <AnalysisResultView analysis={analysis} onBack={handleBack} viewingLabel={viewingLabel} />;
   }
 
   return (
@@ -588,6 +642,80 @@ export default function AnalyzeLetter() {
           )}
         </CardContent>
       </Card>
+
+      {loadingHistory ? (
+        <Card>
+          <CardContent className="py-8 flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading past analyses...
+          </CardContent>
+        </Card>
+      ) : savedAnalyses && savedAnalyses.length > 0 ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" /> Past Analyses
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {savedAnalyses.map((saved) => {
+              const date = new Date(saved.createdAt);
+              const conditionCount = saved.analysisData?.conditions?.length || 0;
+              const errorCount = (saved.analysisData?.cfrViolations?.length || 0) + (saved.analysisData?.overallErrors?.length || 0);
+              return (
+                <div
+                  key={saved.id}
+                  className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors"
+                  data-testid={`card-saved-analysis-${saved.id}`}
+                >
+                  <FileText className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {saved.fileName || "Pasted Text"}
+                      </p>
+                      <span className="text-xs text-muted-foreground">
+                        {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {saved.summary || "No summary available"}
+                    </p>
+                    <div className="flex gap-2 mt-1.5">
+                      {conditionCount > 0 && (
+                        <Badge variant="outline" className="text-xs">{conditionCount} condition{conditionCount !== 1 ? "s" : ""}</Badge>
+                      )}
+                      {errorCount > 0 && (
+                        <Badge variant="destructive" className="text-xs">{errorCount} error{errorCount !== 1 ? "s" : ""}</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleViewSaved(saved)}
+                      data-testid={`button-view-analysis-${saved.id}`}
+                    >
+                      <Eye className="w-4 h-4 mr-1" /> View
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => deleteMutation.mutate(saved.id)}
+                      disabled={deleteMutation.isPending}
+                      data-testid={`button-delete-analysis-${saved.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="bg-muted/30">
         <CardContent className="pt-6">
