@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -119,6 +119,73 @@ function strengthColor(strength: string) {
     case "Weak": return "text-red-600 dark:text-red-400";
     default: return "text-muted-foreground";
   }
+}
+
+const THINKING_STEPS = [
+  { icon: FileText, label: "Extracting text from your decision letter..." },
+  { icon: Eye, label: "Identifying claimed conditions and outcomes..." },
+  { icon: BookOpen, label: "Reviewing rater reasoning and evidence cited..." },
+  { icon: Shield, label: "Checking for 38 CFR regulation violations..." },
+  { icon: Scale, label: "Analyzing duty to assist compliance..." },
+  { icon: Gavel, label: "Evaluating appeal paths and deadlines..." },
+  { icon: TrendingUp, label: "Building your recommended action plan..." },
+  { icon: CheckCircle2, label: "Finalizing expert assessment..." },
+];
+
+const STEP_DELAYS = [0, 3000, 6000, 9000, 12000, 15000, 18000, 22000];
+
+function ThinkingSteps({ isActive }: { isActive: boolean }) {
+  const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    if (!isActive) {
+      setCurrentStep(0);
+      return;
+    }
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    STEP_DELAYS.forEach((delay, idx) => {
+      if (idx === 0) return;
+      timers.push(setTimeout(() => setCurrentStep(idx), delay));
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [isActive]);
+
+  return (
+    <div className="mt-4 p-5 rounded-lg bg-muted/50 border border-border" data-testid="thinking-steps">
+      <p className="text-xs text-muted-foreground mb-4">
+        This typically takes 15-30 seconds.
+      </p>
+      <div className="space-y-2.5">
+        {THINKING_STEPS.map((step, idx) => {
+          if (idx > currentStep) return null;
+          const isComplete = idx < currentStep;
+          const isCurrent = idx === currentStep;
+          const StepIcon = step.icon;
+          return (
+            <div
+              key={idx}
+              className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500"
+              style={{ animationDelay: "0ms" }}
+              data-testid={`thinking-step-${idx}`}
+            >
+              {isComplete ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              ) : isCurrent ? (
+                <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
+              ) : (
+                <StepIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+              )}
+              <span className={`text-sm ${isComplete ? "text-muted-foreground" : isCurrent ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -625,21 +692,7 @@ export default function AnalyzeLetter() {
             )}
           </Button>
 
-          {isAnalyzing && (
-            <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border">
-              <div className="flex items-start gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Reviewing your decision letter...</p>
-                  <p className="text-xs text-muted-foreground">
-                    Our AI is analyzing every condition, checking for CFR violations,
-                    identifying rater errors, and building your recommended action plan.
-                    This typically takes 15-30 seconds.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          {isAnalyzing && <ThinkingSteps isActive={isAnalyzing} />}
         </CardContent>
       </Card>
 
