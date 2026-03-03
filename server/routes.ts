@@ -6,8 +6,9 @@ import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT, DECISION_LETT
 import { MONTHLY_RATES, SMC_RATES, SMC_INFO } from "@shared/va-rates";
 import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
-import * as pdfParseModule from "pdf-parse";
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse") as (dataBuffer: Buffer) => Promise<{ text: string; numpages: number; info: any }>;
 
 const TIER_LIMITS: Record<string, number> = {
   none: 0,
