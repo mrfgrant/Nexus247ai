@@ -245,6 +245,7 @@ export const letterAnalyses = pgTable("letter_analyses", {
   fileName: text("file_name"),
   summary: text("summary"),
   analysisData: jsonb("analysis_data").notNull(),
+  crossReferenceData: jsonb("cross_reference_data"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

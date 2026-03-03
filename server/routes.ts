@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT, DECISION_LETTER_ANALYSIS_PROMPT } from "./prompts";
+import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT, DECISION_LETTER_ANALYSIS_PROMPT, CROSS_REFERENCE_PROMPT } from "./prompts";
 import { MONTHLY_RATES, SMC_RATES, SMC_INFO } from "@shared/va-rates";
 import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
@@ -15,6 +15,13 @@ const TIER_LIMITS: Record<string, number> = {
   basic: 5,
   pro: 50,
   concierge: 999,
+};
+
+const ANALYSIS_LIMITS: Record<string, number> = {
+  none: 0,
+  basic: 2,
+  pro: 10,
+  concierge: 50,
 };
 
 const VALID_TIERS = ["none", "basic", "pro", "concierge"];
@@ -854,9 +861,35 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/analysis-limits", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getVeteranProfile(userId);
+      const tier = getEffectiveTier(profile);
+      const limit = ANALYSIS_LIMITS[tier] || 0;
+      const used = await storage.getAnalysisCountThisMonth(userId);
+      res.json({ tier, limit, used, remaining: Math.max(0, limit - used) });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch analysis limits." });
+    }
+  });
+
   app.post("/api/analyze-letter", isAuthenticated, upload.single("file"), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const profile = await storage.getVeteranProfile(userId);
+      const tier = getEffectiveTier(profile);
+
+      if (tier === "none") {
+        return res.status(403).json({ error: "An active subscription is required to analyze decision letters. Please upgrade your plan.", requiresUpgrade: true });
+      }
+
+      const analysisCount = await storage.getAnalysisCountThisMonth(userId);
+      const analysisLimit = ANALYSIS_LIMITS[tier] || 0;
+      if (analysisCount >= analysisLimit) {
+        return res.status(403).json({ error: `Monthly analysis limit reached (${analysisLimit} analyses). Upgrade your plan for more analyses.`, limitReached: true });
+      }
+
       let letterText = "";
 
       if (req.file) {
@@ -878,13 +911,23 @@ export async function registerRoutes(
         return res.status(400).json({ error: "The letter text is too short to analyze. Please upload the complete decision letter." });
       }
 
-      const profile = await storage.getVeteranProfile(userId);
+      const conditions = await storage.getConditions(userId);
       let veteranContext = "";
       if (profile) {
-        const conditions = await storage.getConditions(userId);
         veteranContext = `Veteran's branch: ${profile.branch || "Unknown"}
 Current VA rating: ${profile.currentRating || 0}%
 Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None on file"}`;
+      }
+
+      const supportingDocs = await storage.getSupportingDocuments(userId);
+      const medicalRecords = supportingDocs
+        .filter((d) => d.category === "medical_records" && d.content)
+        .slice(0, 5);
+      let medicalRecordsContext = "";
+      if (medicalRecords.length > 0) {
+        medicalRecordsContext = medicalRecords
+          .map((d, i) => `--- MEDICAL RECORD ${i + 1}: ${d.fileName} ---\n${(d.content || "").substring(0, 3000)}`)
+          .join("\n\n");
       }
 
       const anthropic = getAnthropicClient();
@@ -892,7 +935,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
         model: "claude-sonnet-4-20250514",
         max_tokens: 4000,
         system: DECISION_LETTER_ANALYSIS_PROMPT.system,
-        messages: [{ role: "user", content: DECISION_LETTER_ANALYSIS_PROMPT.getUserPrompt(letterText, veteranContext) }],
+        messages: [{ role: "user", content: DECISION_LETTER_ANALYSIS_PROMPT.getUserPrompt(letterText, veteranContext, medicalRecordsContext || undefined) }],
       });
 
       const rawText = response.content[0].type === "text" ? response.content[0].text : "";
@@ -917,7 +960,8 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
         analysisData: analysis,
       });
 
-      res.json({ analysis, letterLength: letterText.length, id: saved.id });
+      const remaining = Math.max(0, analysisLimit - analysisCount - 1);
+      res.json({ analysis, letterLength: letterText.length, id: saved.id, remaining, hasMedicalRecords: medicalRecords.length > 0 });
     } catch (error: any) {
       console.error("Analysis error:", error);
       if (error?.message?.includes("api_key") || error?.status === 401) {
@@ -960,6 +1004,76 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
     } catch (error) {
       console.error("Error deleting analysis:", error);
       res.status(500).json({ error: "Failed to delete analysis." });
+    }
+  });
+
+  app.post("/api/analyze-letter/:id/cross-reference", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analysisId = req.params.id;
+
+      const analysis = await storage.getLetterAnalysis(analysisId, userId);
+      if (!analysis) {
+        return res.status(404).json({ error: "Analysis not found." });
+      }
+
+      const profile = await storage.getVeteranProfile(userId);
+      const tier = getEffectiveTier(profile);
+      if (tier === "none") {
+        return res.status(403).json({ error: "An active subscription is required for cross-referencing.", requiresUpgrade: true });
+      }
+
+      const supportingDocs = await storage.getSupportingDocuments(userId);
+      const medicalRecords = supportingDocs
+        .filter((d) => d.category === "medical_records" && d.content)
+        .slice(0, 10);
+
+      if (medicalRecords.length === 0) {
+        return res.status(400).json({ error: "No medical records found. Please upload your medical records in the Intake section (Step 4: Supporting Documents) before cross-referencing.", noRecords: true });
+      }
+
+      const conditions = await storage.getConditions(userId);
+      let veteranContext = "";
+      if (profile) {
+        veteranContext = `Veteran's branch: ${profile.branch || "Unknown"}
+Current VA rating: ${profile.currentRating || 0}%
+Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None on file"}`;
+      }
+
+      const medicalRecordsText = medicalRecords
+        .map((d, i) => `--- MEDICAL RECORD ${i + 1}: ${d.fileName} ---\n${(d.content || "").substring(0, 3000)}`)
+        .join("\n\n");
+
+      const anthropic = getAnthropicClient();
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: CROSS_REFERENCE_PROMPT.system,
+        messages: [{ role: "user", content: CROSS_REFERENCE_PROMPT.getUserPrompt(JSON.stringify(analysis.analysisData), medicalRecordsText, veteranContext) }],
+      });
+
+      const rawText = response.content[0].type === "text" ? response.content[0].text : "";
+
+      let crossReference;
+      try {
+        crossReference = JSON.parse(rawText);
+      } catch {
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          crossReference = JSON.parse(jsonMatch[0]);
+        } else {
+          return res.status(500).json({ error: "Failed to parse cross-reference results. Please try again." });
+        }
+      }
+
+      await storage.updateLetterAnalysis(analysisId, userId, { crossReferenceData: crossReference });
+      res.json({ crossReference });
+    } catch (error: any) {
+      console.error("Cross-reference error:", error);
+      if (error?.message?.includes("api_key") || error?.status === 401) {
+        return res.status(401).json({ error: "Invalid Anthropic API key. Please check your settings." });
+      }
+      res.status(500).json({ error: "Failed to cross-reference records. Please try again." });
     }
   });
 

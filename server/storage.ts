@@ -86,7 +86,9 @@ export interface IStorage {
   createLetterAnalysis(data: InsertLetterAnalysis): Promise<LetterAnalysis>;
   getLetterAnalyses(userId: string): Promise<LetterAnalysis[]>;
   getLetterAnalysis(id: string, userId: string): Promise<LetterAnalysis | undefined>;
+  updateLetterAnalysis(id: string, userId: string, data: Partial<InsertLetterAnalysis>): Promise<LetterAnalysis | undefined>;
   deleteLetterAnalysis(id: string, userId: string): Promise<void>;
+  getAnalysisCountThisMonth(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -303,8 +305,24 @@ export class DatabaseStorage implements IStorage {
     return analysis;
   }
 
+  async updateLetterAnalysis(id: string, userId: string, data: Partial<InsertLetterAnalysis>): Promise<LetterAnalysis | undefined> {
+    const [analysis] = await db.update(letterAnalyses).set(data).where(and(eq(letterAnalyses.id, id), eq(letterAnalyses.userId, userId))).returning();
+    return analysis;
+  }
+
   async deleteLetterAnalysis(id: string, userId: string): Promise<void> {
     await db.delete(letterAnalyses).where(and(eq(letterAnalyses.id, id), eq(letterAnalyses.userId, userId)));
+  }
+
+  async getAnalysisCountThisMonth(userId: string): Promise<number> {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(letterAnalyses)
+      .where(and(eq(letterAnalyses.userId, userId), gte(letterAnalyses.createdAt, startOfMonth)));
+    return Number(result[0]?.count || 0);
   }
 }
 

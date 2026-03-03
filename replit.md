@@ -25,7 +25,7 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
 - `ratingEstimates` — saved rating calculations
 - `usageLogs` — usage tracking
 - `supportingDocuments` — uploaded VA decision letters, denial letters, medical records
-- `letterAnalyses` — saved decision letter analysis results (AI-parsed conditions, errors, appeals, recommendations)
+- `letterAnalyses` — saved decision letter analysis results (AI-parsed conditions, errors, appeals, recommendations) + cross-reference evidence gap data
 
 ### Backend (server/)
 - `server/index.ts` — Express app setup
@@ -63,10 +63,17 @@ All tiers: nexus_letter, personal_statement, buddy_letter, nod, secondary_condit
 Concierge only: aod_motion, good_cause_letter
 
 ### Subscription Tiers
-- None: 0 docs/mo
-- Basic ($19/mo): 5 docs/mo
-- Pro ($49/mo): 50 docs/mo
-- Concierge ($149/mo): 999 docs/mo + AOD/Good Cause
+- None: 0 docs/mo, 0 analyses/mo
+- Basic ($19/mo): 5 docs/mo, 2 analyses/mo
+- Pro ($49/mo): 50 docs/mo, 10 analyses/mo
+- Concierge ($149/mo): 999 docs/mo, 50 analyses/mo + AOD/Good Cause
+
+### Decision Letter Analysis
+- Tier-gated: free users blocked, paid users limited by ANALYSIS_LIMITS
+- Auto-includes uploaded medical records (category: medical_records) in analysis context
+- Cross-reference feature: POST /api/analyze-letter/:id/cross-reference compares medical records against decision findings
+- Cross-reference data saved to letterAnalyses.crossReferenceData (jsonb)
+- Frontend shows Evidence Gap tab with completeness ratings, win probabilities, priority actions, medical tests needed
 
 ### Trial System
 - Admin can grant time-limited trials (1-30 days) via Admin > Manage Users
