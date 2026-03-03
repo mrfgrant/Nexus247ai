@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ThinkingSteps } from "@/components/thinking-steps";
 import {
   Upload,
   FileText,
@@ -207,60 +208,6 @@ const CROSS_REF_THINKING_STEPS = [
 
 const STEP_DELAYS = [0, 3000, 6000, 9000, 12000, 15000, 18000, 22000];
 const CROSS_REF_DELAYS = [0, 3000, 6000, 10000, 14000, 18000];
-
-function ThinkingSteps({ isActive, steps, delays }: { isActive: boolean; steps: typeof THINKING_STEPS; delays: number[] }) {
-  const [currentStep, setCurrentStep] = useState(0);
-
-  useEffect(() => {
-    if (!isActive) {
-      setCurrentStep(0);
-      return;
-    }
-
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    delays.forEach((delay, idx) => {
-      if (idx === 0) return;
-      timers.push(setTimeout(() => setCurrentStep(idx), delay));
-    });
-
-    return () => timers.forEach(clearTimeout);
-  }, [isActive]);
-
-  return (
-    <div className="mt-4 p-5 rounded-lg bg-muted/50 border border-border" data-testid="thinking-steps">
-      <p className="text-xs text-muted-foreground mb-4">
-        This typically takes 15-30 seconds.
-      </p>
-      <div className="space-y-2.5">
-        {steps.map((step, idx) => {
-          if (idx > currentStep) return null;
-          const isComplete = idx < currentStep;
-          const isCurrent = idx === currentStep;
-          const StepIcon = step.icon;
-          return (
-            <div
-              key={idx}
-              className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500"
-              style={{ animationDelay: "0ms" }}
-              data-testid={`thinking-step-${idx}`}
-            >
-              {isComplete ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              ) : isCurrent ? (
-                <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
-              ) : (
-                <StepIcon className="w-4 h-4 text-muted-foreground shrink-0" />
-              )}
-              <span className={`text-sm ${isComplete ? "text-muted-foreground" : isCurrent ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                {step.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 const DOC_TYPE_LABELS: Record<string, string> = {
   nexus_letter: "Nexus Letter",
@@ -777,7 +724,31 @@ function AnalysisResultView({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigate("/generate")}
+                    onClick={() => {
+                      const matchingCondition = analysis.conditions?.find(
+                        (c) => c.name?.toLowerCase() === d.forCondition?.toLowerCase()
+                      );
+                      const contextParts: string[] = [];
+                      if (d.reasoning) contextParts.push(`Recommendation: ${d.reasoning}`);
+                      if (matchingCondition) {
+                        if (matchingCondition.outcome === "denied" && matchingCondition.raterReasoning) {
+                          contextParts.push(`Denial Reasoning: ${matchingCondition.raterReasoning}`);
+                        }
+                        if (matchingCondition.errors?.length) {
+                          contextParts.push(`Rater Errors: ${matchingCondition.errors.join("; ")}`);
+                        }
+                        if (matchingCondition.missedEvidence?.length) {
+                          contextParts.push(`Missed Evidence: ${matchingCondition.missedEvidence.join("; ")}`);
+                        }
+                      }
+                      const params = new URLSearchParams();
+                      params.set("type", d.type);
+                      params.set("condition", d.forCondition);
+                      if (contextParts.length > 0) {
+                        params.set("context", contextParts.join("\n\n"));
+                      }
+                      navigate(`/generate?${params.toString()}`);
+                    }}
                     data-testid={`button-generate-doc-${idx}`}
                   >
                     Generate
@@ -1016,12 +987,12 @@ export default function AnalyzeLetter() {
             )}
           </div>
           {isFreeTier && (
-            <Button size="sm" variant="default" onClick={() => navigate("/subscription")} data-testid="button-upgrade-tier">
+            <Button size="sm" variant="default" onClick={() => navigate("/pricing")} data-testid="button-upgrade-tier">
               <Lock className="w-3 h-3 mr-1" /> Upgrade to Analyze
             </Button>
           )}
           {!isFreeTier && isLimitReached && (
-            <Button size="sm" variant="outline" onClick={() => navigate("/subscription")} data-testid="button-upgrade-limit">
+            <Button size="sm" variant="outline" onClick={() => navigate("/pricing")} data-testid="button-upgrade-limit">
               Upgrade for More
             </Button>
           )}
@@ -1101,7 +1072,7 @@ export default function AnalyzeLetter() {
               <p className="text-xs text-muted-foreground mb-4">
                 Decision letter analysis requires an active subscription. Basic plan includes 2 analyses per month.
               </p>
-              <Button onClick={() => navigate("/subscription")} data-testid="button-upgrade-analyze">
+              <Button onClick={() => navigate("/pricing")} data-testid="button-upgrade-analyze">
                 <Crown className="w-4 h-4 mr-2" /> View Plans
               </Button>
             </div>
@@ -1112,7 +1083,7 @@ export default function AnalyzeLetter() {
               <p className="text-xs text-muted-foreground mb-4">
                 You have used all {limitsData?.limit} analyses for this month. Upgrade your plan for more.
               </p>
-              <Button variant="outline" onClick={() => navigate("/subscription")} data-testid="button-upgrade-limit-cta">
+              <Button variant="outline" onClick={() => navigate("/pricing")} data-testid="button-upgrade-limit-cta">
                 Upgrade Plan
               </Button>
             </div>

@@ -381,6 +381,65 @@ export async function registerRoutes(
         }
       }
 
+      const analyses = await storage.getLetterAnalyses(userId);
+      if (analyses.length > 0) {
+        const latestAnalysis = analyses[0];
+        const analysisData = latestAnalysis.analysisData as any;
+        if (analysisData) {
+          let analysisContext = "\nDECISION LETTER ANALYSIS FINDINGS (use these to strengthen the letter by addressing denial reasons and citing available evidence):\n";
+
+          const conditionName = condition?.conditionName?.toLowerCase() || "";
+          const matchingConditions = (analysisData.conditions || []).filter((c: any) =>
+            conditionName && c.name?.toLowerCase().includes(conditionName) || conditionName && conditionName.includes(c.name?.toLowerCase())
+          );
+
+          if (matchingConditions.length > 0) {
+            for (const mc of matchingConditions) {
+              analysisContext += `\nCondition: ${mc.name} — Outcome: ${mc.outcome}`;
+              if (mc.raterReasoning) analysisContext += `\nRater's Reasoning: ${mc.raterReasoning}`;
+              if (mc.errors?.length) analysisContext += `\nRater Errors Identified: ${mc.errors.join("; ")}`;
+              if (mc.missedEvidence?.length) analysisContext += `\nMissed Evidence: ${mc.missedEvidence.join("; ")}`;
+              if (mc.nextSteps?.length) analysisContext += `\nRecommended Strategy: ${mc.nextSteps.join("; ")}`;
+            }
+          } else if (analysisData.conditions?.length) {
+            analysisContext += `\nAnalyzed conditions: ${analysisData.conditions.map((c: any) => `${c.name} (${c.outcome})`).join(", ")}`;
+          }
+
+          if (analysisData.cfrViolations?.length) {
+            const relevantViolations = conditionName
+              ? analysisData.cfrViolations.filter((v: any) => v.affectedConditions?.some((c: string) => c.toLowerCase().includes(conditionName) || conditionName.includes(c.toLowerCase())))
+              : analysisData.cfrViolations;
+            if (relevantViolations.length > 0) {
+              analysisContext += `\nCFR Violations to Address: ${relevantViolations.map((v: any) => `${v.section}: ${v.description}`).join("; ")}`;
+            }
+          }
+
+          if (analysisData.overallAssessment) {
+            analysisContext += `\nExpert Assessment: ${analysisData.overallAssessment}`;
+          }
+
+          const crossRef = latestAnalysis.crossReferenceData as any;
+          if (crossRef) {
+            const crConditions = conditionName
+              ? (crossRef.conditions || []).filter((c: any) => c.name?.toLowerCase().includes(conditionName) || conditionName.includes(c.name?.toLowerCase()))
+              : crossRef.conditions || [];
+            if (crConditions.length > 0) {
+              analysisContext += "\n\nMEDICAL RECORDS CROSS-REFERENCE:";
+              for (const crc of crConditions) {
+                if (crc.evidencePresent?.length) analysisContext += `\nEvidence Present for ${crc.name}: ${crc.evidencePresent.join("; ")}`;
+                if (crc.evidenceMissing?.length) analysisContext += `\nEvidence Gaps for ${crc.name}: ${crc.evidenceMissing.join("; ")}`;
+                analysisContext += `\nWin Probability: ${crc.winProbability || "Unknown"}`;
+              }
+            }
+            if (crossRef.strengths?.length) {
+              analysisContext += `\nVeteran's Strengths: ${crossRef.strengths.join("; ")}`;
+            }
+          }
+
+          docsContext = (docsContext ? docsContext + "\n" : "") + analysisContext;
+        }
+      }
+
       const { system, user } = promptBuilder({
         vetProfile: profile,
         condition,
@@ -390,9 +449,10 @@ export async function registerRoutes(
       });
 
       const anthropic = getAnthropicClient();
+      const maxTokens = documentType === "nexus_letter" ? 2000 : 3000;
       const response = await anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 3000,
+        max_tokens: maxTokens,
         system,
         messages: [{ role: "user", content: user }],
       });
@@ -404,7 +464,7 @@ export async function registerRoutes(
       try {
         const scoreResponse = await anthropic.messages.create({
           model: "claude-sonnet-4-20250514",
-          max_tokens: 500,
+          max_tokens: 800,
           system: RPA_SCORING_PROMPT.system,
           messages: [
             {
@@ -417,7 +477,17 @@ export async function registerRoutes(
           scoreResponse.content[0].type === "text"
             ? scoreResponse.content[0].text
             : "{}";
-        scores = JSON.parse(scoreText);
+        try {
+          scores = JSON.parse(scoreText);
+        } catch {
+          const jsonMatch = scoreText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            scores = JSON.parse(jsonMatch[0]);
+          } else {
+            console.error("Could not parse scoring JSON:", scoreText.substring(0, 200));
+            throw new Error("Invalid scoring JSON");
+          }
+        }
       } catch (e) {
         console.error("Scoring error:", e);
         scores = {

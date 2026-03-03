@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -16,17 +15,23 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ThinkingSteps } from "@/components/thinking-steps";
 import {
   FileText,
   Loader2,
   Download,
   Lock,
-  CheckCircle,
   AlertTriangle,
   Copy,
   Shield,
+  BookOpen,
+  Search,
+  Gavel,
+  CheckCircle2,
+  Stethoscope,
 } from "lucide-react";
 import type { Condition } from "@shared/schema";
+import { useSearch } from "wouter";
 
 const DOCUMENT_TYPES = [
   { value: "nexus_letter", label: "Nexus Letter", tier: "basic", description: "IMO establishing service connection with CFR citations" },
@@ -38,6 +43,18 @@ const DOCUMENT_TYPES = [
   { value: "aod_motion", label: "AOD Motion", tier: "concierge", description: "Advancement on Docket per 38 CFR § 20.900(c)" },
   { value: "good_cause_letter", label: "Good Cause Letter", tier: "concierge", description: "Supporting hardship argument per 38 U.S.C. § 7107" },
 ];
+
+const GENERATION_STEPS = [
+  { icon: FileText, label: "Gathering your service records and profile..." },
+  { icon: Stethoscope, label: "Loading medical records and supporting documents..." },
+  { icon: BookOpen, label: "Reviewing CFR regulations for your condition..." },
+  { icon: Search, label: "Checking decision letter analysis for denial reasons..." },
+  { icon: Gavel, label: "Drafting your document with expert citations..." },
+  { icon: Shield, label: "Running RPA quality analysis..." },
+  { icon: CheckCircle2, label: "Finalizing scores and suggestions..." },
+];
+
+const GENERATION_DELAYS = [0, 3000, 6000, 9000, 13000, 18000, 24000];
 
 function ScoreGauge({ score, label, color }: { score: number; label: string; color: string }) {
   return (
@@ -59,10 +76,17 @@ function getScoreColor(score: number): string {
 
 export default function GenerateDocument() {
   const { toast } = useToast();
-  const [documentType, setDocumentType] = useState("");
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
+  const urlType = params.get("type") || "";
+  const urlCondition = params.get("condition") || "";
+  const urlContext = params.get("context") || "";
+
+  const [documentType, setDocumentType] = useState(urlType);
   const [conditionId, setConditionId] = useState("");
-  const [additionalContext, setAdditionalContext] = useState("");
+  const [additionalContext, setAdditionalContext] = useState(urlContext);
   const [generatedDoc, setGeneratedDoc] = useState<any>(null);
+  const [hasMatchedCondition, setHasMatchedCondition] = useState(false);
 
   const { data: conditionsList = [] } = useQuery<Condition[]>({
     queryKey: ["/api/conditions"],
@@ -71,6 +95,20 @@ export default function GenerateDocument() {
   const { data: profile } = useQuery<any>({
     queryKey: ["/api/profile"],
   });
+
+  useEffect(() => {
+    if (urlCondition && conditionsList.length > 0 && !hasMatchedCondition) {
+      const match = conditionsList.find(
+        (c) => c.conditionName.toLowerCase() === urlCondition.toLowerCase() ||
+               c.conditionName.toLowerCase().includes(urlCondition.toLowerCase()) ||
+               urlCondition.toLowerCase().includes(c.conditionName.toLowerCase())
+      );
+      if (match) {
+        setConditionId(match.id);
+        setHasMatchedCondition(true);
+      }
+    }
+  }, [urlCondition, conditionsList, hasMatchedCondition]);
 
   const tier = profile?.subscriptionTier || "none";
 
@@ -132,6 +170,8 @@ export default function GenerateDocument() {
     return typeInfo?.tier === "concierge" && tier !== "concierge";
   };
 
+  const hasPrefilledContext = urlType || urlCondition || urlContext;
+
   return (
     <div className="p-3 sm:p-6 max-w-4xl mx-auto space-y-6">
       <div>
@@ -142,6 +182,12 @@ export default function GenerateDocument() {
           Create CFR-grounded VA claims documents with AI quality scoring.
         </p>
       </div>
+
+      {hasPrefilledContext && !generatedDoc && (
+        <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm text-foreground/80" data-testid="text-prefilled-notice">
+          <span className="font-medium">Pre-filled from analysis:</span> Document type, condition, and context have been set based on your decision letter analysis recommendation.
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -236,15 +282,12 @@ export default function GenerateDocument() {
 
       {generateMutation.isPending && (
         <Card>
-          <CardContent className="py-12 text-center space-y-4">
-            <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary" />
-            <div>
-              <p className="font-medium text-foreground">Generating your document...</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Crafting CFR-grounded content and running RPA quality analysis.
-                This typically takes 15-30 seconds.
-              </p>
-            </div>
+          <CardContent className="pt-6">
+            <ThinkingSteps
+              isActive={generateMutation.isPending}
+              steps={GENERATION_STEPS}
+              delays={GENERATION_DELAYS}
+            />
           </CardContent>
         </Card>
       )}

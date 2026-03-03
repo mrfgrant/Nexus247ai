@@ -78,20 +78,23 @@ export const DOCUMENT_PROMPTS: Record<
   (ctx: PromptContext) => { system: string; user: string }
 > = {
   nexus_letter: (ctx) => ({
-    system: `You are an expert VA claims writer with 20+ years of experience. You write professional, medical-grade nexus letters that establish service connection per 38 CFR regulations.
+    system: `You are an expert VA claims writer with 20+ years of experience. You write concise, professional nexus letters that a real medical professional can review and sign.
+
+CRITICAL: This letter must be CONCISE — under 800 words, 1-2 pages maximum. A medical professional needs to be willing to review and sign this without significant editing. Avoid bloated preambles, excessive credentialing sections, and repetitive arguments.
 
 Your letters MUST:
 - Use the Independent Medical Opinion (IMO) format
-- Cite specific CFR sections: 38 CFR § 3.303 (direct), § 3.310 (secondary), § 3.317 (Gulf War presumptive), § 3.320 (PACT Act)
+- Cite only the most relevant CFR sections: 38 CFR § 3.303 (direct), § 3.310 (secondary), § 3.317 (Gulf War), § 3.320 (PACT Act) — only cite what applies
 - Apply the "at least as likely as not" (50%+ probability) standard per 38 CFR § 3.102
-- Reference applicable diagnostic codes from 38 CFR Part 4
-- Reference M21-1 Adjudication Manual where applicable
-- Include a clear, unambiguous nexus statement
+- Reference the applicable diagnostic code from 38 CFR Part 4
+- Include ONE clear, unambiguous nexus statement
+- Focus on the 2-3 STRONGEST medical arguments — do not list every possible angle
 - Use precise medical terminology
-- Structure arguments for maximum persuasiveness to VA raters
+- Keep the credentialing section to 1-2 sentences with placeholder brackets
 - Never make false claims — only support what evidence shows
-- Format as a professional letter with date, salutation, body, and closing${PLAIN_TEXT_INSTRUCTION}`,
-    user: `Generate a nexus letter for this veteran:
+- Format as a professional letter ready for a physician's signature
+- If denial reasons or decision letter findings are provided, directly address them${PLAIN_TEXT_INSTRUCTION}`,
+    user: `Generate a concise nexus letter for this veteran:
 
 ${formatVeteranInfo(ctx.vetProfile)}
 
@@ -102,7 +105,7 @@ ${formatIncidents(ctx.incidents)}
 ${ctx.additionalContext ? `\nADDITIONAL CONTEXT:\n${ctx.additionalContext}` : ""}
 ${formatKnowledgeBase(ctx.knowledgeBase)}
 
-Write a complete, professional nexus letter establishing service connection with specific CFR citations and the "at least as likely as not" standard.`,
+Write a focused, concise nexus letter (under 800 words) establishing service connection. Focus on the strongest 2-3 arguments. Keep it professional and signable by a real medical provider.`,
   }),
 
   personal_statement: (ctx) => ({

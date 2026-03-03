@@ -45,7 +45,7 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
   - `dashboard.tsx` — Veteran command center with stats, quick actions, SMC-S eligibility
   - `intake.tsx` — Multi-step veteran profile wizard (5 steps incl. supporting docs upload; deployment locations as free-text)
   - `conditions.tsx` — Conditions + service incidents CRUD (sidebar: "My Conditions")
-  - `generate-document.tsx` — Document generation with RPA scoring
+  - `generate-document.tsx` — Document generation with RPA scoring, URL param pre-fill from analysis, animated thinking steps
   - `documents.tsx` — Document list with filtering, copy/download/print actions
   - `document-print.tsx` — Print-ready document layout for browser Save as PDF
   - `chat.tsx` — AI Claims Advisor chat with rich-text rendering (sidebar: "Ask VA Questions")
@@ -74,6 +74,13 @@ Concierge only: aod_motion, good_cause_letter
 - Cross-reference feature: POST /api/analyze-letter/:id/cross-reference compares medical records against decision findings
 - Cross-reference data saved to letterAnalyses.crossReferenceData (jsonb)
 - Frontend shows Evidence Gap tab with completeness ratings, win probabilities, priority actions, medical tests needed
+- Analysis recommendations have "Generate" buttons that pre-fill the generate form with type, condition, and context (denial reasons, rater errors, missed evidence)
+
+### Document Generation Enhancements
+- RPA scoring uses JSON extraction fallback (regex match for `{...}` if JSON.parse fails)
+- Nexus letters capped at 2000 max_tokens and prompted for conciseness (under 800 words, signable by real medical professional)
+- Generation route fetches latest decision letter analysis and injects findings (denial reasons, rater errors, missed evidence, CFR violations, cross-reference data) into prompt context
+- Shared ThinkingSteps component (`client/src/components/thinking-steps.tsx`) used on both analyze and generate pages
 
 ### Trial System
 - Admin can grant time-limited trials (1-30 days) via Admin > Manage Users
