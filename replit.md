@@ -1,7 +1,7 @@
-# VetLetters - AI-Powered VA Claims Assistant
+# Nexus247 - AI-Powered VA Claims Assistant
 
 ## Overview
-VetLetters is a SaaS application that helps veterans generate professional, CFR-grounded VA claims documents using AI. It includes document generation, RPA-style quality scoring, AI claims advisor chat, combined rating estimator, and subscription management.
+Nexus247 is a SaaS application that helps veterans generate professional, CFR-grounded VA claims documents using AI. It includes document generation, RPA-style quality scoring, AI claims advisor chat, combined rating estimator, and subscription management.
 
 ## Tech Stack
 - **Frontend**: React + TypeScript, Vite, TailwindCSS, shadcn/ui, wouter (routing), TanStack React Query

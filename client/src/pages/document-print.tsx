@@ -100,7 +100,7 @@ export default function DocumentPrint() {
 
         <div className="print-footer">
           <p style={{ fontSize: "8pt", color: "#999", fontStyle: "italic", margin: 0 }}>
-            This document was generated using VetLetters AI Claims Assistant as a draft template.
+            This document was generated using Nexus247 AI Claims Assistant as a draft template.
             It should be reviewed and customized before submission to the Department of Veterans Affairs.
             This document does not constitute legal advice.
           </p>

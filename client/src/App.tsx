@@ -33,7 +33,7 @@ function AuthenticatedLayout() {
         <main className="flex-1 overflow-auto">
           <div className="md:hidden flex items-center gap-3 p-3 border-b border-border bg-background sticky top-0 z-30">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <span className="text-sm font-semibold text-foreground">VetLetters</span>
+            <span className="text-sm font-semibold text-foreground">Nexus247</span>
           </div>
           <Switch>
             <Route path="/dashboard" component={Dashboard} />

@@ -325,7 +325,7 @@ export default function GenerateDocument() {
               <div className="mt-4 p-3 rounded-md bg-muted/20 border border-border">
                 <p className="text-xs text-muted-foreground italic">
                   <strong>Legal Disclaimer:</strong> This AI-generated document is a draft template only.
-                  VetLetters is not a law firm and does not provide legal advice. Review all content
+                  Nexus247 is not a law firm and does not provide legal advice. Review all content
                   before submission and consult an accredited VA claims agent or attorney.
                   No guarantee of claim outcomes is expressed or implied.
                 </p>

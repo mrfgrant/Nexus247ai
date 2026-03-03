@@ -13,7 +13,7 @@ import {
   Scale,
   Brain,
 } from "lucide-react";
-import logoFull from "@assets/JPEG_image_1772436064255.jpeg";
+import logoFull from "@assets/Nexus247_Logo_Name_1772555424645.png";
 
 const features = [
   {
@@ -108,7 +108,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       <nav className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-3">
-          <img src={logoFull} alt="VetLetters" className="h-10" data-testid="img-landing-logo" />
+          <img src={logoFull} alt="Nexus247" className="h-10" data-testid="img-landing-logo" />
         </div>
         <div className="flex items-center gap-3">
           <a href="/api/login">
@@ -266,7 +266,7 @@ export default function Landing() {
             Legal Disclaimer
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            VetLetters generates AI-assisted draft documents intended as
+            Nexus247 generates AI-assisted draft documents intended as
             templates. We are not a law firm and do not provide legal advice.
             Review all documents before submission and consider consulting an
             accredited VA claims agent or attorney. No guarantee of claim
@@ -278,7 +278,7 @@ export default function Landing() {
 
       <footer className="py-8 px-6 bg-card border-t border-border">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>VetLetters.com. All rights reserved.</p>
+          <p>Nexus247.ai. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span>Privacy Policy</span>
             <span>Terms of Service</span>

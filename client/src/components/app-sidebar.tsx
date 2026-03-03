@@ -31,7 +31,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import logoIcon from "@assets/Logo1_1772436064255.jpg";
+import logoIcon from "@assets/Nexus247_Logo_Shield_1772555600715.png";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -68,15 +68,15 @@ export function AppSidebar() {
         <Link href="/dashboard" className="flex items-center gap-3">
           <img
             src={logoIcon}
-            alt="VetLetters"
+            alt="Nexus247"
             className="w-9 h-9 rounded-md"
             data-testid="img-logo"
           />
           <div>
             <h2 className="text-sm font-bold tracking-tight text-sidebar-foreground">
-              VetLetters
+              Nexus247
             </h2>
-            <p className="text-xs text-sidebar-foreground/60">.com</p>
+            <p className="text-xs text-sidebar-foreground/60">.ai</p>
           </div>
         </Link>
       </SidebarHeader>

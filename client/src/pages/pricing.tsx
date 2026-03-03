@@ -147,7 +147,7 @@ export default function Pricing() {
         <CardContent className="p-4 text-center">
           <p className="text-sm text-muted-foreground">
             All plans include a legal disclaimer on every generated document.
-            VetLetters is not a law firm and does not provide legal advice.
+            Nexus247 is not a law firm and does not provide legal advice.
             Cancel anytime. No long-term contracts.
           </p>
         </CardContent>
