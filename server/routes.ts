@@ -8,20 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-const { PDFParse } = require("pdf-parse");
-
-async function parsePdf(buffer: Buffer): Promise<{ text: string }> {
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
-  await parser.load();
-  const totalPages = parser.doc.numPages;
-  let text = "";
-  for (let i = 1; i <= totalPages; i++) {
-    const pageText = await parser.getPageText(i);
-    text += pageText + "\n";
-  }
-  await parser.destroy();
-  return { text };
-}
+const pdfParse = require("pdf-parse");
 
 const TIER_LIMITS: Record<string, number> = {
   none: 0,
@@ -721,7 +708,7 @@ export async function registerRoutes(
 
       if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
         try {
-          const parsed = await parsePdf(req.file.buffer);
+          const parsed = await pdfParse(req.file.buffer);
           content = parsed.text || "";
 
           if (!content.trim()) {
@@ -874,7 +861,7 @@ export async function registerRoutes(
 
       if (req.file) {
         if (req.file.mimetype === "application/pdf") {
-          const pdfData = await parsePdf(req.file.buffer);
+          const pdfData = await pdfParse(req.file.buffer);
           letterText = pdfData.text;
         } else if (req.file.mimetype === "text/plain" || req.file.mimetype?.startsWith("text/")) {
           letterText = req.file.buffer.toString("utf-8");
