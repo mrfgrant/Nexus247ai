@@ -703,12 +703,34 @@ export async function registerRoutes(
 
       let content = "";
       const fileType = req.file.mimetype;
+      const fileName = req.file.originalname?.toLowerCase() || "";
 
-      if (fileType === "application/pdf") {
-        const parsed = await pdfParse(req.file.buffer);
-        content = parsed.text;
-      } else if (fileType === "text/plain") {
+      if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
+        try {
+          const parsed = await pdfParse(req.file.buffer);
+          content = parsed.text || "";
+
+          if (!content.trim()) {
+            return res.status(400).json({
+              error: "This PDF appears to be a scanned image or contains no extractable text. Please upload a text-based PDF or convert it to text first."
+            });
+          }
+        } catch (pdfError: any) {
+          const errorMsg = pdfError?.message?.toLowerCase() || "";
+          if (errorMsg.includes("encrypt") || errorMsg.includes("password")) {
+            return res.status(400).json({
+              error: "This PDF is password-protected or encrypted. Please remove the password protection and try again."
+            });
+          }
+          return res.status(400).json({
+            error: "Unable to read this PDF file. It may be corrupted or in an unsupported format. Please try converting it to a text file and uploading again."
+          });
+        }
+      } else if (fileType === "text/plain" || fileName.endsWith(".txt")) {
         content = req.file.buffer.toString("utf-8");
+        if (!content.trim()) {
+          return res.status(400).json({ error: "The uploaded file is empty. Please upload a file with content." });
+        }
       } else {
         return res.status(400).json({ error: "Only PDF and TXT files are accepted" });
       }

@@ -36,12 +36,12 @@ import logoIcon from "@assets/Logo1_1772436064255.jpg";
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Intake Profile", url: "/intake", icon: ClipboardList },
-  { title: "Conditions", url: "/conditions", icon: Stethoscope },
+  { title: "My Conditions", url: "/conditions", icon: Stethoscope },
   { title: "Generate Letter", url: "/generate", icon: FileText },
   { title: "My Documents", url: "/documents", icon: FolderOpen },
-  { title: "Claims Chat", url: "/chat", icon: MessageCircle },
+  { title: "Ask VA Questions", url: "/chat", icon: MessageCircle },
   { title: "Rating Estimator", url: "/rating", icon: Calculator },
-  { title: "Analyze Letter", url: "/analyze", icon: FileSearch },
+  { title: "Analyze Decision Letter", url: "/analyze", icon: FileSearch },
 ];
 
 const bottomItems = [

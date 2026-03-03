@@ -42,14 +42,14 @@ VetLetters is a SaaS application that helps veterans generate professional, CFR-
 - **Pages:**
   - `landing.tsx` — Public landing page with hero, features, pricing
   - `dashboard.tsx` — Veteran command center with stats, quick actions, SMC-S eligibility
-  - `intake.tsx` — Multi-step veteran profile wizard (5 steps including supporting docs upload)
-  - `conditions.tsx` — Conditions + service incidents CRUD
+  - `intake.tsx` — Multi-step veteran profile wizard (5 steps incl. supporting docs upload; deployment locations as free-text)
+  - `conditions.tsx` — Conditions + service incidents CRUD (sidebar: "My Conditions")
   - `generate-document.tsx` — Document generation with RPA scoring
   - `documents.tsx` — Document list with filtering, copy/download/print actions
   - `document-print.tsx` — Print-ready document layout for browser Save as PDF
-  - `chat.tsx` — AI Claims Advisor chat with rich-text message rendering
-  - `rating-estimator.tsx` — Combined VA disability rating calculator with SMC levels reference
-  - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis (PDF or text)
+  - `chat.tsx` — AI Claims Advisor chat with rich-text rendering (sidebar: "Ask VA Questions")
+  - `rating-estimator.tsx` — Combined rating calculator with 40-condition auto-suggest combobox, CFR diagnostic codes, min ratings, SMC levels
+  - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis (sidebar: "Analyze Decision Letter")
   - `pricing.tsx` — 3-tier pricing comparison
   - `support.tsx` — Human assistance request form
   - `settings.tsx` — Account and subscription management

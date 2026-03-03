@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,150 @@ import {
   Star,
   Home,
   Hand,
+  Info,
 } from "lucide-react";
 import type { Condition } from "@shared/schema";
+
+const VA_CONDITIONS = [
+  { name: "PTSD", code: "DC 9411", minRating: 10 },
+  { name: "Major Depressive Disorder", code: "DC 9434", minRating: 10 },
+  { name: "Generalized Anxiety Disorder", code: "DC 9400", minRating: 10 },
+  { name: "Bipolar Disorder", code: "DC 9432", minRating: 10 },
+  { name: "Adjustment Disorder", code: "DC 9440", minRating: 10 },
+  { name: "Tinnitus", code: "DC 6260", minRating: 10 },
+  { name: "Hearing Loss (Bilateral)", code: "DC 6100", minRating: 0 },
+  { name: "Sleep Apnea (Obstructive)", code: "DC 6847", minRating: 30 },
+  { name: "Lumbosacral Strain (Low Back)", code: "DC 5237", minRating: 10 },
+  { name: "Degenerative Arthritis of the Spine", code: "DC 5242", minRating: 10 },
+  { name: "Intervertebral Disc Syndrome", code: "DC 5243", minRating: 10 },
+  { name: "Cervical Strain (Neck)", code: "DC 5237", minRating: 10 },
+  { name: "Knee Instability", code: "DC 5257", minRating: 10 },
+  { name: "Knee Limited Flexion", code: "DC 5260", minRating: 10 },
+  { name: "Knee Limited Extension", code: "DC 5261", minRating: 10 },
+  { name: "Ankle Limited Motion", code: "DC 5271", minRating: 10 },
+  { name: "Shoulder Limited Motion", code: "DC 5201", minRating: 20 },
+  { name: "Plantar Fasciitis", code: "DC 5276", minRating: 10 },
+  { name: "Flat Feet (Bilateral)", code: "DC 5276", minRating: 10 },
+  { name: "Migraine Headaches", code: "DC 8100", minRating: 10 },
+  { name: "Radiculopathy (Upper)", code: "DC 8510", minRating: 10 },
+  { name: "Radiculopathy (Lower)", code: "DC 8520", minRating: 10 },
+  { name: "Peripheral Neuropathy (Upper)", code: "DC 8515", minRating: 10 },
+  { name: "Peripheral Neuropathy (Lower)", code: "DC 8520", minRating: 10 },
+  { name: "Sinusitis (Chronic)", code: "DC 6513", minRating: 10 },
+  { name: "Rhinitis (Allergic)", code: "DC 6522", minRating: 10 },
+  { name: "Gastroesophageal Reflux (GERD)", code: "DC 7346", minRating: 10 },
+  { name: "Irritable Bowel Syndrome (IBS)", code: "DC 7319", minRating: 10 },
+  { name: "Erectile Dysfunction", code: "DC 7522", minRating: 0 },
+  { name: "Diabetes Mellitus Type II", code: "DC 7913", minRating: 10 },
+  { name: "Hypertension", code: "DC 7101", minRating: 10 },
+  { name: "Traumatic Brain Injury (TBI)", code: "DC 8045", minRating: 10 },
+  { name: "Scars (Painful/Unstable)", code: "DC 7804", minRating: 10 },
+  { name: "Eczema / Dermatitis", code: "DC 7806", minRating: 10 },
+  { name: "Asthma (Bronchial)", code: "DC 6602", minRating: 10 },
+  { name: "Carpal Tunnel Syndrome", code: "DC 8515", minRating: 10 },
+  { name: "Hip Limited Motion", code: "DC 5252", minRating: 10 },
+  { name: "Fibromyalgia", code: "DC 5025", minRating: 10 },
+  { name: "Chronic Fatigue Syndrome", code: "DC 6354", minRating: 10 },
+  { name: "TMJ Disorder", code: "DC 9905", minRating: 10 },
+];
+
+function ConditionCombobox({
+  value,
+  onChange,
+  onSelectCondition,
+  index,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onSelectCondition: (condition: typeof VA_CONDITIONS[0]) => void;
+  index: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [focusedIdx, setFocusedIdx] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const filtered = value.length >= 1
+    ? VA_CONDITIONS.filter((c) =>
+        c.name.toLowerCase().includes(value.toLowerCase()) ||
+        c.code.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 8)
+    : [];
+
+  const showDropdown = open && filtered.length > 0;
+
+  useEffect(() => {
+    setFocusedIdx(-1);
+  }, [value]);
+
+  const handleSelect = (condition: typeof VA_CONDITIONS[0]) => {
+    onChange(condition.name);
+    onSelectCondition(condition);
+    setOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDropdown) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedIdx((prev) => Math.min(prev + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedIdx((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter" && focusedIdx >= 0) {
+      e.preventDefault();
+      handleSelect(filtered[focusedIdx]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className="relative flex-1">
+      <Input
+        ref={inputRef}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+        onKeyDown={handleKeyDown}
+        placeholder="Start typing a condition..."
+        data-testid={`input-condition-name-${index}`}
+        autoComplete="off"
+      />
+      {showDropdown && (
+        <div
+          ref={listRef}
+          className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto"
+          data-testid={`dropdown-conditions-${index}`}
+        >
+          {filtered.map((c, idx) => (
+            <button
+              key={c.name}
+              type="button"
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center justify-between gap-2 ${
+                idx === focusedIdx ? "bg-accent" : ""
+              }`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelect(c);
+              }}
+              data-testid={`option-condition-${idx}`}
+            >
+              <span className="font-medium">{c.name}</span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {c.code} · min {c.minRating}%
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RatingEstimator() {
   const { toast } = useToast();
@@ -63,6 +205,12 @@ export default function RatingEstimator() {
     setEntries(updated);
   };
 
+  const selectCondition = (index: number, condition: typeof VA_CONDITIONS[0]) => {
+    const updated = [...entries];
+    updated[index] = { name: condition.name, rating: condition.minRating };
+    setEntries(updated);
+  };
+
   const loadFromProfile = () => {
     if (conditionsList.length) {
       setEntries(
@@ -85,6 +233,16 @@ export default function RatingEstimator() {
         </p>
       </div>
 
+      <div className="flex items-start gap-2 p-3 rounded-md bg-primary/5 border border-primary/10">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          The VA uses a "whole person" method to calculate combined ratings &mdash; your disabilities are
+          not simply added together. Each additional condition is applied to your remaining healthy
+          percentage. For example, a 50% plus a 30% does not equal 80%. Instead: 50% leaves 50% healthy,
+          then 30% of that 50% = 15%, giving a combined 65% (rounded to 70%).
+        </p>
+      </div>
+
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-2">
@@ -100,16 +258,20 @@ export default function RatingEstimator() {
           {entries.map((entry, i) => (
             <div key={i} className="flex items-end gap-3">
               <div className="flex-1 space-y-1">
-                <Label className="text-xs">Condition</Label>
-                <Input
+                {i === 0 && (
+                  <Label className="text-xs text-muted-foreground">Disability or medical condition rated by the VA</Label>
+                )}
+                <ConditionCombobox
                   value={entry.name}
-                  onChange={(e) => updateEntry(i, "name", e.target.value)}
-                  placeholder="e.g., PTSD, Tinnitus"
-                  data-testid={`input-condition-name-${i}`}
+                  onChange={(val) => updateEntry(i, "name", val)}
+                  onSelectCondition={(c) => selectCondition(i, c)}
+                  index={i}
                 />
               </div>
               <div className="w-24 space-y-1">
-                <Label className="text-xs">Rating %</Label>
+                {i === 0 && (
+                  <Label className="text-xs text-muted-foreground">VA Rating</Label>
+                )}
                 <Input
                   type="number"
                   min={0}
@@ -127,6 +289,7 @@ export default function RatingEstimator() {
               )}
             </div>
           ))}
+          <p className="text-xs text-muted-foreground">Start typing to see common VA-rated conditions, or enter your own.</p>
 
           <div className="flex gap-2 pt-2">
             <Button variant="outline" onClick={addEntry} data-testid="button-add-rating">

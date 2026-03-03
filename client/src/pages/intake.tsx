@@ -24,9 +24,9 @@ const DISCHARGE_TYPES = ["Honorable", "General (Under Honorable)", "Other Than H
 const STEPS = ["Military Service", "Deployments & Exposures", "VA Info", "Supporting Documents", "Review & Save"];
 
 const DOC_CATEGORIES = [
-  { value: "decision_letter", label: "VA Decision Letter", accept: ".pdf", description: "Upload your VA rating decision letter (PDF)" },
-  { value: "denial_letter", label: "VA Denial Letter", accept: ".pdf", description: "Upload any VA denial letters (PDF)" },
-  { value: "medical_records", label: "Medical Records", accept: ".txt", description: "Upload medical records as text files (.txt only)" },
+  { value: "decision_letter", label: "VA Decision Letter", accept: ".pdf,.txt", description: "Upload your VA rating decision letter (PDF or text file)" },
+  { value: "denial_letter", label: "VA Denial Letter", accept: ".pdf,.txt", description: "Upload any VA denial letters (PDF or text file)" },
+  { value: "medical_records", label: "Medical Records", accept: ".pdf,.txt", description: "Upload medical records (PDF or text file)" },
 ];
 
 export default function Intake() {
@@ -34,6 +34,7 @@ export default function Intake() {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<any>({});
   const [uploadCategory, setUploadCategory] = useState("decision_letter");
+  const [deploymentLocationsText, setDeploymentLocationsText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery<any>({
@@ -41,6 +42,9 @@ export default function Intake() {
     select: (data: any) => {
       if (data && !formData._loaded) {
         setFormData({ ...data, _loaded: true });
+        if (Array.isArray(data.deploymentLocations)) {
+          setDeploymentLocationsText(data.deploymentLocations.join(", "));
+        }
       }
       return data;
     },
@@ -53,6 +57,10 @@ export default function Intake() {
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       const { _loaded, id, createdAt, updatedAt, ...cleanData } = data;
+      cleanData.deploymentLocations = deploymentLocationsText
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
       const res = await apiRequest("POST", "/api/profile", cleanData);
       return res.json();
     },
@@ -205,8 +213,8 @@ export default function Intake() {
               <div className="space-y-2">
                 <Label>Deployment Locations (comma separated)</Label>
                 <Input
-                  value={formData.deploymentLocations?.join(", ") || ""}
-                  onChange={(e) => update("deploymentLocations", e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean))}
+                  value={deploymentLocationsText}
+                  onChange={(e) => setDeploymentLocationsText(e.target.value)}
                   placeholder="e.g., Iraq, Afghanistan, Kuwait"
                   data-testid="input-deployments"
                 />
@@ -275,7 +283,7 @@ export default function Intake() {
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                   <p className="text-sm text-muted-foreground">
-                    Upload any VA decision letters, denial letters, or medical records you have. These help the AI generate more accurate and effective documents for your claims. Medical records must be in text (.txt) format. Decision and denial letters can be PDF files.
+                    Upload any VA decision letters, denial letters, or medical records you have. These help the AI generate more accurate and effective documents for your claims. All document types accept PDF and text (.txt) files.
                   </p>
                 </div>
               </div>
@@ -360,7 +368,7 @@ export default function Intake() {
                   ["MOS/Rate", formData.mosRate],
                   ["Service Dates", `${formData.serviceStartDate || "N/A"} to ${formData.serviceEndDate || "N/A"}`],
                   ["Discharge", formData.dischargeType],
-                  ["Deployments", formData.deploymentLocations?.join(", ")],
+                  ["Deployments", deploymentLocationsText],
                   ["Current Rating", formData.currentRating ? `${formData.currentRating}%` : "Not rated"],
                   ["VA File #", formData.vaFileNumber],
                 ].map(([label, value]) => (
