@@ -48,7 +48,7 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
   - `generate-document.tsx` — Document generation with RPA scoring, URL param pre-fill from analysis, animated thinking steps
   - `documents.tsx` — Document list with filtering, copy/download/print actions
   - `document-print.tsx` — Print-ready document layout for browser Save as PDF
-  - `chat.tsx` — AI Claims Advisor chat with rich-text rendering (sidebar: "Ask VA Questions")
+  - `chat.tsx` — AI Claims Advisor chat with rich-text rendering, personalized context (profile, conditions, medical records, decision letter analysis), context banner (sidebar: "Ask VA Questions")
   - `rating-estimator.tsx` — Combined rating calculator with 40-condition auto-suggest combobox, CFR diagnostic codes, min ratings, SMC levels
   - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis with saved history (sidebar: "Analyze Decision Letter")
   - `pricing.tsx` — 3-tier pricing comparison

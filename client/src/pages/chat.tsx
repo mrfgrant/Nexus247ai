@@ -7,8 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Send, MessageCircle, Bot, User, Lightbulb, BookOpen } from "lucide-react";
-import type { ChatMessage } from "@shared/schema";
+import { Send, MessageCircle, Bot, User, Lightbulb, BookOpen, FileText, Shield, Upload } from "lucide-react";
+import type { ChatMessage, SupportingDocument, LetterAnalysis } from "@shared/schema";
+import { Link } from "wouter";
 
 const THINKING_MESSAGES = [
   "Analyzing your question...",
@@ -226,6 +227,19 @@ export default function Chat() {
     queryKey: ["/api/chat/messages"],
   });
 
+  const { data: supportingDocs = [] } = useQuery<SupportingDocument[]>({
+    queryKey: ["/api/supporting-documents"],
+  });
+
+  const { data: letterAnalyses = [] } = useQuery<LetterAnalysis[]>({
+    queryKey: ["/api/letter-analyses"],
+  });
+
+  const medicalRecordCount = supportingDocs.filter((d) => d.category === "medical_records").length;
+  const decisionLetterCount = supportingDocs.filter((d) => d.category === "decision_letter" || d.category === "denial_letter").length;
+  const hasAnalysis = letterAnalyses.length > 0;
+  const hasAnyContext = medicalRecordCount > 0 || decisionLetterCount > 0 || hasAnalysis;
+
   const sendMutation = useMutation({
     mutationFn: async (msg: string) => {
       const res = await apiRequest("POST", "/api/chat/send", { message: msg });
@@ -273,6 +287,39 @@ export default function Chat() {
           Get expert guidance on VA claims, CFR regulations, and filing strategy.
         </p>
       </div>
+
+      {hasAnyContext ? (
+        <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground/80 flex items-center gap-2 flex-wrap" data-testid="text-chat-context-banner">
+          <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="font-medium">Your advisor has access to:</span>
+          {medicalRecordCount > 0 && (
+            <span className="inline-flex items-center gap-1 bg-primary/10 rounded px-1.5 py-0.5">
+              <FileText className="w-3 h-3" />
+              {medicalRecordCount} medical record{medicalRecordCount !== 1 ? "s" : ""}
+            </span>
+          )}
+          {decisionLetterCount > 0 && (
+            <span className="inline-flex items-center gap-1 bg-primary/10 rounded px-1.5 py-0.5">
+              <FileText className="w-3 h-3" />
+              {decisionLetterCount} decision letter{decisionLetterCount !== 1 ? "s" : ""}
+            </span>
+          )}
+          {hasAnalysis && (
+            <span className="inline-flex items-center gap-1 bg-primary/10 rounded px-1.5 py-0.5">
+              <BookOpen className="w-3 h-3" />
+              {letterAnalyses.length} analysis{letterAnalyses.length !== 1 ? " results" : " result"}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="p-2.5 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground flex items-center gap-2" data-testid="text-chat-no-context-banner">
+          <Upload className="w-3.5 h-3.5 shrink-0" />
+          <span>
+            <Link href="/intake" className="text-primary underline underline-offset-2 hover:text-primary/80">Upload medical records</Link>
+            {" "}in your profile to get personalized advice based on your actual records.
+          </span>
+        </div>
+      )}
 
       <Card className="flex-1 flex flex-col min-h-0">
         <CardContent className="flex-1 flex flex-col min-h-0 p-0">
