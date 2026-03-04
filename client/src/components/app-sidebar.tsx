@@ -25,7 +25,9 @@ import {
   LogOut,
   Shield,
   FileSearch,
+  ClipboardCheck,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,6 +40,7 @@ const mainItems = [
   { title: "Intake Profile", url: "/intake", icon: ClipboardList },
   { title: "My Conditions", url: "/conditions", icon: Stethoscope },
   { title: "Generate Letter", url: "/generate", icon: FileText },
+  { title: "C&P Exam Prep", url: "/cnp-prep", icon: ClipboardCheck, badge: "Pro" },
   { title: "My Documents", url: "/documents", icon: FolderOpen },
   { title: "Ask VA Questions", url: "/chat", icon: MessageCircle },
   { title: "Rating Estimator", url: "/rating", icon: Calculator },
@@ -94,7 +97,12 @@ export function AppSidebar() {
                   >
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s/g, "-")}`}>
                       <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
+                      <span className="flex-1">{item.title}</span>
+                      {"badge" in item && item.badge && (
+                        <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 h-4 font-medium">
+                          {item.badge}
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

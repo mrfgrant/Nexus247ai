@@ -21,6 +21,7 @@ import AdminKnowledgeBase from "@/pages/admin-knowledge-base";
 import AdminSupport from "@/pages/admin-support";
 import AdminUsers from "@/pages/admin-users";
 import AnalyzeLetter from "@/pages/analyze-letter";
+import CnpPrep from "@/pages/cnp-prep";
 import DocumentPrint from "@/pages/document-print";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
@@ -44,6 +45,7 @@ function AuthenticatedLayout() {
             <Route path="/chat" component={Chat} />
             <Route path="/rating" component={RatingEstimator} />
             <Route path="/analyze" component={AnalyzeLetter} />
+            <Route path="/cnp-prep" component={CnpPrep} />
             <Route path="/pricing" component={Pricing} />
             <Route path="/support" component={Support} />
             <Route path="/settings" component={Settings} />

@@ -62,11 +62,20 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
 All tiers: nexus_letter, personal_statement, buddy_letter, nod, secondary_condition, increase_claim
 Concierge only: aod_motion, good_cause_letter
 
+### C&P Exam Prep (Pro+ Feature)
+- Page: `client/src/pages/cnp-prep.tsx` — route `/cnp-prep`
+- API: `POST /api/cnp-prep` with `{ conditionId }` — Pro/Concierge only
+- Two parallel AI calls: full 8-section prep guide (4000 tokens) + printable one-pager cheat sheet (1500 tokens)
+- Smart alerts: checks for missing nexus letter (warning) and always recommends buddy letter, with one-click generate buttons pre-filling the generate form
+- Monthly limits via usageLogs (action "cnp_prep"): Pro=10, Concierge=50
+- Prompts: `CNP_EXAM_PREP_PROMPT` + `CNP_EXAM_CHEATSHEET_PROMPT` in `server/prompts.ts`
+- Sidebar: after "Generate Letter" with ClipboardCheck icon and Pro badge
+
 ### Subscription Tiers
-- None: 0 docs/mo, 0 analyses/mo
-- Basic ($19/mo): 5 docs/mo, 2 analyses/mo
-- Pro ($49/mo): 50 docs/mo, 10 analyses/mo
-- Concierge ($149/mo): 999 docs/mo, 50 analyses/mo + AOD/Good Cause
+- None: 0 docs/mo, 0 analyses/mo, 0 C&P preps/mo
+- Basic ($19/mo): 5 docs/mo, 2 analyses/mo, 0 C&P preps/mo
+- Pro ($49/mo): 50 docs/mo, 10 analyses/mo, 10 C&P preps/mo
+- Concierge ($149/mo): 999 docs/mo, 50 analyses/mo, 50 C&P preps/mo + AOD/Good Cause
 
 ### Decision Letter Analysis
 - Tier-gated: free users blocked, paid users limited by ANALYSIS_LIMITS
