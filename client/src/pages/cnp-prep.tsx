@@ -10,6 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -151,6 +157,71 @@ export default function CnpPrep() {
                 Upgrade to Pro
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
+            </div>
+
+            <div className="mt-6 text-left">
+              <p className="text-sm font-medium text-foreground mb-2">What you get with C&P Exam Prep:</p>
+              <Accordion type="multiple" className="w-full">
+                <AccordionItem value="prep-guide" data-testid="accordion-prep-guide">
+                  <AccordionTrigger className="text-sm py-3">
+                    <span className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-primary shrink-0" />
+                      Personalized 8-Section Prep Guide
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-sm">
+                    A comprehensive guide tailored to your specific condition covering exam overview, condition-specific questions the examiner will ask, what to say and what to avoid, worst-day symptom descriptions using the frequency-severity-duration framework, DBQ scoring criteria, bad faith exam red flags, a pre-exam checklist, and a detailed post-exam 24-hour documentation template.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="cheat-sheet" data-testid="accordion-cheat-sheet">
+                  <AccordionTrigger className="text-sm py-3">
+                    <span className="flex items-center gap-2">
+                      <Printer className="w-4 h-4 text-primary shrink-0" />
+                      Printable Exam Day Cheat Sheet
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-sm">
+                    A one-page document you print and hold during your exam. Includes your condition summary, key service incidents in plain language, worst-day symptoms written in your own voice, phrases to use and phrases to avoid, and space for notes. Designed so you don't blank under pressure.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="gap-alerts" data-testid="accordion-gap-alerts">
+                  <AccordionTrigger className="text-sm py-3">
+                    <span className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-primary shrink-0" />
+                      Smart Document Gap Alerts
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-sm">
+                    Automatically checks if you're missing a nexus letter for the condition you're prepping for and recommends a buddy letter to corroborate your symptoms. One-click buttons let you generate these documents before the exam — catching gaps pre-exam rather than post-denial.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="dbq-criteria" data-testid="accordion-dbq-criteria">
+                  <AccordionTrigger className="text-sm py-3">
+                    <span className="flex items-center gap-2">
+                      <Stethoscope className="w-4 h-4 text-primary shrink-0" />
+                      Condition-Specific DBQ Criteria
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-sm">
+                    Shows exactly what the examiner is measuring on the Disability Benefits Questionnaire for your condition. Includes specific rating thresholds from 38 CFR Part 4 so you understand what symptoms and findings correspond to each rating percentage.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="post-exam" className="border-b-0" data-testid="accordion-post-exam">
+                  <AccordionTrigger className="text-sm py-3">
+                    <span className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-primary shrink-0" />
+                      Post-Exam Action Plan
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-sm">
+                    Step-by-step guide for what to do within 24 hours after your exam. Covers writing down everything the examiner said and did, documenting exam duration and any red flags, requesting the completed DBQ copy immediately, and how to file a complaint if the exam was inadequate.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
           </CardContent>
         </Card>
