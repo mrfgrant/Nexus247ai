@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [location] = useLocation();
+  const queryClient = useQueryClient();
+  const [verifying, setVerifying] = useState(false);
   const { data: profile, isLoading } = useQuery<any>({
     queryKey: ["/api/profile"],
   });
@@ -21,11 +23,44 @@ export default function Settings() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("stripe") === "success") {
-      toast({
-        title: "Subscription activated!",
-        description: "Your plan is now active.",
-      });
-      window.history.replaceState({}, "", window.location.pathname);
+      const sessionId = params.get("session_id");
+      if (sessionId) {
+        setVerifying(true);
+        fetch(`/api/verify-checkout?session_id=${encodeURIComponent(sessionId)}`, {
+          credentials: "include",
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.tier) {
+              toast({
+                title: "Subscription activated!",
+                description: `Your ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan is now active.`,
+              });
+              queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+            } else {
+              toast({
+                title: "Payment received",
+                description: "Your subscription is being processed. It may take a moment to activate.",
+              });
+            }
+          })
+          .catch(() => {
+            toast({
+              title: "Payment received",
+              description: "Your subscription is being processed. Refresh the page in a moment.",
+            });
+          })
+          .finally(() => {
+            setVerifying(false);
+            window.history.replaceState({}, "", window.location.pathname);
+          });
+      } else {
+        toast({
+          title: "Payment received",
+          description: "Your subscription is being processed.",
+        });
+        window.history.replaceState({}, "", window.location.pathname);
+      }
     }
   }, []);
 
@@ -46,9 +81,15 @@ export default function Settings() {
     },
   });
 
-  if (isLoading) {
+  if (isLoading || verifying) {
     return (
       <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-4">
+        {verifying && (
+          <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            <p className="text-sm font-medium text-foreground">Verifying your payment and activating your subscription...</p>
+          </div>
+        )}
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-48" />
         <Skeleton className="h-48" />

@@ -1386,7 +1386,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
         payment_method_types: ["card"],
         line_items: [{ price: priceId, quantity: 1 }],
         mode: "subscription",
-        success_url: `${baseUrl}/settings?stripe=success`,
+        success_url: `${baseUrl}/settings?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${baseUrl}/pricing?stripe=cancelled`,
         metadata: { userId, tier },
       });
@@ -1395,6 +1395,52 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
     } catch (error: any) {
       console.error("Checkout session error:", error);
       res.status(500).json({ error: "Failed to create checkout session. Please try again." });
+    }
+  });
+
+  app.get("/api/verify-checkout", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const sessionId = req.query.session_id as string;
+
+      if (!sessionId) {
+        return res.status(400).json({ error: "Missing session_id" });
+      }
+
+      const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["subscription"],
+      });
+
+      if (session.payment_status !== "paid") {
+        return res.status(400).json({ error: "Payment not completed" });
+      }
+
+      const customerId = session.customer as string;
+      const profile = await storage.getProfileByStripeCustomerId(customerId);
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ error: "Session does not belong to this user" });
+      }
+
+      const subscription = session.subscription as any;
+      if (!subscription) {
+        return res.status(400).json({ error: "No subscription found for this session" });
+      }
+
+      const priceId = subscription.items?.data?.[0]?.price?.id;
+      const tier = priceId ? PRICE_TO_TIER[priceId] || "basic" : "basic";
+
+      await storage.updateSubscriptionFromStripe(customerId, {
+        stripeSubscriptionId: subscription.id,
+        subscriptionTier: tier,
+        subscriptionStatus: "active",
+        trialEndsAt: null,
+      });
+
+      console.log(`Checkout verified: customer=${customerId} tier=${tier} user=${userId}`);
+      res.json({ tier, status: "active" });
+    } catch (error: any) {
+      console.error("Verify checkout error:", error);
+      res.status(500).json({ error: "Failed to verify checkout session" });
     }
   });
 
