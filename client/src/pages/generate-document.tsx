@@ -14,8 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ThinkingSteps } from "@/components/thinking-steps";
+import { TrialLetterPreview } from "@/components/trial-letter-preview";
+import { getRankDisplayName } from "@shared/utils";
 import {
   FileText,
   Loader2,
@@ -76,6 +79,7 @@ function getScoreColor(score: number): string {
 
 export default function GenerateDocument() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
   const urlType = params.get("type") || "";
@@ -292,7 +296,20 @@ export default function GenerateDocument() {
         </Card>
       )}
 
-      {generatedDoc && (
+      {generatedDoc && generatedDoc.trialMode === true && (
+        <TrialLetterPreview
+          document={generatedDoc.document || {}}
+          previewContent={generatedDoc.previewContent || ""}
+          veteranName={getRankDisplayName(profile?.rank, profile?.branch, user?.lastName, user?.firstName)}
+          conditionName={
+            conditionId && conditionId !== "none"
+              ? conditionsList.find((c) => c.id === conditionId)?.conditionName || ""
+              : ""
+          }
+        />
+      )}
+
+      {generatedDoc && !generatedDoc.trialMode && (
         <>
           <Card>
             <CardHeader className="pb-3">

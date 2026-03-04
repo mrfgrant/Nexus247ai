@@ -30,9 +30,16 @@ import {
   Calendar,
   AlertTriangle,
   Printer,
+  Lock,
+  ArrowRight,
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import type { Document } from "@shared/schema";
+
+interface TrialDocument extends Document {
+  trialMode?: boolean;
+  previewContent?: string;
+}
 
 function getScoreColor(score: number): string {
   if (score >= 80) return "text-green-600 dark:text-green-400";
@@ -50,9 +57,9 @@ export default function Documents() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [filter, setFilter] = useState("all");
-  const [viewDoc, setViewDoc] = useState<Document | null>(null);
+  const [viewDoc, setViewDoc] = useState<TrialDocument | null>(null);
 
-  const { data: docs = [], isLoading } = useQuery<Document[]>({
+  const { data: docs = [], isLoading } = useQuery<TrialDocument[]>({
     queryKey: ["/api/documents"],
   });
 
@@ -146,6 +153,19 @@ export default function Documents() {
                       <Badge variant="outline" className="text-xs">
                         {doc.documentType.replace(/_/g, " ")}
                       </Badge>
+                      {doc.trialMode && (
+                        <Badge
+                          className="no-default-hover-elevate no-default-active-elevate text-xs"
+                          style={{
+                            background: "rgba(212,164,62,0.15)",
+                            color: "#D4A43E",
+                            border: "1px solid rgba(212,164,62,0.35)",
+                          }}
+                          data-testid={`badge-trial-${doc.id}`}
+                        >
+                          Trial
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-xs">
                         {doc.status}
                       </Badge>
@@ -229,20 +249,75 @@ export default function Documents() {
                   </div>
                 </div>
               )}
-              <div className="whitespace-pre-wrap font-mono text-sm p-4 rounded-md bg-muted/30 border border-border leading-relaxed">
-                {viewDoc.content}
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => handleCopy(viewDoc.content)} data-testid="button-copy-modal">
-                  <Copy className="w-3 h-3 mr-1" /> Copy
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleDownload(viewDoc)} data-testid="button-download-modal">
-                  <Download className="w-3 h-3 mr-1" /> Download
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => { setViewDoc(null); navigate(`/documents/${viewDoc.id}/print`); }} data-testid="button-print-modal">
-                  <Printer className="w-3 h-3 mr-1" /> Print / PDF
-                </Button>
-              </div>
+              {viewDoc.trialMode || !viewDoc.content ? (
+                <div data-testid="trial-preview-dialog">
+                  <div className="whitespace-pre-wrap font-mono text-sm p-4 rounded-md bg-muted/30 border border-border leading-relaxed" data-testid="text-dialog-preview-content">
+                    {viewDoc.previewContent || ""}
+                  </div>
+                  <div className="relative mt-4">
+                    <div
+                      className="absolute inset-x-0 top-0 h-12 z-10"
+                      style={{
+                        background: "linear-gradient(to bottom, hsl(var(--card)), transparent)",
+                      }}
+                    />
+                    <div
+                      className="font-mono text-sm leading-relaxed overflow-hidden"
+                      style={{
+                        filter: "blur(5px)",
+                        userSelect: "none",
+                        maxHeight: "180px",
+                        color: "hsl(var(--muted-foreground))",
+                      }}
+                      aria-hidden="true"
+                      data-testid="text-dialog-blurred"
+                    >
+                      Pursuant to 38 CFR § 3.303(a), the veteran's condition is service-connected based on the following evidence and medical nexus established during active duty service. The medical evidence of record demonstrates a clear and unmistakable relationship between the current diagnosis and the in-service event, injury, or illness documented in the service treatment records. The veteran's treating physician has provided a medical opinion stating that it is at least as likely as not that the current condition was incurred in or caused by the veteran's military service. This opinion is supported by the veteran's service treatment records, post-service medical records, and the current clinical findings. Furthermore, the Board of Veterans' Appeals has consistently held that lay testimony regarding observable symptoms is competent evidence.
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center space-y-3">
+                    <div
+                      className="mx-auto flex items-center justify-center w-10 h-10 rounded-full"
+                      style={{ background: "rgba(212,164,62,0.12)" }}
+                    >
+                      <Lock className="w-5 h-5" style={{ color: "#D4A43E" }} />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Upgrade to unlock the full document with all CFR citations.
+                    </p>
+                    <Link href="/pricing">
+                      <Button
+                        style={{
+                          background: "#D4A43E",
+                          color: "#0D2137",
+                          borderColor: "#D4A43E",
+                        }}
+                        data-testid="button-upgrade-dialog"
+                      >
+                        Upgrade to Unlock
+                        <ArrowRight className="ml-1.5 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="whitespace-pre-wrap font-mono text-sm p-4 rounded-md bg-muted/30 border border-border leading-relaxed">
+                    {viewDoc.content}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => handleCopy(viewDoc.content)} data-testid="button-copy-modal">
+                      <Copy className="w-3 h-3 mr-1" /> Copy
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleDownload(viewDoc)} data-testid="button-download-modal">
+                      <Download className="w-3 h-3 mr-1" /> Download
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setViewDoc(null); navigate(`/documents/${viewDoc.id}/print`); }} data-testid="button-print-modal">
+                      <Printer className="w-3 h-3 mr-1" /> Print / PDF
+                    </Button>
+                  </div>
+                </>
+              )}
               <p className="text-xs text-muted-foreground italic">
                 This AI-generated document is a draft template only. Review before submission.
               </p>

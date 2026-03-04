@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
+import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Document } from "@shared/schema";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -18,7 +20,7 @@ export default function DocumentPrint() {
   const [, params] = useRoute("/documents/:id/print");
   const docId = params?.id;
 
-  const { data: doc, isLoading } = useQuery<Document>({
+  const { data: doc, isLoading } = useQuery<Document & { trialMode?: boolean }>({
     queryKey: ["/api/documents", docId],
     queryFn: async () => {
       const res = await fetch(`/api/documents/${docId}`, { credentials: "include" });
@@ -28,17 +30,48 @@ export default function DocumentPrint() {
     enabled: !!docId,
   });
 
+  const isTrialDoc = doc?.trialMode || !doc?.content;
+
   useEffect(() => {
-    if (doc && !isLoading) {
+    if (doc && !isLoading && !isTrialDoc) {
       const timer = setTimeout(() => window.print(), 600);
       return () => clearTimeout(timer);
     }
-  }, [doc, isLoading]);
+  }, [doc, isLoading, isTrialDoc]);
 
   if (isLoading || !doc) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-muted-foreground">Loading document...</p>
+      </div>
+    );
+  }
+
+  if (isTrialDoc) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-6 text-center">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-muted">
+          <Lock className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h1 className="text-2xl font-bold" data-testid="text-trial-print-heading">
+          Upgrade to Access Printable Documents
+        </h1>
+        <p className="text-muted-foreground max-w-md" data-testid="text-trial-print-description">
+          Printable and downloadable documents are available with a paid subscription.
+          Upgrade now to access your full letter, remove watermarks, and download as PDF.
+        </p>
+        <Link href="/pricing">
+          <Button data-testid="button-trial-print-upgrade">
+            View Plans & Upgrade
+          </Button>
+        </Link>
+        <button
+          onClick={() => window.history.back()}
+          className="text-sm text-muted-foreground underline mt-2"
+          data-testid="button-trial-print-back"
+        >
+          Go Back
+        </button>
       </div>
     );
   }

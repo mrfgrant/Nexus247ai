@@ -94,11 +94,31 @@ Concierge only: aod_motion, good_cause_letter
 - Shared ThinkingSteps component (`client/src/components/thinking-steps.tsx`) used on both analyze and generate pages
 
 ### Trial System
+- 3-day Pro trial auto-granted on first profile creation (`POST /api/profile`)
 - Admin can grant time-limited trials (1-30 days) via Admin > Manage Users
 - Trials auto-set tier to Basic if user has no tier
 - `getEffectiveTier()` in routes.ts checks trialEndsAt — expired trials revert to "none"
+- `isTrialUser()` helper: returns true if trialEndsAt is future AND subscriptionStatus !== "active"
 - Dashboard shows trial badge with remaining days
 - `veteranProfiles.trialEndsAt` timestamp field tracks trial expiry
+
+### Trial Document Gating
+- Full documents generated and stored in DB during trial — gating is API-response-level only
+- `getPreviewContent()` extracts first ~3 paragraphs as preview
+- `POST /api/generate`: trial users get `{ trialMode: true, previewContent, content: null, document }`
+- `GET /api/documents` + `GET /api/documents/:id`: trial users get gated responses with previewContent
+- Frontend: `TrialLetterPreview` component (`client/src/components/trial-letter-preview.tsx`) renders animated score ring, 5-dimension bars, trial banner, visible preview content, watermarked/blurred remainder with lock overlay, pricing chips, upgrade CTAs → `/pricing`
+- `generate-document.tsx`: conditionally renders TrialLetterPreview vs full content based on `trialMode`
+- `documents.tsx`: gold "Trial" badge on cards, gated preview dialog with blur + upgrade CTA
+- `document-print.tsx`: blocks print, shows upgrade message with link to pricing
+- On Stripe subscription activation, `isTrialUser()` returns false → full content flows normally
+
+### Trial Chat Gating
+- Trial users can access AI chat but without personal data context
+- Chat skips profile details, conditions, uploaded documents, and decision letter analysis
+- Knowledge base (general CFR/VA info) still included
+- Veteran display name still used for addressing
+- AI instructed to provide general VA claims guidance and mention that paid subscription unlocks personalized, data-driven advice
 
 ### Veteran Addressing Convention
 Veterans are addressed by rank + last name throughout the app (e.g., "SPC Grant", "PO2 Smith"). The `getRankDisplayName()` utility in `shared/utils.ts` maps pay grades to branch-specific abbreviations. Used in: dashboard greeting, sidebar profile, chat UI + AI prompt, settings page, and all AI document generation prompts.
