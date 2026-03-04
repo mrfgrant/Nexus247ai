@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FAQ — Nexus247.ai</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+```
+:root {
+  --navy:    #0B1C2E;
+  --navy-mid:#122540;
+  --steel:   #1E3A5F;
+  --gold:    #C8993A;
+  --gold-lt: #E2B96A;
+  --smoke:   #F4F1EC;
+  --fog:     #E8E4DC;
+  --white:   #FFFFFF;
+  --body-txt:#3A3530;
+  --muted:   #7A7168;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--smoke);
+  color: var(--body-txt);
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 5vw; height: 68px;
+  background: rgba(11,28,46,0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(200,153,58,0.18);
+}
+.nav-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.35rem; color: var(--white);
+  text-decoration: none;
+}
+.nav-logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 2.2rem; list-style: none; }
+.nav-links a {
+  color: rgba(255,255,255,0.72); text-decoration: none;
+  font-size: 0.88rem; font-weight: 500;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--gold-lt); }
+.nav-cta {
+  background: var(--gold); color: var(--navy);
+  border: none; padding: 10px 22px; border-radius: 3px;
+  font-size: 0.83rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.nav-cta:hover { background: var(--gold-lt); }
+
+/* PAGE HEADER */
+.page-header {
+  background: var(--navy);
+  padding: 140px 5vw 80px;
+  position: relative; overflow: hidden;
+}
+.page-header::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(200,153,58,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,153,58,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.page-header::after {
+  content: '';
+  position: absolute; left: 5vw; top: 20%; bottom: 20%;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, var(--gold) 20%, var(--gold) 80%, transparent);
+  opacity: 0.4;
+}
+.header-inner {
+  max-width: 640px;
+  margin-left: 4vw;
+  position: relative; z-index: 1;
+}
+.page-eyebrow {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 1.5rem;
+}
+.eyebrow-line { width: 36px; height: 1px; background: var(--gold); opacity: 0.8; }
+.eyebrow-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold);
+}
+.page-header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+  color: var(--white); line-height: 1.1;
+  margin-bottom: 1.2rem;
+}
+.page-header h1 em { color: var(--gold); font-style: italic; }
+.page-header p {
+  color: rgba(255,255,255,0.5);
+  font-size: 1.05rem; line-height: 1.7;
+  font-weight: 300; max-width: 480px;
+}
+
+/* CATEGORY FILTER */
+.filter-bar {
+  background: var(--navy-mid);
+  padding: 0 5vw;
+  border-bottom: 1px solid rgba(200,153,58,0.12);
+  display: flex; gap: 0; overflow-x: auto;
+}
+.filter-btn {
+  background: none; border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  padding: 18px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.filter-btn:hover { color: rgba(255,255,255,0.75); }
+.filter-btn.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+/* MAIN LAYOUT */
+.faq-layout {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 72px 5vw 100px;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+/* SIDEBAR */
+.sidebar {
+  position: sticky; top: 90px;
+}
+.sidebar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 1rem;
+}
+.sidebar-nav { list-style: none; }
+.sidebar-nav li { margin-bottom: 2px; }
+.sidebar-nav a {
+  display: block;
+  font-size: 0.85rem; color: var(--muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 3px;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+  line-height: 1.3;
+}
+.sidebar-nav a:hover {
+  color: var(--navy); background: var(--fog);
+  border-left-color: var(--gold);
+}
+.sidebar-nav a.active {
+  color: var(--navy); background: var(--fog);
+  border-left-color: var(--gold); font-weight: 500;
+}
+
+/* FAQ CONTENT */
+.faq-content { min-width: 0; }
+
+.faq-section { margin-bottom: 64px; }
+.faq-section:last-child { margin-bottom: 0; }
+
+.section-heading {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--fog);
+}
+.section-icon {
+  width: 36px; height: 36px;
+  background: rgba(200,153,58,0.1);
+  border: 1px solid rgba(200,153,58,0.25);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); flex-shrink: 0;
+}
+.section-heading h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  color: var(--navy);
+}
+
+/* ACCORDION */
+.faq-item {
+  border: 1px solid var(--fog);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  background: var(--white);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.faq-item:hover { box-shadow: 0 2px 16px rgba(11,28,46,0.07); }
+.faq-item.open { box-shadow: 0 4px 24px rgba(11,28,46,0.09); }
+
+.faq-question {
+  width: 100%; background: none; border: none;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.97rem; font-weight: 500;
+  color: var(--navy); line-height: 1.4;
+  transition: background 0.15s;
+}
+.faq-question:hover { background: var(--smoke); }
+.faq-item.open .faq-question { background: var(--smoke); }
+
+.faq-icon {
+  flex-shrink: 0; margin-top: 2px;
+  width: 20px; height: 20px;
+  border: 1px solid var(--fog);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  transition: transform 0.25s, background 0.2s, border-color 0.2s, color 0.2s;
+}
+.faq-item.open .faq-icon {
+  transform: rotate(45deg);
+  background: var(--gold); border-color: var(--gold);
+  color: var(--navy);
+}
+
+.faq-answer {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.25s ease;
+  padding: 0 24px;
+}
+.faq-item.open .faq-answer {
+  max-height: 500px;
+  padding: 0 24px 24px;
+}
+.faq-answer p {
+  font-size: 0.92rem; line-height: 1.72;
+  color: var(--muted); font-weight: 300;
+  border-top: 1px solid var(--fog);
+  padding-top: 16px;
+}
+.faq-answer p + p { margin-top: 0.8rem; padding-top: 0; border-top: none; }
+.faq-answer strong { color: var(--navy); font-weight: 600; }
+.faq-answer a { color: var(--gold); text-decoration: none; }
+.faq-answer a:hover { text-decoration: underline; }
+
+/* CTA BAND */
+.cta-band {
+  background: var(--navy);
+  padding: 72px 5vw;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.cta-band::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(200,153,58,0.07) 0%, transparent 70%);
+}
+.cta-band h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: var(--white); margin-bottom: 0.8rem;
+}
+.cta-band h2 em { color: var(--gold); font-style: italic; }
+.cta-band p {
+  color: rgba(255,255,255,0.45); font-size: 0.95rem;
+  font-weight: 300; max-width: 440px;
+  margin: 0 auto 2rem; line-height: 1.65;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--gold); color: var(--navy);
+  padding: 15px 32px; border-radius: 3px;
+  font-size: 0.88rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  text-decoration: none; border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 4px 20px rgba(200,153,58,0.25);
+}
+.btn-primary:hover { background: var(--gold-lt); transform: translateY(-2px); }
+
+footer {
+  background: var(--navy);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 32px 5vw;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+footer .logo-sm {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem; color: var(--white);
+}
+footer .logo-sm span { color: var(--gold); }
+footer p { font-size: 0.78rem; color: rgba(255,255,255,0.3); }
+footer nav a {
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.78rem; margin-left: 1.4rem; transition: color 0.2s;
+}
+footer nav a:hover { color: var(--gold-lt); }
+
+@media (max-width: 780px) {
+  .faq-layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  nav .nav-links { display: none; }
+  footer { flex-direction: column; align-items: flex-start; }
+}
+```
+
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+
+<nav>
+  <a href="index.html" class="nav-logo">Nexus<span>247</span>.ai</a>
+  <ul class="nav-links">
+    <li><a href="index.html#features">Features</a></li>
+    <li><a href="index.html#how">How It Works</a></li>
+    <li><a href="index.html#pricing">Pricing</a></li>
+    <li><a href="faq.html" style="color:var(--gold-lt)">FAQ</a></li>
+  </ul>
+  <button class="nav-cta">Start Your Claim</button>
+</nav>
+
+<!-- PAGE HEADER -->
+
+<section class="page-header">
+  <div class="header-inner">
+    <div class="page-eyebrow">
+      <div class="eyebrow-line"></div>
+      <div class="eyebrow-text">Knowledge Base</div>
+    </div>
+    <h1>Questions Veterans<br><em>Actually Ask.</em></h1>
+    <p>Straight answers on nexus letters, the claims process, how our platform works, and what to expect at every step.</p>
+  </div>
+</section>
+
+<!-- FILTER BAR -->
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filterAll(this)">All Questions</button>
+  <button class="filter-btn" onclick="filterSection(this,'nexus')">Nexus Letters</button>
+  <button class="filter-btn" onclick="filterSection(this,'claims')">The Claims Process</button>
+  <button class="filter-btn" onclick="filterSection(this,'platform')">Using the Platform</button>
+  <button class="filter-btn" onclick="filterSection(this,'ratings')">Ratings & Math</button>
+  <button class="filter-btn" onclick="filterSection(this,'appeals')">Appeals & NODs</button>
+  <button class="filter-btn" onclick="filterSection(this,'privacy')">Privacy & Security</button>
+</div>
+
+<!-- MAIN -->
+
+<div class="faq-layout">
+
+  <!-- SIDEBAR -->
+
+  <aside class="sidebar">
+    <div class="sidebar-label">Jump to section</div>
+    <ul class="sidebar-nav">
+      <li><a href="#nexus">Nexus Letters</a></li>
+      <li><a href="#claims">The Claims Process</a></li>
+      <li><a href="#platform">Using the Platform</a></li>
+      <li><a href="#ratings">Ratings & Math</a></li>
+      <li><a href="#appeals">Appeals & NODs</a></li>
+      <li><a href="#privacy">Privacy & Security</a></li>
+    </ul>
+  </aside>
+
+  <!-- FAQ CONTENT -->
+
+  <div class="faq-content">
+
+```
+<!-- ═══ NEXUS LETTERS ═══ -->
+<section class="faq-section" id="nexus" data-category="nexus">
+  <div class="section-heading">
+    <div class="section-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <h2>Nexus Letters</h2>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What exactly is a nexus letter and why do I need one?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>A nexus letter is a medical opinion that establishes the connection — the "nexus" — between your current disability and your military service. The VA requires this link to approve a service-connection claim. Without a clear nexus, even well-documented conditions are routinely denied. A strong nexus letter cites specific 38 CFR regulations, references your service records, and uses the VA's required medical language ("at least as likely as not").</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Can I submit a claim without a nexus letter?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Technically yes — but you're significantly more likely to be denied. The VA may order its own Compensation & Pension (C&P) exam, which uses VA-contracted examiners who have financial incentives to minimize your rating. Having your own nexus letter on file gives you far more control over how your case is framed and evaluated.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What makes a nexus letter strong vs. one that gets ignored?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>A strong nexus letter must: (1) use the exact "at least as likely as not" standard — anything weaker is legally insufficient; (2) cite specific 38 CFR sections applicable to your condition; (3) reference your actual service records, MOS, and documented exposures; (4) address and rebut any negative C&P findings; and (5) be written with medical rationale, not just a conclusion. Our AI generates letters meeting all five criteria and then scores them before you see them.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      My private doctor refused to write a nexus letter. What now?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>This is extremely common. Most civilian physicians aren't trained in VA claims language and are cautious about legal liability. Nexus247 generates a draft letter grounded in 38 CFR that you can take back to your doctor for signature — or our Complete plan connects you with an independent medical expert familiar with VA requirements who can write and sign the opinion directly.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Does a nexus letter need to be written by a doctor?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>For a nexus letter to carry maximum weight, yes — it should be authored or co-signed by a licensed medical professional (MD, DO, PA, NP) with credentials relevant to your condition. Nexus247 generates the medical rationale and CFR-grounded framework; you bring it to your provider or use our expert review option for a fully signed opinion.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Can I get a nexus letter for a secondary condition?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Yes, and this is one of the most overlooked opportunities in VA claims. Secondary service connection means a condition caused or aggravated by an already service-connected disability qualifies for its own rating. For example, if your service-connected back injury caused depression, that depression may be ratable too. Our platform handles secondary nexus letters with the same CFR-grounded approach.</p></div>
+  </div>
+</section>
+
+<!-- ═══ THE CLAIMS PROCESS ═══ -->
+<section class="faq-section" id="claims" data-category="claims">
+  <div class="section-heading">
+    <div class="section-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h2>The Claims Process</h2>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      How long does a VA claim typically take to process?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>The VA's average processing time varies widely — typically 100–150 days for initial claims, but complex cases or those requiring C&P exams can run 6–18 months. Claims with complete, well-documented evidence (including a strong nexus letter) tend to move faster because the VA doesn't need to gather additional information. The single best thing you can do to speed up your claim is submit a fully evidenced package from the start.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What is a C&P exam and how do I prepare for it?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>A Compensation & Pension (C&P) exam is a medical evaluation ordered by the VA to assess the nature and severity of your claimed disabilities. Key prep tips: (1) describe your <strong>worst days</strong>, not your average — the VA rates maximum functional impact; (2) bring your nexus letter and any private medical opinions; (3) don't minimize symptoms out of habit or pride; (4) if you disagree with the examiner's conclusions, you have the right to request a new exam or submit a rebuttal. Our Complete plan includes a C&P prep guide.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What's the difference between direct service connection, secondary, and aggravation?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p><strong>Direct service connection</strong> means the condition was caused by an in-service event (injury, exposure, illness). <strong>Secondary service connection</strong> means the condition was caused or worsened by an already service-connected disability. <strong>Aggravation</strong> means a pre-existing condition was made permanently worse — beyond its natural progression — by military service. All three qualify for disability compensation, and all three are letter types we support.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      I was already denied. Can I still file again?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Yes. A denial is not final. You have three options: (1) file a <strong>Supplemental Claim</strong> with new and relevant evidence — this is the most common path and is where a new nexus letter or updated medical opinion is powerful; (2) request a <strong>Higher-Level Review</strong> (no new evidence, but a senior reviewer looks for errors); or (3) appeal to the <strong>Board of Veterans Appeals</strong>. The right path depends on the denial reason — our AI Claims Advisor can help you diagnose which lane is best for your situation.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What is an Effective Date and why does it matter so much?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Your effective date is generally the date the VA receives your claim — and it determines your back pay. If you're approved, you receive compensation going back to that date. This is why filing an Intent to File (ITF) immediately is critical: it locks in your effective date while you gather evidence, giving you up to a year to submit a fully developed claim without losing retroactive pay. Never wait until your package is perfect to start the clock.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Do I need a VSO (Veterans Service Officer) to file a claim?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>No — you can file independently. VSOs are free, accredited advocates who can be valuable, especially for complex cases. However, many veterans find VSOs to be overloaded and under-resourced, and VSOs cannot provide medical opinions or nexus letters. Nexus247 complements a VSO relationship by giving you professional-quality medical evidence that your VSO can then help you submit and track.</p></div>
+  </div>
+</section>
+
+<!-- ═══ USING THE PLATFORM ═══ -->
+<section class="faq-section" id="platform" data-category="platform">
+  <div class="section-heading">
+    <div class="section-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+    <h2>Using the Platform</h2>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What documents do I need to get started?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>The more you provide, the stronger your letter. At minimum you need: your service records (DD-214), any relevant medical records documenting your condition, and a description of the in-service event or exposure. Helpful additions include: C&P exam results, prior VA decisions, buddy statements, and your MOS/duty description. You don't need everything perfect before starting — our AI works with what you have and flags what's missing.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      How does the RPA Quality Scoring work?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Every generated letter is automatically scored across five dimensions before you see it: <strong>CFR Compliance</strong> (are the correct regulatory sections cited?), <strong>Nexus Strength</strong> (is the service connection argument legally sufficient?), <strong>Evidence Integration</strong> (does the letter reference your specific records?), <strong>Medical Rationale</strong> (is the clinical reasoning sound?), and <strong>Rater Readiness</strong> (is it formatted and written the way VA raters expect?). Each dimension scores 0–20, giving you a total out of 100 with actionable feedback on any weaknesses.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Is Nexus247 a law firm or medical practice?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>No. Nexus247 is an AI-powered document preparation and claims support platform. We are not attorneys and do not provide legal advice. We are not physicians and do not provide medical diagnoses or treatment. Our platform generates CFR-grounded document templates and educational guidance to help veterans build stronger claims. For a legally binding signed medical opinion, our expert review option connects you with independent licensed clinicians who operate independently.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      How is Nexus247 different from free VA claim resources?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Free resources — VSOs, VA.gov guides, veteran forums — are valuable but they don't generate your specific medical documents. They can explain the process; they can't write a nexus letter that cites 38 CFR § 3.303 in the context of your particular MOS and diagnosed condition. Nexus247 fills the critical gap between general guidance and the professional-quality medical evidence that actually determines outcomes.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What happens after I purchase? How fast do I get my letter?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>After purchase, you complete an intake questionnaire and upload your documents. Our AI generates your first letter draft, scores it, and delivers it to your secure dashboard — typically within minutes of completing your intake. You can review, request revisions, and download your final letter in PDF format ready for submission.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Can I use Nexus247 if I'm already working with a VSO or attorney?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Absolutely — and many veterans do. Nexus247 handles what VSOs and most attorneys can't: the generation of the actual medical documents. You can use our letters as evidence submitted alongside your VSO's representation, or provide them to your VA-accredited attorney to review and advise on. We're a tool in your arsenal, not a replacement for your existing team.</p></div>
+  </div>
+</section>
+
+<!-- ═══ RATINGS & MATH ═══ -->
+<section class="faq-section" id="ratings" data-category="ratings">
+  <div class="section-heading">
+    <div class="section-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <h2>Ratings & Math</h2>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Why doesn't my combined rating equal the sum of my individual ratings?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Because the VA uses "whole person math," not simple addition. Each successive disability is applied to the remaining "able" percentage of your body — not the total. For example: a 50% rating leaves you 50% able. A second 30% rating is 30% of that remaining 50% = 15% additional disability. Combined: 65% (rounded to 60%). This is why three 30% ratings don't equal 90%. Our Rating Estimator handles this calculation automatically.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What is TDIU and do I qualify?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Total Disability Individual Unemployability (TDIU) allows veterans to be paid at the 100% rate even if their combined rating is below 100%, if their service-connected disabilities prevent them from maintaining substantially gainful employment. You may qualify if you have a single disability rated at 60%+ or a combined rating of 70%+ with at least one disability at 40%+. TDIU requires a separate application (VA Form 21-8940) supported by strong medical evidence — which our platform can help build.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Can my rating be reduced after it's assigned?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>It's possible, but the VA faces a high legal burden to reduce an established rating. Ratings held for 5+ years are considered "protected" and require clear evidence of sustained improvement. Ratings held for 20+ years are "stabilized" and can only be reduced if fraud is proven. Avoid unnecessary follow-up exams, keep current medical documentation, and never ignore VA correspondence — missing a scheduled exam is one of the most common reasons ratings get reduced.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What is a bilateral factor and how does it affect my rating?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>If you have service-connected disabilities affecting both sides of the body (e.g., both knees, both shoulders, both feet), the VA adds a 10% bilateral factor to those combined ratings before adding them to your overall combined rating. This is a real bump that many veterans and even some VSOs miss. Our Rating Estimator accounts for bilateral conditions automatically.</p></div>
+  </div>
+</section>
+
+<!-- ═══ APPEALS & NODs ═══ -->
+<section class="faq-section" id="appeals" data-category="appeals">
+  <div class="section-heading">
+    <div class="section-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+    </div>
+    <h2>Appeals & NODs</h2>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What is a Notice of Disagreement (NOD) and when should I file one?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>A Notice of Disagreement is a formal statement that you disagree with a VA rating decision. Under the AMA (Appeals Modernization Act), filing an NOD kicks off an appeal at the Board of Veterans Appeals (BVA) and is one of three appeal lanes available after a decision. You have one year from your decision date to file. An NOD is most appropriate when you believe the rater made a legal or factual error — as opposed to simply needing new evidence, where a Supplemental Claim is usually faster.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      What's the difference between a Supplemental Claim and an NOD?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>A <strong>Supplemental Claim</strong> (VA Form 20-0995) is for when you have new and relevant evidence — like a nexus letter you didn't have before — that wasn't part of the original decision. It stays within the regional office and tends to resolve faster. An <strong>NOD</strong> is a formal appeal to the BVA arguing the existing decision was wrong. If you were denied due to lack of medical evidence, a Supplemental Claim with a strong nexus letter is usually the right move.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      How do I rebut a negative C&P exam?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>A negative C&P exam is not the end — it can be rebutted with a private independent medical opinion (IMO) that addresses the examiner's specific conclusions point by point. The IMO must explain why the C&P examiner's reasoning was flawed and provide a well-supported counter-opinion. Vague disagreement won't work; it has to engage the evidence directly. This is one of the most powerful uses of our platform and expert review service.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      My appeal has been pending for years. What can I do?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Legacy appeals (filed before February 2019) can take 5–10 years at the BVA. Options to consider: (1) opt into the AMA modernized review system if eligible — it can significantly speed things up; (2) request a hearing with a Veterans Law Judge if you haven't already; (3) contact your Congressional representative's constituent services office — congressional inquiries can prompt action; (4) work with an accredited VA attorney who may be able to identify procedural shortcuts. Our AI Advisor can help you understand your current status and options.</p></div>
+  </div>
+</section>
+
+<!-- ═══ PRIVACY & SECURITY ═══ -->
+<section class="faq-section" id="privacy" data-category="privacy">
+  <div class="section-heading">
+    <div class="section-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <h2>Privacy & Security</h2>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Is Nexus247 HIPAA compliant?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Yes. Nexus247 operates as a HIPAA-covered entity. Your medical records, personal information, and generated documents are handled in compliance with HIPAA privacy and security standards — including encryption in transit and at rest, access controls, and audit logging. We do not sell, share, or market your health information to third parties.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Will using Nexus247 affect my VA records or active claim?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>No. Nexus247 is completely separate from the VA system. We don't have access to your VA records and we don't communicate with the VA on your behalf unless you explicitly use a representation service. Generating a letter on our platform has zero effect on any pending claim — documents only enter your claim when you choose to submit them yourself through the VA.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      How is my data stored and can I delete it?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>Your documents and personal data are stored in encrypted cloud storage with access limited to you and, where applicable, the expert reviewers you engage. You can request deletion of your account and associated data at any time by contacting our support team. We retain anonymized, de-identified data to improve our AI models but no personally identifiable health information is retained after account deletion.</p></div>
+  </div>
+
+  <div class="faq-item">
+    <button class="faq-question" onclick="toggle(this)">
+      Is my information shared with the VA or any government agency?
+      <span class="faq-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+    </button>
+    <div class="faq-answer"><p>No. Nexus247 does not share your information with the VA, Department of Defense, or any government agency. Your information is submitted to the VA only when you personally choose to include our generated documents in your claim package. We are a private service with no government affiliation or data-sharing agreements.</p></div>
+  </div>
+
+</section>
+```
+
+  </div><!-- end faq-content -->
+</div><!-- end faq-layout -->
+
+<!-- CTA BAND -->
+
+<section class="cta-band">
+  <h2>Still Have Questions?<br><em>We're Here.</em></h2>
+  <p>Chat with our AI Claims Advisor or reach our support team — no question is too small when your benefits are on the line.</p>
+  <a href="index.html#start" class="btn-primary">
+    Start Your Claim
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;">
+      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+    </svg>
+  </a>
+</section>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="logo-sm">Nexus<span>247</span>.ai</div>
+  <p>© 2025 Nexus247.ai · Not a law firm · Not affiliated with the VA</p>
+  <nav>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </nav>
+</footer>
+
+<script>
+  function toggle(btn) {
+    const item = btn.closest('.faq-item');
+    const wasOpen = item.classList.contains('open');
+    // close all
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  }
+
+  function filterSection(btn, cat) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.faq-section').forEach(sec => {
+      sec.style.display = sec.dataset.category === cat ? 'block' : 'none';
+    });
+  }
+
+  function filterAll(btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.faq-section').forEach(sec => sec.style.display = 'block');
+  }
+
+  // Scroll spy for sidebar
+  const sections = document.querySelectorAll('.faq-section');
+  const sideLinks = document.querySelectorAll('.sidebar-nav a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(sec => {
+      if (window.scrollY >= sec.offsetTop - 120) current = sec.id;
+    });
+    sideLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+
+  // Open first item in each section by default
+  document.querySelectorAll('.faq-section').forEach(sec => {
+    const first = sec.querySelector('.faq-item');
+    if (first) first.classList.add('open');
+  });
+</script>
+
+</body>
+</html>
