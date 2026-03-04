@@ -26,6 +26,8 @@ import {
   Shield,
   FileSearch,
   ClipboardCheck,
+  AlertTriangle,
+  Lightbulb,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
@@ -51,6 +53,8 @@ const mainItems = [
 const bottomItems = [
   { title: "Pricing", url: "/pricing", icon: CreditCard },
   { title: "Get Help", url: "/support", icon: HeadphonesIcon },
+  { title: "Report a Problem", url: "/support?type=bug", icon: AlertTriangle },
+  { title: "Feature Request", url: "/support?type=feature", icon: Lightbulb },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 

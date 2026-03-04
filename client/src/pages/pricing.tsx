@@ -229,6 +229,17 @@ export default function Pricing() {
         <p style={{ color: "var(--muted-foreground)", fontSize: "0.95rem", maxWidth: 520, margin: "0 auto" }}>
           Every plan includes RPA quality scoring, AI Claims Chat, and CFR-grounded letter generation.
         </p>
+        <p
+          style={{
+            color: "#D4A43E",
+            fontSize: "1rem",
+            fontWeight: 600,
+            marginTop: 14,
+          }}
+          data-testid="text-trial-messaging"
+        >
+          Start with a free 3-day Pro trial — no credit card required.
+        </p>
       </div>
 
       <div className="pricing-grid" style={{ display: "grid", gap: 24, alignItems: "start" }}>
@@ -310,6 +321,20 @@ export default function Pricing() {
                   <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.88rem", lineHeight: 1.5 }}>
                     {tier.description}
                   </p>
+                  {tier.tier === "pro" && (
+                    <p
+                      style={{
+                        color: "#D4A43E",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        marginTop: 8,
+                        letterSpacing: "0.03em",
+                      }}
+                      data-testid="text-pro-trial-badge"
+                    >
+                      Includes 3-day free trial
+                    </p>
+                  )}
                 </div>
 
                 <div style={{
@@ -385,7 +410,11 @@ export default function Pricing() {
                     {checkoutMutation.isPending && checkoutMutation.variables === tier.tier ? (
                       <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
                     ) : null}
-                    {currentTier === "none" ? `Start ${tier.name}` : `Upgrade to ${tier.name}`}
+                    {tier.tier === "pro" && currentTier === "none"
+                      ? "Start Free Trial"
+                      : currentTier === "none"
+                        ? `Start ${tier.name}`
+                        : `Upgrade to ${tier.name}`}
                   </button>
                 )}
               </div>

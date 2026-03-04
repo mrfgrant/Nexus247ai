@@ -26,7 +26,7 @@ const STEPS = ["Military Service", "Deployments & Exposures", "VA Info", "Suppor
 const DOC_CATEGORIES = [
   { value: "decision_letter", label: "VA Decision Letter", accept: ".pdf,.txt", description: "Upload your VA rating decision letter (PDF or text file)" },
   { value: "denial_letter", label: "VA Denial Letter", accept: ".pdf,.txt", description: "Upload any VA denial letters (PDF or text file)" },
-  { value: "medical_records", label: "Medical Records", accept: ".pdf,.txt", description: "Upload medical records (PDF or text file)" },
+  { value: "medical_records", label: "Medical Records", accept: ".txt", description: "Upload medical records exported to plain text (.txt). For optimal outcomes, include your service treatment records and any relevant medical documentation." },
 ];
 
 export default function Intake() {
@@ -131,8 +131,22 @@ export default function Intake() {
     );
   }
 
+  const isNewUser = !profile || !profile.id;
+
   return (
     <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-6">
+      {isNewUser && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="pt-6 space-y-2">
+            <h2 className="text-lg font-semibold text-foreground" data-testid="text-profile-required-heading">Complete Your Profile to Get Started</h2>
+            <p className="text-sm text-muted-foreground" data-testid="text-profile-required-body">
+              For Nexus247 to generate accurate, CFR-grounded documents tailored to your claim, we need your military service details. This information helps our AI build letters that reference the right regulations and evidence for your specific situation.
+            </p>
+            <p className="text-xs text-muted-foreground/70" data-testid="text-profile-required-time">This usually takes about 5 minutes.</p>
+          </CardContent>
+        </Card>
+      )}
+
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-intake-title">Veteran Profile Intake</h1>
         <p className="text-muted-foreground text-sm mt-1">Complete your profile to generate accurate claim documents.</p>
@@ -283,7 +297,7 @@ export default function Intake() {
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
                   <p className="text-sm text-muted-foreground">
-                    Upload any VA decision letters, denial letters, or medical records you have. These help the AI generate more accurate and effective documents for your claims. All document types accept PDF and text (.txt) files.
+                    Documents are optional but significantly improve the accuracy and strength of your generated letters. Medical records must be exported to plain text (.txt) format. Decision letters and denial letters accept both PDF and text files.
                   </p>
                 </div>
               </div>

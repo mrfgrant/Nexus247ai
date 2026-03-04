@@ -285,7 +285,7 @@ export default function CnpPrep() {
         </Card>
       )}
 
-      {result && (
+      {result && !result.trialMode && (
         <>
           <div className="space-y-3">
             {!result.hasNexusLetter && (
@@ -448,6 +448,154 @@ export default function CnpPrep() {
             </TabsContent>
           </Tabs>
         </>
+      )}
+
+      {result && result.trialMode && (
+        <div className="space-y-4" data-testid="trial-prep-preview">
+          <div
+            className="rounded-md p-4"
+            style={{
+              background: "rgba(212,164,62,0.08)",
+              border: "1px solid rgba(212,164,62,0.35)",
+            }}
+            data-testid="section-trial-prep-banner"
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground" data-testid="text-trial-prep-title">
+                  Your C&P Exam Prep guide has been generated
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  A preview of your personalized prep guide for {result.conditionName} is shown below. Upgrade to access the full guide.
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate("/pricing")}
+                style={{
+                  background: "#D4A43E",
+                  color: "#0D2137",
+                  borderColor: "#D4A43E",
+                }}
+                className="whitespace-nowrap"
+                data-testid="button-unlock-prep-banner"
+              >
+                Unlock Full Prep Guide
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">
+                C&P Exam Preparation Guide — {result.conditionName}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="prose prose-sm dark:prose-invert max-w-none p-4 rounded-md bg-muted/30 border border-border whitespace-pre-wrap font-mono text-sm leading-relaxed"
+                data-testid="text-prep-guide-preview"
+              >
+                {result.prepGuidePreview}
+              </div>
+
+              <div className="relative mt-4" onContextMenu={(e) => e.preventDefault()}>
+                <div
+                  className="absolute inset-x-0 top-0 h-16 z-10"
+                  style={{
+                    background: "linear-gradient(to bottom, hsl(var(--card)), transparent)",
+                  }}
+                />
+
+                <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+                  {[
+                    { top: "10%", left: "8%", rotate: -35 },
+                    { top: "40%", left: "50%", rotate: -35 },
+                    { top: "70%", left: "20%", rotate: -35 },
+                  ].map((pos, i) => (
+                    <div
+                      key={i}
+                      className="absolute whitespace-nowrap text-xs font-bold tracking-widest uppercase"
+                      style={{
+                        top: pos.top,
+                        left: pos.left,
+                        transform: `rotate(${pos.rotate}deg)`,
+                        color: "rgba(212,164,62,0.08)",
+                        fontSize: "0.7rem",
+                        letterSpacing: "0.15em",
+                      }}
+                    >
+                      TRIAL — Nexus247.ai — Upgrade to Access
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  className="font-mono text-sm leading-relaxed overflow-hidden p-4 rounded-md bg-muted/30 border border-border"
+                  style={{
+                    filter: "blur(5px)",
+                    userSelect: "none",
+                    maxHeight: "300px",
+                  }}
+                  aria-hidden="true"
+                  data-testid="text-blurred-prep-content"
+                >
+                  {"Section 3: Condition-Specific Questions\n\nThe examiner will ask you detailed questions about the frequency, severity, and duration of your symptoms. Be prepared to describe your worst days using specific examples...\n\nSection 4: DBQ Scoring Criteria\n\nThe Disability Benefits Questionnaire for your condition measures specific functional limitations. Understanding these criteria helps you provide relevant information...\n\nSection 5: What to Say and What to Avoid\n\nDuring your exam, focus on describing how your condition affects your daily life. Use the frequency-severity-duration framework for each symptom...\n\nSection 6: Red Flags — Bad Faith Exam Indicators\n\nKnow what constitutes an inadequate exam so you can document issues and file a complaint if necessary...\n\nSection 7: Pre-Exam Checklist\n\nBefore your appointment, gather all relevant documentation including your service treatment records, buddy letters, and any private medical opinions...\n\nSection 8: Post-Exam Documentation Template\n\nWithin 24 hours of your exam, document everything that happened including the examiner's questions, your responses, exam duration, and any concerns..."}
+                </div>
+
+                <div className="absolute inset-0 flex items-center justify-center z-20">
+                  <Card className="max-w-sm w-full mx-4">
+                    <CardContent className="p-5 text-center space-y-3">
+                      <div
+                        className="mx-auto flex items-center justify-center w-10 h-10 rounded-full"
+                        style={{ background: "rgba(212,164,62,0.12)" }}
+                      >
+                        <Lock className="w-5 h-5" style={{ color: "#D4A43E" }} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground" data-testid="text-lock-prep-title">
+                          Full Prep Guide Ready
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Upgrade to access the full prep guide with symptom descriptions, DBQ scoring criteria, and your printable cheat sheet.
+                        </p>
+                      </div>
+                      <Button
+                        className="w-full"
+                        style={{
+                          background: "#D4A43E",
+                          color: "#0D2137",
+                          borderColor: "#D4A43E",
+                        }}
+                        onClick={() => navigate("/pricing")}
+                        data-testid="button-unlock-full-prep"
+                      >
+                        Unlock Full Prep Guide
+                        <ArrowRight className="ml-1.5 h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+                        {[
+                          { name: "Basic", price: "$19", period: "/mo" },
+                          { name: "Pro", price: "$49", period: "/mo" },
+                          { name: "Concierge", price: "$149", period: "/mo" },
+                        ].map((chip) => (
+                          <Badge
+                            key={chip.name}
+                            variant="outline"
+                            className="no-default-hover-elevate no-default-active-elevate text-xs"
+                            data-testid={`badge-prep-pricing-${chip.name.toLowerCase()}`}
+                          >
+                            {chip.name} {chip.price}{chip.period}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

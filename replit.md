@@ -115,10 +115,37 @@ Concierge only: aod_motion, good_cause_letter
 
 ### Trial Chat Gating
 - Trial users can access AI chat but without personal data context
+- Users without profiles (safety net) also get general-guidance chat instead of 403
+- Users with expired trials (tier "none" + profile exists) get blocked with 403
 - Chat skips profile details, conditions, uploaded documents, and decision letter analysis
 - Knowledge base (general CFR/VA info) still included
 - Veteran display name still used for addressing
 - AI instructed to provide general VA claims guidance and mention that paid subscription unlocks personalized, data-driven advice
+
+### Trial C&P Exam Prep Gating
+- Trial users can generate C&P prep but get `trialMode: true` response with preview content only
+- `prepGuidePreview` and `cheatSheetPreview` contain first ~3 paragraphs
+- Full `prepGuide` and `cheatSheet` nulled out in trial response
+- Frontend shows preview content, blurred section with watermark, lock overlay with upgrade CTA and pricing chips
+- Copy/Download/Print buttons hidden in trial mode
+
+### Profile Completion Gate
+- `AuthenticatedLayout` in App.tsx queries `/api/profile`
+- If no profile, redirects to `/intake` (except `/intake`, `/pricing`, `/settings`, `/support`)
+- Intake page shows a prominent banner when no profile exists explaining why it's needed
+- Medical records only accept `.txt` files (frontend + backend validation)
+- Decision/denial letters still accept `.pdf,.txt`
+
+### Tier-Based Record Limits
+- `getRecordLimit(tier)`: Basic/Trial=5000 chars, Pro=20000, Concierge=50000 per record
+- `getDocLimit(tier)`: Basic=5 docs, Pro=20, Concierge=50 docs in AI context
+- Applied across all AI routes: document generation, chat, decision letter analysis, cross-reference, C&P exam prep
+- Ensures paying customers get their full medical records included in AI analysis
+
+### Sidebar Feedback Links
+- "Report a Problem" → `/support?type=bug` (AlertTriangle icon)
+- "Feature Request" → `/support?type=feature` (Lightbulb icon)
+- Support page reads `type` query param and auto-opens dialog with pre-filled subject
 
 ### Veteran Addressing Convention
 Veterans are addressed by rank + last name throughout the app (e.g., "SPC Grant", "PO2 Smith"). The `getRankDisplayName()` utility in `shared/utils.ts` maps pay grades to branch-specific abbreviations. Used in: dashboard greeting, sidebar profile, chat UI + AI prompt, settings page, and all AI document generation prompts.

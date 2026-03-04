@@ -484,29 +484,39 @@ function AnalysisResultView({
         </CardContent>
       </Card>
 
-      {analysisId && !crossRef && (
+      {analysisId && (
         <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex gap-3 flex-1">
                 <FileSearch className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-foreground mb-1">Cross-Reference Medical Records</h3>
+                  <h3 className="font-semibold text-foreground mb-1">
+                    {crossRef ? "Re-Analyze Evidence" : "Cross-Reference Medical Records"}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    Compare your uploaded medical records against this decision to find evidence gaps and build a winning strategy.
+                    {crossRef
+                      ? "Re-run if you've uploaded new records or if results seem incomplete."
+                      : "Compare your uploaded medical records against this decision to find evidence gaps and build a winning strategy."}
                   </p>
                 </div>
               </div>
               <Button
                 onClick={handleCrossReference}
                 disabled={isCrossReferencing}
+                variant={crossRef ? "outline" : "default"}
                 className="shrink-0"
-                data-testid="button-cross-reference"
+                data-testid={crossRef ? "button-re-analyze-evidence" : "button-cross-reference"}
               >
                 {isCrossReferencing ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Analyzing...
+                  </>
+                ) : crossRef ? (
+                  <>
+                    <History className="w-4 h-4 mr-2" />
+                    Re-Analyze Evidence
                   </>
                 ) : (
                   <>

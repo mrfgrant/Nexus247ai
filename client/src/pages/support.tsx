@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearch } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,22 @@ import type { SupportRequest } from "@shared/schema";
 
 export default function Support() {
   const { toast } = useToast();
+  const searchString = useSearch();
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const type = params.get("type");
+    if (type === "bug") {
+      setSubject("[Bug Report] ");
+      setOpen(true);
+    } else if (type === "feature") {
+      setSubject("[Feature Request] ");
+      setOpen(true);
+    }
+  }, [searchString]);
 
   const { data: requests = [], isLoading } = useQuery<SupportRequest[]>({
     queryKey: ["/api/support"],
