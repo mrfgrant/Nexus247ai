@@ -524,14 +524,14 @@ function AnalysisResultView({
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`w-full grid ${tabCount === 6 ? "grid-cols-6" : "grid-cols-5"}`} data-testid="analysis-tabs">
-          <TabsTrigger value="conditions">Conditions ({analysis.conditions?.length || 0})</TabsTrigger>
-          <TabsTrigger value="appeals">Appeals ({analysis.appealOptions?.length || 0})</TabsTrigger>
-          <TabsTrigger value="errors">Errors ({(analysis.cfrViolations?.length || 0) + (analysis.overallErrors?.length || 0)})</TabsTrigger>
-          <TabsTrigger value="documents">Documents ({analysis.recommendedDocuments?.length || 0})</TabsTrigger>
-          <TabsTrigger value="dates">Key Dates</TabsTrigger>
+        <TabsList className={`w-full flex overflow-x-auto scrollbar-hide ${tabCount === 6 ? "md:grid md:grid-cols-6" : "md:grid md:grid-cols-5"}`} data-testid="analysis-tabs">
+          <TabsTrigger value="conditions" className="shrink-0 whitespace-nowrap">Conditions ({analysis.conditions?.length || 0})</TabsTrigger>
+          <TabsTrigger value="appeals" className="shrink-0 whitespace-nowrap">Appeals ({analysis.appealOptions?.length || 0})</TabsTrigger>
+          <TabsTrigger value="errors" className="shrink-0 whitespace-nowrap">Errors ({(analysis.cfrViolations?.length || 0) + (analysis.overallErrors?.length || 0)})</TabsTrigger>
+          <TabsTrigger value="documents" className="shrink-0 whitespace-nowrap">Documents ({analysis.recommendedDocuments?.length || 0})</TabsTrigger>
+          <TabsTrigger value="dates" className="shrink-0 whitespace-nowrap">Key Dates</TabsTrigger>
           {crossRef && (
-            <TabsTrigger value="evidence" className="relative">
+            <TabsTrigger value="evidence" className="relative shrink-0 whitespace-nowrap">
               Evidence Gap
               <span className="ml-1 w-2 h-2 rounded-full bg-amber-500 inline-block" />
             </TabsTrigger>

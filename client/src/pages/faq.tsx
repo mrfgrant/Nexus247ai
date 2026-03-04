@@ -12,6 +12,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { RpaScoringModal } from "@/components/rpa-scoring-modal";
 
 const categories = [
   { id: "all", label: "All Questions" },
@@ -193,6 +194,7 @@ export default function FAQ() {
   const [openItems, setOpenItems] = useState<Record<string, number | null>>({});
   const [activeSection, setActiveSection] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [rpaModalOpen, setRpaModalOpen] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -425,7 +427,13 @@ export default function FAQ() {
                       <button
                         className="faq-question"
                         data-testid={`faq-question-${section.id}-${idx}`}
-                        onClick={() => handleToggle(section.id, idx)}
+                        onClick={(e) => {
+                          if (item.q === "How does the RPA Quality Scoring work?") {
+                            setRpaModalOpen(true);
+                            return;
+                          }
+                          handleToggle(section.id, idx);
+                        }}
                         style={{
                           width: "100%",
                           background: isOpen ? "var(--smoke)" : "none",
@@ -444,7 +452,17 @@ export default function FAQ() {
                           lineHeight: 1.4,
                         }}
                       >
-                        <span>{item.q}</span>
+                        <span>
+                          {item.q === "How does the RPA Quality Scoring work?" ? (
+                            <span
+                              onClick={(e) => { e.stopPropagation(); setRpaModalOpen(true); }}
+                              style={{ cursor: "pointer", textDecoration: "underline", textDecorationColor: "var(--gold)", textUnderlineOffset: 4 }}
+                              data-testid="trigger-rpa-modal-faq"
+                            >
+                              {item.q}
+                            </span>
+                          ) : item.q}
+                        </span>
                         <span
                           className="faq-icon-rotate"
                           style={{
@@ -543,6 +561,8 @@ export default function FAQ() {
           <Link href="/faq" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem" }} data-testid="link-footer-faq">FAQ</Link>
         </nav>
       </footer>
+
+      <RpaScoringModal open={rpaModalOpen} onOpenChange={setRpaModalOpen} />
 
       <style>{`
         .faq-layout-grid {

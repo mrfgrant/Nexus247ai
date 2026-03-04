@@ -104,7 +104,18 @@ Concierge only: aod_motion, good_cause_letter
 Veterans are addressed by rank + last name throughout the app (e.g., "SPC Grant", "PO2 Smith"). The `getRankDisplayName()` utility in `shared/utils.ts` maps pay grades to branch-specific abbreviations. Used in: dashboard greeting, sidebar profile, chat UI + AI prompt, settings page, and all AI document generation prompts.
 
 ### Design Theme
-Navy blue primary (#1a3a6b), warm gold accent (#d4a017), dark sidebar, military/veteran aesthetic
+Navy (#0D2137), navy-mid (#163352), gold (#D4A43E), gold-lt (#EAC76A), smoke (#FAFAF7), fog (#EFF0F3). Dark sidebar, military/veteran aesthetic.
+
+### RPA Scoring Modal
+- Reusable component: `client/src/components/rpa-scoring-modal.tsx`
+- Shows 5 scoring dimensions table with navy/gold design, CTA to login or generate
+- Triggered from: landing page feature card, pricing page feature lists, FAQ "How does RPA Quality Scoring work?" question
+- Props: `open`, `onOpenChange`, `authenticated` (controls CTA link target)
+
+### Landing Page Hero
+- Two-column hero: left = copy + CTAs, right = animated Score Card widget
+- Score Card shows 5 animated bars (CFR Compliance, Nexus Strength, Evidence Grounding, Diagnostic Clarity, Rater Readiness) with count-up to 86/100
+- Mobile (<900px) stacks vertically
 
 ### Stripe Payment Integration
 - `server/stripe.ts` — Stripe client + price/tier mappings + customer helper

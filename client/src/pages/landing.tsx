@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Shield,
   FileText,
@@ -16,6 +16,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { RpaScoringModal } from "@/components/rpa-scoring-modal";
 
 const features = [
   {
@@ -175,8 +176,142 @@ function LandingFeatureItem({ feature }: { feature: { text: string; detail: stri
   );
 }
 
+const SCORE_ROWS = [
+  { label: "CFR Compliance", score: 9, width: 90 },
+  { label: "Nexus Strength", score: 9, width: 90 },
+  { label: "Evidence Grounding", score: 8, width: 80 },
+  { label: "Diagnostic Clarity", score: 8, width: 80 },
+  { label: "Rater Readiness", score: 9, width: 90 },
+];
+
+function ScoreCard() {
+  const [animated, setAnimated] = useState(false);
+  const [barWidths, setBarWidths] = useState(SCORE_ROWS.map(() => 0));
+  const [scores, setScores] = useState(SCORE_ROWS.map(() => 0));
+  const [overall, setOverall] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !animated) {
+          setAnimated(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [animated]);
+
+  useEffect(() => {
+    if (!animated) return;
+    SCORE_ROWS.forEach((row, i) => {
+      setTimeout(() => {
+        setBarWidths((prev) => { const n = [...prev]; n[i] = row.width; return n; });
+        let current = 0;
+        const tick = setInterval(() => {
+          current++;
+          setScores((prev) => { const n = [...prev]; n[i] = current; return n; });
+          if (current >= row.score) clearInterval(tick);
+        }, 90);
+      }, 500 + i * 200);
+    });
+    setTimeout(() => {
+      let n = 0;
+      const target = 86;
+      const tick = setInterval(() => {
+        n += 2;
+        setOverall(Math.min(n, target));
+        if (n >= target) clearInterval(tick);
+      }, 20);
+    }, 500 + 5 * 200 + 300);
+  }, [animated]);
+
+  return (
+    <div ref={cardRef} className="score-card-wrap" style={{ flex: "0 0 390px", animation: animated ? "fadeLeft 0.8s ease both" : "none" }}>
+      <div style={{
+        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(212,164,62,0.3)",
+        borderRadius: 10, padding: "26px 26px 22px", backdropFilter: "blur(12px)",
+        boxShadow: "0 24px 64px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04) inset",
+      }} data-testid="card-score-preview">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.63rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--gold)" }}>
+            RPA Quality Score
+          </div>
+          <div style={{
+            background: "rgba(212,164,62,0.15)", border: "1px solid rgba(212,164,62,0.35)",
+            borderRadius: 2, padding: "3px 10px", fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "0.58rem", letterSpacing: "0.1em", color: "var(--gold-lt)", textTransform: "uppercase",
+          }}>
+            Live Preview
+          </div>
+        </div>
+        <div style={{
+          background: "rgba(255,255,255,0.06)", borderRadius: 5, padding: "13px 15px",
+          marginBottom: 20, border: "1px solid rgba(255,255,255,0.07)",
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.56rem", letterSpacing: "0.14em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase", marginBottom: 9 }}>
+            Nexus Letter · Veteran Sample
+          </div>
+          {[100, 88, 95, 80, 60].map((w, i) => (
+            <div key={i} style={{ height: 6, borderRadius: 4, background: "rgba(255,255,255,0.12)", marginBottom: i < 4 ? 6 : 0, width: `${w}%`, filter: "blur(1px)" }} />
+          ))}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18 }}>
+          {SCORE_ROWS.map((row, i) => (
+            <div key={row.label}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                <div style={{ fontSize: "0.77rem", color: "rgba(255,255,255,0.75)" }}>{row.label}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem", color: "var(--gold)", fontWeight: 600 }}>{scores[i]}/10</div>
+              </div>
+              <div style={{ height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden" }}>
+                <div style={{
+                  height: "100%", borderRadius: 10,
+                  background: "linear-gradient(90deg, var(--gold), var(--gold-lt))",
+                  width: `${barWidths[i]}%`,
+                  transition: "width 1.2s cubic-bezier(0.22, 1, 0.36, 1)",
+                }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{
+          background: "rgba(212,164,62,0.1)", border: "1px solid rgba(212,164,62,0.3)",
+          borderRadius: 6, padding: "13px 15px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.58rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 3 }}>
+              Overall Score
+            </div>
+            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.85rem", color: "var(--gold)", lineHeight: 1 }} data-testid="text-overall-score">
+              {overall}<span style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.38)", fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}>/100</span>
+            </div>
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 7,
+            background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)",
+            borderRadius: 4, padding: "8px 13px",
+          }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.6)", animation: "pulse 2s infinite" }} />
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.6rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#4ade80" }}>
+              Ready to Submit
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 13, textAlign: "center", fontSize: "0.7rem", color: "rgba(255,255,255,0.27)", lineHeight: 1.5 }}>
+          Every letter is scored like this <strong style={{ color: "rgba(212,164,62,0.7)", fontWeight: 500 }}>before you submit</strong>.<br />
+          Low scores get flagged for revision automatically.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [rpaModalOpen, setRpaModalOpen] = useState(false);
   const revealRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
@@ -271,120 +406,102 @@ export default function Landing() {
 
       {/* HERO */}
       <section
-        className="landing-grid-bg landing-gold-line"
+        className="landing-grid-bg"
         style={{
-          minHeight: "100vh", background: "var(--navy)", display: "flex", flexDirection: "column",
-          justifyContent: "center", position: "relative", overflow: "hidden", padding: "120px 5vw 80px",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #0D2137 0%, #163352 55%, #1a3d60 100%)",
+          display: "flex", flexDirection: "column", justifyContent: "center",
+          position: "relative", overflow: "hidden", padding: "120px 5vw 80px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "2rem", animation: "fadeUp 0.7s ease both" }}>
-          <div style={{ width: 36, height: 1, background: "var(--gold)", opacity: 0.8 }} />
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", opacity: 0.9 }}>
-            Trusted by Veterans Nationwide
-          </div>
-        </div>
+        <div style={{
+          position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
+          width: "52vw", height: "80%",
+          background: "radial-gradient(ellipse at center, rgba(212,164,62,0.08) 0%, transparent 65%)",
+          pointerEvents: "none",
+        }} />
 
-        <div style={{ maxWidth: 700, marginLeft: "4vw" }}>
-          <h1
-            style={{
-              fontFamily: "'DM Serif Display', serif", fontSize: "clamp(3rem, 6vw, 5.2rem)",
-              lineHeight: 1.08, color: "#fff", marginBottom: "1.6rem", animation: "fadeUp 0.7s 0.1s ease both",
-            }}
-            data-testid="text-hero-headline"
-          >
-            Your Service<br />Deserves a <em style={{ fontStyle: "italic", color: "var(--gold)" }}>Fight<br />Worth Winning.</em>
-          </h1>
-          <p
-            style={{
-              fontSize: "1.1rem", lineHeight: 1.7, color: "rgba(255,255,255,0.62)",
-              maxWidth: 520, marginBottom: "3rem", fontWeight: 300, animation: "fadeUp 0.7s 0.2s ease both",
-            }}
-            data-testid="text-hero-subtitle"
-          >
-            AI-powered nexus letters, personal statements, and NODs grounded in 38 CFR regulations — scored for quality before you ever submit.
-          </p>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", animation: "fadeUp 0.7s 0.3s ease both" }}>
-            <a
-              href="/api/login"
+        <div className="landing-hero-inner" style={{
+          display: "flex", alignItems: "center", gap: "5vw",
+          maxWidth: 1200, margin: "0 auto", width: "100%", position: "relative", zIndex: 1,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "2rem", animation: "fadeUp 0.6s ease both" }}>
+              <div style={{ width: 32, height: 1, background: "var(--gold)", opacity: 0.8 }} />
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.68rem", letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--gold)" }}>
+                Trusted by Veterans Nationwide
+              </div>
+            </div>
+            <h1
               style={{
-                display: "inline-flex", alignItems: "center", gap: 10,
-                background: "var(--gold)", color: "var(--navy)", padding: "16px 34px", borderRadius: 3,
-                fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
-                textDecoration: "none", boxShadow: "0 4px 24px rgba(200,153,58,0.28)",
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)",
+                lineHeight: 1.07, color: "#fff", marginBottom: "1.5rem", animation: "fadeUp 0.6s 0.1s ease both",
               }}
-              data-testid="button-hero-cta"
+              data-testid="text-hero-headline"
             >
-              Start Your Claim
-              <ArrowRight style={{ width: 16, height: 16 }} />
-            </a>
-            <a
-              href="#pricing"
+              Your Service<br />Deserves a <em style={{ fontStyle: "italic", color: "var(--gold)" }}>Fight<br />Worth Winning.</em>
+            </h1>
+            <p
               style={{
-                display: "inline-flex", alignItems: "center", gap: 10,
-                background: "transparent", color: "rgba(255,255,255,0.78)", padding: "16px 28px", borderRadius: 3,
-                fontSize: "0.9rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase",
-                textDecoration: "none", border: "1px solid rgba(255,255,255,0.2)",
-                fontFamily: "'DM Sans', sans-serif",
+                fontSize: "1.05rem", lineHeight: 1.72, color: "rgba(255,255,255,0.58)",
+                maxWidth: 480, marginBottom: "2.8rem", fontWeight: 300, animation: "fadeUp 0.6s 0.2s ease both",
               }}
-              data-testid="button-view-pricing"
+              data-testid="text-hero-subtitle"
             >
-              View Pricing
-            </a>
-          </div>
-
-          <div
-            style={{
-              display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap",
-              marginTop: "4.5rem", paddingTop: "3rem", borderTop: "1px solid rgba(255,255,255,0.08)",
-              animation: "fadeUp 0.7s 0.4s ease both",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: "0.8rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
-              <Shield style={{ width: 14, height: 14, color: "var(--gold)", opacity: 0.8 }} />
-              HIPAA Compliant
+              AI-powered nexus letters, personal statements, and NODs grounded in 38 CFR — scored for quality before you ever submit.
+            </p>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", animation: "fadeUp 0.6s 0.3s ease both" }}>
+              <a
+                href="/api/login"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 10,
+                  background: "var(--gold)", color: "var(--navy)", padding: "15px 32px", borderRadius: 3,
+                  fontSize: "0.88rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase",
+                  textDecoration: "none", boxShadow: "0 4px 24px rgba(212,164,62,0.32)",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+                data-testid="button-hero-cta"
+              >
+                Start Your Claim
+                <ArrowRight style={{ width: 15, height: 15 }} />
+              </a>
+              <a
+                href="#pricing"
+                style={{
+                  display: "inline-flex", alignItems: "center",
+                  background: "transparent", color: "rgba(255,255,255,0.72)", padding: "15px 26px", borderRadius: 3,
+                  fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase",
+                  textDecoration: "none", border: "1px solid rgba(255,255,255,0.18)",
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+                data-testid="button-view-pricing"
+              >
+                View Pricing
+              </a>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: "0.8rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
-              <Lock style={{ width: 14, height: 14, color: "var(--gold)", opacity: 0.8 }} />
-              Encrypted & Secure
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: "0.8rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
-              <Scale style={{ width: 14, height: 14, color: "var(--gold)", opacity: 0.8 }} />
-              38 CFR Grounded
-            </div>
-          </div>
-        </div>
-
-        {/* Floating stat cards */}
-        <div
-          className="landing-hero-stats"
-          style={{
-            position: "absolute", right: "5vw", bottom: "10%",
-            display: "flex", flexDirection: "column", gap: 14,
-            animation: "fadeLeft 0.8s 0.5s ease both",
-          }}
-        >
-          {[
-            { num: "38 CFR", label: "Regulation-backed" },
-            { num: "5-pt", label: "Quality scoring" },
-            { num: "24/7", label: "Available access" },
-          ].map((stat) => (
             <div
-              key={stat.label}
               style={{
-                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(200,153,58,0.18)",
-                borderRadius: 6, padding: "18px 24px", minWidth: 180, backdropFilter: "blur(8px)",
+                display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap",
+                marginTop: "4rem", paddingTop: "2.5rem", borderTop: "1px solid rgba(255,255,255,0.08)",
+                animation: "fadeUp 0.6s 0.4s ease both",
               }}
-              data-testid={`stat-${stat.label.toLowerCase().replace(/\s+/g, "-")}`}
             >
-              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: "2rem", color: "var(--gold)", lineHeight: 1 }}>
-                {stat.num}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.75rem", letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)", fontWeight: 500 }}>
+                <Shield style={{ width: 13, height: 13, color: "var(--gold)", opacity: 0.75 }} />
+                HIPAA Compliant
               </div>
-              <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>
-                {stat.label}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.75rem", letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)", fontWeight: 500 }}>
+                <Lock style={{ width: 13, height: 13, color: "var(--gold)", opacity: 0.75 }} />
+                Encrypted & Secure
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.75rem", letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)", fontWeight: 500 }}>
+                <Scale style={{ width: 13, height: 13, color: "var(--gold)", opacity: 0.75 }} />
+                38 CFR Grounded
               </div>
             </div>
-          ))}
+          </div>
+
+          <ScoreCard />
         </div>
       </section>
 
@@ -426,7 +543,14 @@ export default function Landing() {
               data-testid={`card-feature-${feature.title.toLowerCase().replace(/\s+/g, "-")}`}
             >
               <feature.icon className="landing-feat-icon" style={{ width: 40, height: 40, marginBottom: "1.4rem", color: "var(--navy)", transition: "color 0.25s" }} />
-              <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.3rem", color: "var(--navy)", marginBottom: "0.7rem" }}>
+              <h3
+                style={{
+                  fontFamily: "'DM Serif Display', serif", fontSize: "1.3rem", color: "var(--navy)", marginBottom: "0.7rem",
+                  ...(feature.title === "RPA Quality Scoring" ? { cursor: "pointer", textDecoration: "underline", textDecorationColor: "var(--gold)", textUnderlineOffset: 4 } : {}),
+                }}
+                onClick={feature.title === "RPA Quality Scoring" ? () => setRpaModalOpen(true) : undefined}
+                data-testid={feature.title === "RPA Quality Scoring" ? "trigger-rpa-modal-feature" : undefined}
+              >
                 {feature.title}
               </h3>
               <p style={{ color: "var(--landing-muted)", fontSize: "0.92rem", lineHeight: 1.65, fontWeight: 300 }}>
@@ -639,13 +763,9 @@ export default function Landing() {
         </nav>
       </footer>
 
+      <RpaScoringModal open={rpaModalOpen} onOpenChange={setRpaModalOpen} />
+
       <style>{`
-        .landing-nav-links {
-          display: flex !important;
-        }
-        .landing-hero-stats {
-          display: flex !important;
-        }
         .landing-steps-container {
           flex-direction: row;
         }
@@ -653,25 +773,27 @@ export default function Landing() {
           display: block;
         }
         .landing-feature-card:hover {
-          background: var(--landing-white) !important;
+          background: var(--gold-pale) !important;
         }
         .landing-feature-card:hover .landing-feat-icon {
           color: var(--gold) !important;
         }
         .landing-pricing-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 16px 48px rgba(11,28,46,0.1);
+          box-shadow: 0 16px 48px rgba(13,33,55,0.1);
+        }
+        @media (max-width: 900px) {
+          .landing-hero-inner {
+            flex-direction: column !important;
+          }
+          .score-card-wrap {
+            flex: none !important;
+            width: 100% !important;
+            max-width: 420px !important;
+            margin: 2rem auto 0 !important;
+          }
         }
         @media (max-width: 768px) {
-          .landing-nav-links {
-            display: none !important;
-          }
-          .landing-hero-stats {
-            display: none !important;
-          }
-          .landing-gold-line::after {
-            display: none;
-          }
           .landing-steps-container {
             flex-direction: column !important;
             gap: 3rem !important;

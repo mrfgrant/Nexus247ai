@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { RpaScoringModal } from "@/components/rpa-scoring-modal";
 
 const tiers = [
   {
@@ -169,16 +170,23 @@ const tiers = [
   },
 ];
 
-function FeatureItem({ feature }: { feature: { text: string; included: boolean; detail?: string } }) {
+function FeatureItem({ feature, onRpaClick }: { feature: { text: string; included: boolean; detail?: string }; onRpaClick?: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const hasDetail = !!feature.detail;
+  const isRpa = feature.text.toLowerCase().includes("rpa quality scoring");
 
   return (
     <li className="text-sm">
       <button
         type="button"
-        onClick={() => hasDetail && setExpanded(!expanded)}
-        className={`flex items-start gap-2 w-full text-left ${hasDetail ? "cursor-pointer" : "cursor-default"}`}
+        onClick={() => {
+          if (isRpa && onRpaClick) {
+            onRpaClick();
+          } else if (hasDetail) {
+            setExpanded(!expanded);
+          }
+        }}
+        className={`flex items-start gap-2 w-full text-left ${hasDetail || isRpa ? "cursor-pointer" : "cursor-default"}`}
         data-testid={`feature-${feature.text.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`}
       >
         {feature.included ? (
@@ -186,16 +194,16 @@ function FeatureItem({ feature }: { feature: { text: string; included: boolean; 
         ) : (
           <Lock className="w-4 h-4 text-muted-foreground/40 mt-0.5 shrink-0" />
         )}
-        <span className={`flex-1 ${feature.included ? "text-foreground" : "text-muted-foreground/60"}`}>
+        <span className={`flex-1 ${feature.included ? "text-foreground" : "text-muted-foreground/60"} ${isRpa ? "underline decoration-primary/50 underline-offset-2" : ""}`}>
           {feature.text}
         </span>
-        {hasDetail && (
+        {hasDetail && !isRpa && (
           <ChevronDown
             className={`w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
           />
         )}
       </button>
-      {expanded && feature.detail && (
+      {expanded && feature.detail && !isRpa && (
         <p className="text-xs text-muted-foreground mt-1.5 ml-6 leading-relaxed">
           {feature.detail}
         </p>
@@ -208,6 +216,7 @@ export default function Pricing() {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [rpaModalOpen, setRpaModalOpen] = useState(false);
   const { data: profile } = useQuery<any>({
     queryKey: ["/api/profile"],
     enabled: isAuthenticated,
@@ -281,7 +290,7 @@ export default function Pricing() {
                 </div>
                 <ul className="space-y-3">
                   {tier.features.map((feature) => (
-                    <FeatureItem key={feature.text} feature={feature} />
+                    <FeatureItem key={feature.text} feature={feature} onRpaClick={() => setRpaModalOpen(true)} />
                   ))}
                 </ul>
                 {isCurrent ? (
@@ -323,6 +332,8 @@ export default function Pricing() {
           </p>
         </CardContent>
       </Card>
+
+      <RpaScoringModal open={rpaModalOpen} onOpenChange={setRpaModalOpen} authenticated />
     </div>
   );
 }

@@ -288,16 +288,22 @@
 }
 
 :root {
-  --navy: #0B1C2E;
-  --navy-mid: #122540;
-  --steel: #1E3A5F;
-  --gold: #C8993A;
-  --gold-lt: #E2B96A;
-  --smoke: #F4F1EC;
-  --fog: #E8E4DC;
+  --navy: #0D2137;
+  --navy-mid: #163352;
+  --steel: #1E4A7A;
+  --gold: #D4A43E;
+  --gold-lt: #EAC76A;
+  --gold-pale: #FDF3DC;
+  --smoke: #FAFAF7;
+  --fog: #EFF0F3;
   --landing-white: #FFFFFF;
-  --body-txt: #3A3530;
-  --landing-muted: #7A7168;
+  --body-txt: #2C3340;
+  --landing-muted: #6B7280;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 @keyframes fadeUp {
@@ -387,6 +393,14 @@
 .legal-doc strong { color: var(--body-txt); font-weight: 600; }
 .legal-doc a { color: var(--gold); text-decoration: none; }
 .legal-doc a:hover { text-decoration: underline; }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 .legal-doc ul, .legal-doc ol {
   margin: 0.8rem 0 1.2rem 1.2rem;
 }
