@@ -7,6 +7,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import Landing from "@/pages/landing";
+import Faq from "@/pages/faq";
+import Terms from "@/pages/terms";
 import Dashboard from "@/pages/dashboard";
 import Intake from "@/pages/intake";
 import Conditions from "@/pages/conditions";
@@ -78,6 +80,8 @@ function Router() {
     return (
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/faq" component={Faq} />
+        <Route path="/terms" component={Terms} />
         <Route component={Landing} />
       </Switch>
     );
@@ -85,6 +89,8 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/faq" component={Faq} />
+      <Route path="/terms" component={Terms} />
       <Route path="/documents/:id/print" component={DocumentPrint} />
       <Route><AuthenticatedLayout /></Route>
     </Switch>

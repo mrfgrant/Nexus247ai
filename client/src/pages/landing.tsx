@@ -1,58 +1,58 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect, useRef } from "react";
 import {
   Shield,
   FileText,
   MessageCircle,
   Calculator,
-  Star,
   CheckCircle,
   ArrowRight,
   Lock,
   ChevronDown,
   Scale,
   Brain,
+  Users,
+  Clock,
+  Activity,
+  Menu,
+  X,
 } from "lucide-react";
-import logoFull from "@assets/Nexus247_Logo_Name_1772555424645.png";
 
 const features = [
   {
     icon: FileText,
     title: "CFR-Grounded Letters",
     description:
-      "Nexus letters, personal statements, NODs, and more — each citing specific 38 CFR sections that VA raters look for.",
+      "Nexus letters, personal statements, and NODs — each citing the specific 38 CFR sections that VA raters look for. No guesswork.",
   },
   {
-    icon: Brain,
+    icon: Clock,
     title: "Trained on Real Decisions",
     description:
-      "Our AI learns from actual VA approvals and denials to understand how raters think and what arguments win claims.",
+      "Our AI learns from actual VA approvals and denials to understand how raters think and which arguments consistently win claims.",
   },
   {
-    icon: Scale,
+    icon: Activity,
     title: "RPA Quality Scoring",
     description:
-      "Every letter is scored on 5 dimensions — CFR compliance, evidence strength, nexus quality, and rater readiness.",
+      "Every letter is scored across 5 dimensions — CFR compliance, evidence strength, nexus quality, and rater readiness — before you submit.",
   },
   {
     icon: MessageCircle,
     title: "AI Claims Advisor",
     description:
-      "Get instant answers about your claim, C&P exam prep, filing strategy, and appeal options from our AI advisor.",
+      "Get instant, informed answers about your claim, C&P exam prep, filing strategy, and appeal options — available any time.",
   },
   {
     icon: Calculator,
     title: "Rating Estimator",
     description:
-      "Calculate your combined VA disability rating using the official whole-person method and see estimated monthly benefits.",
+      "Calculate your combined VA disability rating using the official whole-person method and see exactly where you stand before filing.",
   },
   {
-    icon: Shield,
+    icon: Users,
     title: "Human Expert Support",
     description:
-      "Request manual review from claims experts when you need human guidance on complex cases.",
+      "Request manual review from claims experts when you need human guidance on complex medical evidence or appeal strategy.",
   },
 ];
 
@@ -108,23 +108,66 @@ const tiers = [
   },
 ];
 
+const testimonials = [
+  {
+    quote: "The nexus letter was night and day compared to what I'd been submitting. It cited specific CFR sections I didn't even know applied to my case.",
+    author: "Army Veteran — 70% Rating Awarded",
+  },
+  {
+    quote: "I'd been fighting my claim for three years. Within 60 days of using Nexus247, I had my decision. The quality scoring alone was worth it.",
+    author: "Marine Corps Veteran — Claim Approved",
+  },
+  {
+    quote: "Finally a tool built for veterans, not built to confuse them. Clean, fast, and the AI advisor actually understood my situation.",
+    author: "Navy Veteran — Appeal Successful",
+  },
+];
+
+const steps = [
+  {
+    num: "01",
+    title: "Upload Your Records",
+    desc: "Securely submit your medical records, service history, and supporting documents in minutes.",
+  },
+  {
+    num: "02",
+    title: "AI Builds Your Case",
+    desc: "Our system analyzes your records against 38 CFR and generates your nexus letter, personal statement, or NOD.",
+  },
+  {
+    num: "03",
+    title: "Review, Score & Submit",
+    desc: "Your letter is scored for quality across five dimensions. Review, refine if needed, and submit with confidence.",
+  },
+];
+
 function LandingFeatureItem({ feature }: { feature: { text: string; detail: string } }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <li className="text-sm">
+    <li style={{ fontSize: "0.88rem", marginBottom: "0.75rem", lineHeight: 1.4 }}>
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex items-start gap-2 w-full text-left cursor-pointer"
+        className="flex items-start gap-2.5 w-full text-left cursor-pointer"
+        style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
+        data-testid={`feature-${feature.text.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`}
       >
-        <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-        <span className="flex-1 text-foreground">{feature.text}</span>
+        <CheckCircle style={{ width: 15, height: 15, marginTop: 2, flexShrink: 0, color: "var(--gold)" }} />
+        <span className="flex-1">{feature.text}</span>
         <ChevronDown
-          className={`w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+          style={{
+            width: 14,
+            height: 14,
+            marginTop: 2,
+            flexShrink: 0,
+            opacity: 0.4,
+            transition: "transform 0.2s",
+            transform: expanded ? "rotate(180deg)" : "none",
+          }}
         />
       </button>
       {expanded && (
-        <p className="text-xs text-muted-foreground mt-1.5 ml-6 leading-relaxed">
+        <p style={{ fontSize: "0.82rem", color: "var(--landing-muted)", marginTop: 6, marginLeft: 26, lineHeight: 1.6, fontWeight: 300 }}>
           {feature.detail}
         </p>
       )}
@@ -133,185 +176,515 @@ function LandingFeatureItem({ feature }: { feature: { text: string; detail: stri
 }
 
 export default function Landing() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const revealRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => entry.target.classList.add("visible"), i * 80);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    revealRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const addRevealRef = (el: HTMLElement | null) => {
+    if (el && !revealRefs.current.includes(el)) {
+      revealRefs.current.push(el);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border bg-card">
-        <div className="flex items-center gap-3">
-          <img src={logoFull} alt="Nexus247" className="h-10" data-testid="img-landing-logo" />
-        </div>
-        <div className="flex items-center gap-3">
-          <a href="/api/login">
-            <Button variant="outline" data-testid="button-login">
-              Log In
-            </Button>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "var(--smoke)", color: "var(--body-txt)", overflowX: "hidden" }}>
+      {/* NAV */}
+      <nav className="landing-nav" data-testid="nav-landing">
+        <a href="/" style={{ textDecoration: "none" }} data-testid="link-landing-logo">
+          <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.35rem", color: "#fff", letterSpacing: "0.02em" }}>
+            Nexus<span style={{ color: "var(--gold)" }}>247</span>.ai
+          </span>
+        </a>
+        <ul className="hidden md:flex" style={{ gap: "2.2rem", listStyle: "none", margin: 0, padding: 0 }}>
+          <li><a href="#features" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-features">Features</a></li>
+          <li><a href="#how" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-how-it-works">How It Works</a></li>
+          <li><a href="#pricing" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-pricing">Pricing</a></li>
+          <li><a href="/faq" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-faq">FAQ</a></li>
+        </ul>
+        <div className="hidden md:flex" style={{ alignItems: "center", gap: "12px" }}>
+          <a href="/api/login" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="button-login">Log In</a>
+          <a href="/api/login" data-testid="button-get-started">
+            <button
+              type="button"
+              style={{
+                background: "var(--gold)", color: "var(--navy)", border: "none",
+                padding: "10px 22px", borderRadius: 3, fontSize: "0.83rem", fontWeight: 600,
+                letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              Get Started
+            </button>
           </a>
-          <a href="/api/login">
-            <Button data-testid="button-get-started">Get Started</Button>
-          </a>
         </div>
+        <button
+          type="button"
+          className="md:hidden"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: 4 }}
+          data-testid="button-mobile-menu"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X style={{ width: 24, height: 24 }} /> : <Menu style={{ width: 24, height: 24 }} />}
+        </button>
       </nav>
 
-      <section className="relative py-20 px-6 text-center bg-gradient-to-b from-primary/5 to-background">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <Badge variant="secondary" className="text-sm">
-            <Star className="w-3 h-3 mr-1" />
+      {mobileMenuOpen && (
+        <div
+          style={{
+            position: "fixed", top: 68, left: 0, right: 0, zIndex: 99,
+            background: "var(--navy)", borderBottom: "1px solid rgba(200,153,58,0.18)",
+            padding: "16px 5vw", display: "flex", flexDirection: "column", gap: 12,
+          }}
+        >
+          <a href="#features" onClick={() => setMobileMenuOpen(false)} style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-features-mobile">Features</a>
+          <a href="#how" onClick={() => setMobileMenuOpen(false)} style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-how-mobile">How It Works</a>
+          <a href="#pricing" onClick={() => setMobileMenuOpen(false)} style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-pricing-mobile">Pricing</a>
+          <a href="/faq" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-faq-mobile">FAQ</a>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+            <a href="/api/login" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="button-login-mobile">Log In</a>
+            <a href="/api/login" data-testid="button-get-started-mobile">
+              <button type="button" style={{ background: "var(--gold)", color: "var(--navy)", border: "none", padding: "12px 22px", borderRadius: 3, fontSize: "0.83rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", width: "100%" }}>
+                Get Started
+              </button>
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* HERO */}
+      <section
+        className="landing-grid-bg landing-gold-line"
+        style={{
+          minHeight: "100vh", background: "var(--navy)", display: "flex", flexDirection: "column",
+          justifyContent: "center", position: "relative", overflow: "hidden", padding: "120px 5vw 80px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "2rem", animation: "fadeUp 0.7s ease both" }}>
+          <div style={{ width: 36, height: 1, background: "var(--gold)", opacity: 0.8 }} />
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)", opacity: 0.9 }}>
             Trusted by Veterans Nationwide
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground leading-tight">
-            Win Your VA Claim with{" "}
-            <span className="text-primary">AI-Powered</span> Letters
+          </div>
+        </div>
+
+        <div style={{ maxWidth: 700, marginLeft: "4vw" }}>
+          <h1
+            style={{
+              fontFamily: "'DM Serif Display', serif", fontSize: "clamp(3rem, 6vw, 5.2rem)",
+              lineHeight: 1.08, color: "#fff", marginBottom: "1.6rem", animation: "fadeUp 0.7s 0.1s ease both",
+            }}
+            data-testid="text-hero-headline"
+          >
+            Your Service<br />Deserves a <em style={{ fontStyle: "italic", color: "var(--gold)" }}>Fight<br />Worth Winning.</em>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Generate professional nexus letters, personal statements, and NODs
-            grounded in{" "}
-            <strong>38 CFR regulations</strong> and trained on real rater
-            decisions. Every letter is scored for quality before you submit.
+          <p
+            style={{
+              fontSize: "1.1rem", lineHeight: 1.7, color: "rgba(255,255,255,0.62)",
+              maxWidth: 520, marginBottom: "3rem", fontWeight: 300, animation: "fadeUp 0.7s 0.2s ease both",
+            }}
+            data-testid="text-hero-subtitle"
+          >
+            AI-powered nexus letters, personal statements, and NODs grounded in 38 CFR regulations — scored for quality before you ever submit.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <a href="/api/login">
-              <Button size="lg" data-testid="button-hero-cta">
-                Start Your Claim
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", animation: "fadeUp 0.7s 0.3s ease both" }}>
+            <a
+              href="/api/login"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 10,
+                background: "var(--gold)", color: "var(--navy)", padding: "16px 34px", borderRadius: 3,
+                fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                textDecoration: "none", boxShadow: "0 4px 24px rgba(200,153,58,0.28)",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+              data-testid="button-hero-cta"
+            >
+              Start Your Claim
+              <ArrowRight style={{ width: 16, height: 16 }} />
             </a>
-            <a href="#pricing">
-              <Button variant="outline" size="lg" data-testid="button-view-pricing">
-                View Pricing
-              </Button>
+            <a
+              href="#pricing"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 10,
+                background: "transparent", color: "rgba(255,255,255,0.78)", padding: "16px 28px", borderRadius: 3,
+                fontSize: "0.9rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase",
+                textDecoration: "none", border: "1px solid rgba(255,255,255,0.2)",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+              data-testid="button-view-pricing"
+            >
+              View Pricing
             </a>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-6 pt-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4" />
-              <span>HIPAA Compliant</span>
+
+          <div
+            style={{
+              display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap",
+              marginTop: "4.5rem", paddingTop: "3rem", borderTop: "1px solid rgba(255,255,255,0.08)",
+              animation: "fadeUp 0.7s 0.4s ease both",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: "0.8rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+              <Shield style={{ width: 14, height: 14, color: "var(--gold)", opacity: 0.8 }} />
+              HIPAA Compliant
             </div>
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              <span>Encrypted & Secure</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: "0.8rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+              <Lock style={{ width: 14, height: 14, color: "var(--gold)", opacity: 0.8 }} />
+              Encrypted & Secure
             </div>
-            <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4" />
-              <span>38 CFR Grounded</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: "0.8rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+              <Scale style={{ width: 14, height: 14, color: "var(--gold)", opacity: 0.8 }} />
+              38 CFR Grounded
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="py-20 px-6 bg-background">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground">
-              Everything You Need to Win Your Claim
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Professional-grade tools designed by claims experts, powered by AI
-              that learns from real VA decisions.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature) => (
-              <Card key={feature.title} className="hover-elevate">
-                <CardContent className="p-6 space-y-3">
-                  <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
-                    <feature.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        {/* Floating stat cards */}
+        <div
+          className="landing-hero-stats"
+          style={{
+            position: "absolute", right: "5vw", bottom: "10%",
+            display: "flex", flexDirection: "column", gap: 14,
+            animation: "fadeLeft 0.8s 0.5s ease both",
+          }}
+        >
+          {[
+            { num: "38 CFR", label: "Regulation-backed" },
+            { num: "5-pt", label: "Quality scoring" },
+            { num: "24/7", label: "Available access" },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              style={{
+                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(200,153,58,0.18)",
+                borderRadius: 6, padding: "18px 24px", minWidth: 180, backdropFilter: "blur(8px)",
+              }}
+              data-testid={`stat-${stat.label.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: "2rem", color: "var(--gold)", lineHeight: 1 }}>
+                {stat.num}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section id="pricing" className="py-20 px-6 bg-card/50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="mt-3 text-muted-foreground">
-              Choose the plan that fits your claims needs.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {tiers.map((tier) => (
-              <Card
-                key={tier.name}
-                className={`relative hover-elevate ${tier.popular ? "ring-2 ring-primary" : ""}`}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge>Most Popular</Badge>
-                  </div>
-                )}
-                <CardContent className="p-6 space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {tier.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {tier.description}
-                    </p>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-foreground">
-                      {tier.price}
-                    </span>
-                    <span className="text-muted-foreground">{tier.period}</span>
-                  </div>
-                  <ul className="space-y-3">
-                    {tier.features.map((feature) => (
-                      <LandingFeatureItem key={feature.text} feature={feature} />
-                    ))}
-                  </ul>
-                  <a href="/api/login">
-                    <Button
-                      className="w-full"
-                      variant={tier.popular ? "default" : "outline"}
-                      data-testid={`button-${tier.name.toLowerCase()}-cta`}
-                    >
-                      {tier.cta}
-                    </Button>
-                  </a>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Gold divider */}
+      <div style={{ height: 4, background: "linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-lt) 50%, var(--gold) 70%, transparent)", opacity: 0.45 }} />
 
-      <section className="py-16 px-6 bg-background border-t border-border">
-        <div className="max-w-3xl mx-auto text-center space-y-4">
-          <Shield className="w-10 h-10 mx-auto text-primary" />
-          <h2 className="text-2xl font-bold text-foreground">
-            Legal Disclaimer
+      {/* FEATURES */}
+      <section id="features" style={{ padding: "100px 5vw", background: "var(--smoke)" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 5rem", textAlign: "center" }}>
+          <div style={{
+            display: "inline-block", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
+            letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)",
+            border: "1px solid rgba(200,153,58,0.35)", padding: "5px 14px", borderRadius: 2, marginBottom: "1.2rem",
+          }}>
+            What You Get
+          </div>
+          <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "var(--navy)", lineHeight: 1.15, marginBottom: "1rem" }}>
+            Everything You Need to Win Your Claim
           </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Nexus247 generates AI-assisted draft documents intended as
-            templates. We are not a law firm and do not provide legal advice.
-            Review all documents before submission and consider consulting an
-            accredited VA claims agent or attorney. No guarantee of claim
-            outcomes is expressed or implied. All veteran data is encrypted at
-            rest and in transit per HIPAA standards.
+          <p style={{ color: "var(--landing-muted)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300 }}>
+            Professional-grade tools built by claims experts and powered by AI trained on real VA decisions — not generic templates.
           </p>
+        </div>
+
+        <div
+          ref={addRevealRef}
+          className="reveal"
+          style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: 2, background: "var(--fog)", border: "2px solid var(--fog)",
+            borderRadius: 8, overflow: "hidden", maxWidth: 1100, margin: "0 auto",
+          }}
+        >
+          {features.map((feature) => (
+            <div
+              key={feature.title}
+              className="landing-feature-card"
+              style={{ background: "var(--smoke)", padding: "44px 36px", transition: "background 0.25s", position: "relative" }}
+              data-testid={`card-feature-${feature.title.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              <feature.icon className="landing-feat-icon" style={{ width: 40, height: 40, marginBottom: "1.4rem", color: "var(--navy)", transition: "color 0.25s" }} />
+              <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.3rem", color: "var(--navy)", marginBottom: "0.7rem" }}>
+                {feature.title}
+              </h3>
+              <p style={{ color: "var(--landing-muted)", fontSize: "0.92rem", lineHeight: 1.65, fontWeight: 300 }}>
+                {feature.description}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <footer className="py-8 px-6 bg-card border-t border-border">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>Nexus247.ai. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
-            <span>HIPAA Notice</span>
+      {/* HOW IT WORKS */}
+      <section id="how" className="landing-grid-bg" style={{ padding: "100px 5vw", background: "var(--navy)", position: "relative", overflow: "hidden" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 5rem", textAlign: "center" }}>
+          <div style={{
+            display: "inline-block", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
+            letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)",
+            border: "1px solid rgba(200,153,58,0.35)", padding: "5px 14px", borderRadius: 2, marginBottom: "1.2rem",
+          }}>
+            The Process
           </div>
+          <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "#fff", lineHeight: 1.15, marginBottom: "1rem" }}>
+            Three Steps to a Stronger Claim
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300 }}>
+            We've stripped away the complexity so you can focus on what matters — getting the rating you've earned.
+          </p>
         </div>
+
+        <div ref={addRevealRef} className="reveal landing-steps-container" style={{ display: "flex", gap: 0, maxWidth: 960, margin: "0 auto", position: "relative" }}>
+          <div className="landing-steps-line" style={{
+            position: "absolute", top: 32, left: 40, right: 40, height: 1,
+            background: "linear-gradient(90deg, var(--gold), rgba(200,153,58,0.2), var(--gold))", opacity: 0.3,
+          }} />
+          {steps.map((step) => (
+            <div key={step.num} style={{ flex: 1, textAlign: "center", padding: "0 24px", position: "relative" }} data-testid={`step-${step.num}`}>
+              <div style={{
+                width: 64, height: 64, borderRadius: "50%", border: "1px solid rgba(200,153,58,0.4)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                margin: "0 auto 1.5rem", fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "1.1rem", fontWeight: 600, color: "var(--gold)",
+                background: "rgba(200,153,58,0.08)", position: "relative", zIndex: 1,
+              }}>
+                {step.num}
+              </div>
+              <h3 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.15rem", color: "#fff", marginBottom: "0.6rem" }}>
+                {step.title}
+              </h3>
+              <p style={{ fontSize: "0.87rem", color: "rgba(255,255,255,0.42)", lineHeight: 1.6, fontWeight: 300 }}>
+                {step.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" style={{ padding: "100px 5vw", background: "var(--smoke)" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 5rem", textAlign: "center" }}>
+          <div style={{
+            display: "inline-block", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
+            letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)",
+            border: "1px solid rgba(200,153,58,0.35)", padding: "5px 14px", borderRadius: 2, marginBottom: "1.2rem",
+          }}>
+            Pricing
+          </div>
+          <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "var(--navy)", lineHeight: 1.15, marginBottom: "1rem" }}>
+            Simple, Transparent Pricing
+          </h2>
+          <p style={{ color: "var(--landing-muted)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300 }}>
+            Choose the plan that fits your claims needs. Every plan includes RPA quality scoring and CFR-grounded letter generation.
+          </p>
+        </div>
+
+        <div
+          ref={addRevealRef}
+          className="reveal"
+          style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))",
+            gap: 24, maxWidth: 960, margin: "0 auto",
+          }}
+        >
+          {tiers.map((tier) => (
+            <div
+              key={tier.name}
+              style={{
+                background: tier.popular ? "var(--navy)" : "var(--landing-white)",
+                border: tier.popular ? "1.5px solid var(--gold)" : "1px solid var(--fog)",
+                borderRadius: 6, padding: "44px 36px", position: "relative",
+                transition: "transform 0.2s, box-shadow 0.2s",
+              }}
+              className="landing-pricing-card"
+              data-testid={`card-tier-${tier.name.toLowerCase()}`}
+            >
+              {tier.popular && (
+                <div style={{
+                  position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)",
+                  background: "var(--gold)", color: "var(--navy)", fontSize: "0.68rem", fontWeight: 700,
+                  letterSpacing: "0.12em", textTransform: "uppercase", padding: "5px 16px", borderRadius: 2,
+                  whiteSpace: "nowrap",
+                }}>
+                  Most Popular
+                </div>
+              )}
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.2em",
+                textTransform: "uppercase", color: "var(--gold)", marginBottom: "0.8rem",
+              }}>
+                {tier.name}
+              </div>
+              <div style={{
+                fontFamily: "'DM Serif Display', serif", fontSize: "3rem",
+                color: tier.popular ? "#fff" : "var(--navy)", lineHeight: 1, marginBottom: "0.3rem",
+              }}>
+                {tier.price}<span style={{ fontSize: "1rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}>{tier.period}</span>
+              </div>
+              <div style={{ fontSize: "0.78rem", color: tier.popular ? "rgba(255,255,255,0.45)" : "var(--landing-muted)", marginBottom: "2rem" }}>
+                {tier.description}
+              </div>
+              <ul style={{ listStyle: "none", marginBottom: "2.5rem", padding: 0 }}>
+                {tier.features.map((feature) => (
+                  <LandingFeatureItem key={feature.text} feature={feature} />
+                ))}
+              </ul>
+              <a
+                href="/api/login"
+                style={{
+                  display: "block", width: "100%", textAlign: "center", padding: 14, borderRadius: 3,
+                  fontSize: "0.85rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                  textDecoration: "none", cursor: "pointer",
+                  fontFamily: "'DM Sans', sans-serif",
+                  ...(tier.popular
+                    ? { background: "var(--gold)", color: "var(--navy)", border: "none" }
+                    : { background: "transparent", border: "1px solid var(--fog)", color: "var(--navy)" }),
+                }}
+                data-testid={`button-${tier.name.toLowerCase()}-cta`}
+              >
+                {tier.cta}
+              </a>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section style={{ padding: "80px 5vw", background: "var(--fog)", borderTop: "1px solid rgba(11,28,46,0.06)", borderBottom: "1px solid rgba(11,28,46,0.06)" }}>
+        <div ref={addRevealRef} className="reveal" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, maxWidth: 960, margin: "0 auto" }}>
+          {testimonials.map((t, i) => (
+            <div
+              key={i}
+              style={{ background: "var(--landing-white)", borderRadius: 6, padding: "32px 28px", borderLeft: "3px solid var(--gold)" }}
+              data-testid={`card-testimonial-${i}`}
+            >
+              <blockquote style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.05rem", color: "var(--navy)", lineHeight: 1.55, marginBottom: "1.2rem", fontStyle: "italic" }}>
+                "{t.quote}"
+              </blockquote>
+              <div style={{ fontSize: "0.78rem", color: "var(--landing-muted)", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>
+                {t.author}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FOOTER CTA */}
+      <section
+        style={{
+          padding: "100px 5vw", background: "var(--navy-mid)", textAlign: "center",
+          position: "relative", overflow: "hidden",
+        }}
+      >
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, rgba(200,153,58,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2.2rem, 4vw, 3.4rem)", color: "#fff", marginBottom: "1.2rem", position: "relative" }}>
+          Your Benefits Are<br /><em style={{ color: "var(--gold)", fontStyle: "italic" }}>Not Optional.</em>
+        </h2>
+        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "1rem", fontWeight: 300, maxWidth: 480, margin: "0 auto 2.5rem", lineHeight: 1.65, position: "relative" }}>
+          You earned them. Let's build a claim that proves it — professional, precise, and ready to win.
+        </p>
+        <a
+          href="/api/login"
+          style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
+            background: "var(--gold)", color: "var(--navy)", padding: "16px 34px", borderRadius: 3,
+            fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+            textDecoration: "none", boxShadow: "0 4px 24px rgba(200,153,58,0.28)",
+            fontFamily: "'DM Sans', sans-serif", position: "relative",
+          }}
+          data-testid="button-footer-cta"
+        >
+          Start Your Claim
+          <ArrowRight style={{ width: 16, height: 16 }} />
+        </a>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{
+        background: "var(--navy)", borderTop: "1px solid rgba(255,255,255,0.06)",
+        padding: "32px 5vw", display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexWrap: "wrap", gap: 16,
+      }}>
+        <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.1rem", color: "#fff" }}>
+          Nexus<span style={{ color: "var(--gold)" }}>247</span>.ai
+        </div>
+        <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", margin: 0 }}>
+          2025 Nexus247.ai · Not a law firm · Not affiliated with the VA
+        </p>
+        <nav style={{ display: "flex", gap: 0 }}>
+          <a href="/faq" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-faq">FAQ</a>
+          <a href="/terms" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-terms">Terms</a>
+          <a href="/terms" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-privacy">Privacy</a>
+        </nav>
       </footer>
+
+      <style>{`
+        .landing-nav-links {
+          display: flex !important;
+        }
+        .landing-hero-stats {
+          display: flex !important;
+        }
+        .landing-steps-container {
+          flex-direction: row;
+        }
+        .landing-steps-line {
+          display: block;
+        }
+        .landing-feature-card:hover {
+          background: var(--landing-white) !important;
+        }
+        .landing-feature-card:hover .landing-feat-icon {
+          color: var(--gold) !important;
+        }
+        .landing-pricing-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 48px rgba(11,28,46,0.1);
+        }
+        @media (max-width: 768px) {
+          .landing-nav-links {
+            display: none !important;
+          }
+          .landing-hero-stats {
+            display: none !important;
+          }
+          .landing-gold-line::after {
+            display: none;
+          }
+          .landing-steps-container {
+            flex-direction: column !important;
+            gap: 3rem !important;
+          }
+          .landing-steps-line {
+            display: none !important;
+          }
+          footer {
+            flex-direction: column;
+            align-items: flex-start !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
