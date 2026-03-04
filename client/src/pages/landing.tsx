@@ -480,6 +480,12 @@ export default function Landing() {
                 View Pricing
               </a>
             </div>
+            <p style={{
+              marginTop: "1rem", fontSize: "0.82rem", color: "var(--gold)", fontWeight: 500,
+              letterSpacing: "0.04em", animation: "fadeUp 0.6s 0.35s ease both",
+            }} data-testid="text-hero-trial">
+              Start with a free 3-day Pro trial. No credit card required.
+            </p>
             <div
               style={{
                 display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap",
@@ -621,7 +627,7 @@ export default function Landing() {
             Simple, Transparent Pricing
           </h2>
           <p style={{ color: "var(--landing-muted)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300 }}>
-            Choose the plan that fits your claims needs. Every plan includes RPA quality scoring and CFR-grounded letter generation.
+            Start with a <span style={{ color: "var(--gold)", fontWeight: 600 }}>free 3-day Pro trial</span> — no credit card required. Then choose the plan that fits your claims needs.
           </p>
         </div>
 
@@ -729,8 +735,11 @@ export default function Landing() {
         <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2.2rem, 4vw, 3.4rem)", color: "#fff", marginBottom: "1.2rem", position: "relative" }}>
           Your Benefits Are<br /><em style={{ color: "var(--gold)", fontStyle: "italic" }}>Not Optional.</em>
         </h2>
-        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "1rem", fontWeight: 300, maxWidth: 480, margin: "0 auto 2.5rem", lineHeight: 1.65, position: "relative" }}>
+        <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "1rem", fontWeight: 300, maxWidth: 480, margin: "0 auto 1.2rem", lineHeight: 1.65, position: "relative" }}>
           You earned them. Let's build a claim that proves it — professional, precise, and ready to win.
+        </p>
+        <p style={{ color: "var(--gold)", fontSize: "0.88rem", fontWeight: 600, marginBottom: "2.2rem", position: "relative" }} data-testid="text-footer-trial">
+          3-day Pro trial — free, no credit card.
         </p>
         <a
           href="/api/login"
