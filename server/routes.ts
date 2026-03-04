@@ -7,6 +7,7 @@ import { MONTHLY_RATES, SMC_RATES, SMC_INFO } from "@shared/va-rates";
 import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
 import { createRequire } from "module";
+import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from "./stripe";
 const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url);
 const pdfParse = _require("pdf-parse");
 
@@ -1350,6 +1351,194 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
       }
       res.status(500).json({ error: "Failed to generate C&P exam prep. Please try again." });
     }
+  });
+
+  app.post("/api/create-checkout-session", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { tier } = req.body;
+
+      if (!tier || !TIER_TO_PRICE[tier]) {
+        return res.status(400).json({ error: "Invalid tier. Must be basic, pro, or concierge." });
+      }
+
+      const priceId = TIER_TO_PRICE[tier];
+      const email = req.user.claims.email || "";
+      const name = `${req.user.claims.first_name || ""} ${req.user.claims.last_name || ""}`.trim();
+
+      const customerId = await getOrCreateStripeCustomer(userId, email, name);
+
+      const existingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        limit: 10,
+      });
+      const blockingStatuses = ["active", "trialing", "past_due"];
+      const blockingSub = existingSubs.data.find((s: any) => blockingStatuses.includes(s.status));
+      if (blockingSub) {
+        return res.status(400).json({
+          error: "You already have an active subscription. Please manage it from your Settings page.",
+        });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: "subscription",
+        success_url: `${baseUrl}/settings?stripe=success`,
+        cancel_url: `${baseUrl}/pricing?stripe=cancelled`,
+        metadata: { userId, tier },
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Checkout session error:", error);
+      res.status(500).json({ error: "Failed to create checkout session. Please try again." });
+    }
+  });
+
+  app.post("/api/create-portal-session", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profile = await storage.getVeteranProfile(userId);
+
+      if (!profile?.stripeCustomerId) {
+        return res.status(400).json({ error: "No billing account found. Please subscribe first." });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const session = await stripe.billingPortal.sessions.create({
+        customer: profile.stripeCustomerId,
+        return_url: `${baseUrl}/settings`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Portal session error:", error);
+      res.status(500).json({ error: "Failed to open billing portal. Please try again." });
+    }
+  });
+
+  app.post("/api/stripe-webhook", async (req: any, res) => {
+    const sig = req.headers["stripe-signature"];
+    if (!sig) {
+      return res.status(400).json({ error: "Missing stripe-signature header" });
+    }
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error("STRIPE_WEBHOOK_SECRET not configured — rejecting webhook");
+      return res.status(500).json({ error: "Webhook endpoint not configured" });
+    }
+
+    let event: any;
+    try {
+      event = stripe.webhooks.constructEvent(req.rawBody as Buffer, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("Webhook signature verification failed:", err.message);
+      return res.status(400).json({ error: "Webhook signature verification failed" });
+    }
+
+    try {
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object;
+          const customerId = session.customer as string;
+          const subscriptionId = session.subscription as string;
+
+          if (subscriptionId) {
+            const existingProfile = await storage.getProfileByStripeCustomerId(customerId);
+            if (!existingProfile) {
+              console.error(`Webhook: No profile found for Stripe customer ${customerId}`);
+              break;
+            }
+
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            const priceId = subscription.items.data[0]?.price?.id;
+            const tier = priceId ? PRICE_TO_TIER[priceId] || "basic" : "basic";
+
+            await storage.updateSubscriptionFromStripe(customerId, {
+              stripeSubscriptionId: subscriptionId,
+              subscriptionTier: tier,
+              subscriptionStatus: "active",
+              trialEndsAt: null,
+            });
+
+            console.log(`Subscription activated: customer=${customerId} tier=${tier} user=${existingProfile.userId}`);
+          }
+          break;
+        }
+
+        case "customer.subscription.updated": {
+          const subscription = event.data.object;
+          const customerId = subscription.customer as string;
+
+          const existingProfile = await storage.getProfileByStripeCustomerId(customerId);
+          if (!existingProfile) {
+            console.error(`Webhook: No profile found for Stripe customer ${customerId}`);
+            break;
+          }
+
+          const priceId = subscription.items.data[0]?.price?.id;
+          const tier = priceId ? PRICE_TO_TIER[priceId] || "basic" : "basic";
+          const status = subscription.status;
+
+          const mappedStatus = ["active", "trialing"].includes(status) ? "active" : status;
+          const mappedTier = ["active", "trialing"].includes(status) ? tier : "none";
+
+          await storage.updateSubscriptionFromStripe(customerId, {
+            stripeSubscriptionId: subscription.id,
+            subscriptionTier: mappedTier,
+            subscriptionStatus: mappedStatus,
+          });
+
+          console.log(`Subscription updated: customer=${customerId} tier=${mappedTier} status=${mappedStatus}`);
+          break;
+        }
+
+        case "customer.subscription.deleted": {
+          const subscription = event.data.object;
+          const customerId = subscription.customer as string;
+
+          const existingProfile = await storage.getProfileByStripeCustomerId(customerId);
+          if (!existingProfile) {
+            console.error(`Webhook: No profile found for Stripe customer ${customerId}`);
+            break;
+          }
+
+          await storage.updateSubscriptionFromStripe(customerId, {
+            stripeSubscriptionId: null,
+            subscriptionTier: "none",
+            subscriptionStatus: "inactive",
+          });
+
+          console.log(`Subscription cancelled: customer=${customerId} user=${existingProfile.userId}`);
+          break;
+        }
+
+        case "invoice.payment_failed": {
+          const invoice = event.data.object;
+          const customerId = invoice.customer as string;
+          console.warn(`Payment failed: customer=${customerId} invoice=${invoice.id}`);
+          break;
+        }
+
+        default:
+          break;
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("Webhook processing error:", error);
+      res.status(500).json({ error: "Webhook processing failed" });
+    }
+  });
+
+  app.get("/api/stripe-config", (req, res) => {
+    res.json({
+      publishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY || "",
+    });
   });
 
   return httpServer;

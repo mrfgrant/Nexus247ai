@@ -1,10 +1,13 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Lock, Star, Shield, ChevronDown } from "lucide-react";
+import { CheckCircle, Lock, Star, Shield, ChevronDown, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 const tiers = [
   {
@@ -203,10 +206,39 @@ function FeatureItem({ feature }: { feature: { text: string; included: boolean; 
 
 export default function Pricing() {
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
   const { data: profile } = useQuery<any>({
     queryKey: ["/api/profile"],
     enabled: isAuthenticated,
   });
+
+  const checkoutMutation = useMutation({
+    mutationFn: async (tier: string) => {
+      const res = await apiRequest("POST", "/api/create-checkout-session", { tier });
+      return res.json();
+    },
+    onSuccess: (data: { url: string }) => {
+      window.location.href = data.url;
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Checkout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("stripe") === "cancelled") {
+      toast({
+        title: "Payment cancelled",
+        description: "You can try again whenever you're ready.",
+      });
+    }
+  }, []);
 
   const currentTier = profile?.subscriptionTier || "none";
 
@@ -261,7 +293,18 @@ export default function Pricing() {
                     className="w-full"
                     variant={tier.popular ? "default" : "outline"}
                     data-testid={`button-select-${tier.tier}`}
+                    disabled={checkoutMutation.isPending}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        window.location.href = "/api/login";
+                      } else {
+                        checkoutMutation.mutate(tier.tier);
+                      }
+                    }}
                   >
+                    {checkoutMutation.isPending && checkoutMutation.variables === tier.tier ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : null}
                     {currentTier === "none" ? `Start ${tier.name}` : `Upgrade to ${tier.name}`}
                   </Button>
                 )}

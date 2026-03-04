@@ -89,6 +89,18 @@ export interface IStorage {
   updateLetterAnalysis(id: string, userId: string, data: Partial<InsertLetterAnalysis>): Promise<LetterAnalysis | undefined>;
   deleteLetterAnalysis(id: string, userId: string): Promise<void>;
   getAnalysisCountThisMonth(userId: string): Promise<number>;
+
+  updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<void>;
+  getProfileByStripeCustomerId(stripeCustomerId: string): Promise<VeteranProfile | undefined>;
+  updateSubscriptionFromStripe(
+    stripeCustomerId: string,
+    data: {
+      stripeSubscriptionId: string | null;
+      subscriptionTier: string;
+      subscriptionStatus: string;
+      trialEndsAt?: Date | null;
+    }
+  ): Promise<VeteranProfile | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -323,6 +335,47 @@ export class DatabaseStorage implements IStorage {
       .from(letterAnalyses)
       .where(and(eq(letterAnalyses.userId, userId), gte(letterAnalyses.createdAt, startOfMonth)));
     return Number(result[0]?.count || 0);
+  }
+
+  async updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<void> {
+    await db
+      .update(veteranProfiles)
+      .set({ stripeCustomerId, updatedAt: new Date() })
+      .where(eq(veteranProfiles.userId, userId));
+  }
+
+  async getProfileByStripeCustomerId(stripeCustomerId: string): Promise<VeteranProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(veteranProfiles)
+      .where(eq(veteranProfiles.stripeCustomerId, stripeCustomerId));
+    return profile;
+  }
+
+  async updateSubscriptionFromStripe(
+    stripeCustomerId: string,
+    data: {
+      stripeSubscriptionId: string | null;
+      subscriptionTier: string;
+      subscriptionStatus: string;
+      trialEndsAt?: Date | null;
+    }
+  ): Promise<VeteranProfile | undefined> {
+    const updateData: any = {
+      stripeSubscriptionId: data.stripeSubscriptionId,
+      subscriptionTier: data.subscriptionTier,
+      subscriptionStatus: data.subscriptionStatus,
+      updatedAt: new Date(),
+    };
+    if (data.trialEndsAt !== undefined) {
+      updateData.trialEndsAt = data.trialEndsAt;
+    }
+    const [profile] = await db
+      .update(veteranProfiles)
+      .set(updateData)
+      .where(eq(veteranProfiles.stripeCustomerId, stripeCustomerId))
+      .returning();
+    return profile;
   }
 }
 

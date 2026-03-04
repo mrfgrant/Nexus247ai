@@ -9,7 +9,7 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
 - **Database**: PostgreSQL via Drizzle ORM
 - **Auth**: Replit Auth (OIDC)
 - **AI**: Anthropic Claude Sonnet (user's API key via ANTHROPIC_API_KEY env secret)
-- **Payments**: Stripe (not yet connected — needs user OAuth)
+- **Payments**: Stripe (live keys configured, checkout + webhooks + portal)
 
 ## Architecture
 
@@ -28,9 +28,10 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
 - `letterAnalyses` — saved decision letter analysis results (AI-parsed conditions, errors, appeals, recommendations) + cross-reference evidence gap data
 
 ### Backend (server/)
-- `server/index.ts` — Express app setup
-- `server/routes.ts` — All API routes (profile, conditions, incidents, documents, generate, chat, support, knowledge base, rating, dashboard)
+- `server/index.ts` — Express app setup (rawBody capture for Stripe webhooks)
+- `server/routes.ts` — All API routes (profile, conditions, incidents, documents, generate, chat, support, knowledge base, rating, dashboard, Stripe checkout/webhook/portal)
 - `server/storage.ts` — DatabaseStorage with IStorage interface
+- `server/stripe.ts` — Stripe client, price/tier mappings, customer creation helper
 - `server/prompts.ts` — CFR-grounded AI prompts for 8 document types + RPA scoring + chat + decision letter analysis
 - `server/replit_integrations/auth/` — Replit Auth OIDC integration
 
@@ -101,9 +102,24 @@ Concierge only: aod_motion, good_cause_letter
 ### Design Theme
 Navy blue primary (#1a3a6b), warm gold accent (#d4a017), dark sidebar, military/veteran aesthetic
 
+### Stripe Payment Integration
+- `server/stripe.ts` — Stripe client + price/tier mappings + customer helper
+- Price IDs: Basic=`price_1T776nEBRMFySHqpEY8vdmE9`, Pro=`price_1T777GEBRMFySHqpCBvns2rX`, Concierge=`price_1T778MEBRMFySHqpeyk2TGS4`
+- Routes:
+  - `POST /api/create-checkout-session` — creates Stripe Checkout Session (requires auth, takes `{ tier }`)
+  - `POST /api/create-portal-session` — creates Stripe Customer Portal session (requires auth, needs stripeCustomerId)
+  - `POST /api/stripe-webhook` — handles checkout.session.completed, subscription.updated, subscription.deleted, invoice.payment_failed
+  - `GET /api/stripe-config` — returns publishable key
+- Flow: Pricing button → checkout session → Stripe hosted payment → webhook updates subscriptionTier/status → redirect to /settings?stripe=success
+- Webhook uses rawBody from index.ts for signature verification (STRIPE_WEBHOOK_SECRET optional but recommended for production)
+- Storage methods: `updateStripeCustomerId`, `getProfileByStripeCustomerId`, `updateSubscriptionFromStripe`
+
 ## Environment Secrets
 - `ANTHROPIC_API_KEY` — Claude API key
 - `SESSION_SECRET` — Express session secret
+- `STRIPE_SECRET_KEY` — Stripe secret key (sk_live_...)
+- `VITE_STRIPE_PUBLISHABLE_KEY` — Stripe publishable key (pk_live_...) for frontend
+- `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret (optional, for signature verification)
 - `DATABASE_URL` — PostgreSQL connection string (auto-provisioned)
 
 ## Running

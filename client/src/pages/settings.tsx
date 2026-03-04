@@ -1,16 +1,49 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
-import { Shield, CreditCard, User, Settings as SettingsIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Link, useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { Shield, CreditCard, User, Settings as SettingsIcon, Loader2, ExternalLink } from "lucide-react";
 
 export default function Settings() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [location] = useLocation();
   const { data: profile, isLoading } = useQuery<any>({
     queryKey: ["/api/profile"],
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("stripe") === "success") {
+      toast({
+        title: "Subscription activated!",
+        description: "Your plan is now active.",
+      });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const portalMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/create-portal-session");
+      return await res.json();
+    },
+    onSuccess: (data: { url: string }) => {
+      window.location.href = data.url;
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -28,6 +61,12 @@ export default function Settings() {
     basic: "Basic - $19/mo",
     pro: "Pro - $49/mo",
     concierge: "Concierge - $149/mo",
+  };
+
+  const statusBadgeClass: Record<string, string> = {
+    active: "bg-green-500/15 text-green-700 dark:text-green-400",
+    past_due: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400",
+    canceled: "bg-red-500/15 text-red-700 dark:text-red-400",
   };
 
   return (
@@ -66,24 +105,54 @@ export default function Settings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <p className="text-sm text-muted-foreground">Current Plan</p>
               <p className="font-medium text-foreground" data-testid="text-current-plan">
                 {tierLabels[profile?.subscriptionTier || "none"]}
               </p>
             </div>
-            <Badge className={profile?.subscriptionTier === "none" ? "bg-muted text-muted-foreground" : ""}>
-              <Shield className="w-3 h-3 mr-1" />
-              {(profile?.subscriptionTier || "none").toUpperCase()}
-            </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              {profile?.subscriptionStatus && profile.subscriptionStatus !== "inactive" && (
+                <Badge
+                  className={statusBadgeClass[profile.subscriptionStatus] || ""}
+                  data-testid="badge-subscription-status"
+                >
+                  {profile.subscriptionStatus.replace("_", " ").toUpperCase()}
+                </Badge>
+              )}
+              <Badge className={profile?.subscriptionTier === "none" ? "bg-muted text-muted-foreground" : ""}>
+                <Shield className="w-3 h-3 mr-1" />
+                {(profile?.subscriptionTier || "none").toUpperCase()}
+              </Badge>
+            </div>
           </div>
-          <div className="flex gap-2">
+          {profile?.trialEndsAt && new Date(profile.trialEndsAt) > new Date() && (
+            <p className="text-sm text-muted-foreground" data-testid="text-trial-ends">
+              Trial ends: {new Date(profile.trialEndsAt).toLocaleDateString()}
+            </p>
+          )}
+          <div className="flex gap-2 flex-wrap">
             <Link href="/pricing">
               <Button variant="outline" data-testid="button-change-plan">
                 {profile?.subscriptionTier === "none" ? "Choose a Plan" : "Change Plan"}
               </Button>
             </Link>
+            {profile?.stripeCustomerId && (
+              <Button
+                variant="outline"
+                onClick={() => portalMutation.mutate()}
+                disabled={portalMutation.isPending}
+                data-testid="button-manage-billing"
+              >
+                {portalMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                )}
+                Manage Billing
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
