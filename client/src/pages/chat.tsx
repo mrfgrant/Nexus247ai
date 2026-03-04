@@ -329,8 +329,8 @@ export default function Chat() {
         )}
       </div>
 
-      {hasAnyContext ? (
-        <div className={`p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground/80 flex items-center gap-2 flex-wrap ${isMobile ? "mx-3 mt-2" : ""}`} data-testid="text-chat-context-banner">
+      {!isMobile && (hasAnyContext ? (
+        <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground/80 flex items-center gap-2 flex-wrap" data-testid="text-chat-context-banner">
           <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="font-medium">Your advisor has access to:</span>
           {medicalRecordCount > 0 && (
@@ -353,14 +353,14 @@ export default function Chat() {
           )}
         </div>
       ) : (
-        <div className={`p-2.5 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground flex items-center gap-2 ${isMobile ? "mx-3 mt-2" : ""}`} data-testid="text-chat-no-context-banner">
+        <div className="p-2.5 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground flex items-center gap-2" data-testid="text-chat-no-context-banner">
           <Upload className="w-3.5 h-3.5 shrink-0" />
           <span>
             <Link href="/intake" className="text-primary underline underline-offset-2 hover:text-primary/80">Upload medical records</Link>
             {" "}in your profile to get personalized advice based on your actual records.
           </span>
         </div>
-      )}
+      ))}
 
       <Card className={`flex-1 flex flex-col min-h-0 ${isMobile ? "border-0 shadow-none rounded-none" : ""}`}>
         <CardContent className="flex-1 flex flex-col min-h-0 p-0">
