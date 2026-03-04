@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nexus247.ai — Win Your VA Claim</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #0D2137;
+      --navy-mid: #163352;
+      --steel:    #1E4A7A;
+      --gold:     #D4A43E;
+      --gold-lt:  #EAC76A;
+      --gold-pale:#FDF3DC;
+      --cream:    #FAFAF7;
+      --fog:      #EFF0F3;
+      --white:    #FFFFFF;
+      --body-txt: #2C3340;
+      --muted:    #6B7280;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--body-txt);
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5vw; height: 68px;
+      background: rgba(13,33,55,0.96);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(212,164,62,0.2);
+    }
+    .nav-logo { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: 0.02em; }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 2.2rem; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--gold-lt); }
+    .nav-cta { background: var(--gold); color: var(--navy); border: none; padding: 10px 22px; border-radius: 3px; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s, transform 0.15s; }
+    .nav-cta:hover { background: var(--gold-lt); transform: translateY(-1px); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0D2137 0%, #163352 55%, #1a3d60 100%);
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; overflow: hidden;
+      padding: 120px 5vw 80px;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(212,164,62,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(212,164,62,0.05) 1px, transparent 1px);
+      background-size: 64px 64px; pointer-events: none;
+    }
+    .hero::after {
+      content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+      width: 52vw; height: 80%;
+      background: radial-gradient(ellipse at center, rgba(212,164,62,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-inner { display: flex; align-items: center; gap: 5vw; max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+
+    .hero-copy { flex: 1; min-width: 0; }
+
+    .hero-eyebrow { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; animation: fadeUp 0.6s ease both; }
+    .hero-eyebrow-line { width: 32px; height: 1px; background: var(--gold); opacity: 0.8; }
+    .hero-eyebrow-text { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); }
+
+    .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.8rem, 5.5vw, 4.8rem); line-height: 1.07; color: var(--white); margin-bottom: 1.5rem; animation: fadeUp 0.6s 0.1s ease both; }
+    .hero h1 em { font-style: italic; color: var(--gold); }
+
+    .hero-sub { font-size: 1.05rem; line-height: 1.72; color: rgba(255,255,255,0.58); max-width: 480px; margin-bottom: 2.8rem; font-weight: 300; animation: fadeUp 0.6s 0.2s ease both; }
+
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; animation: fadeUp 0.6s 0.3s ease both; }
+
+    .btn-primary { display: inline-flex; align-items: center; gap: 10px; background: var(--gold); color: var(--navy); padding: 15px 32px; border-radius: 3px; font-size: 0.88rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; box-shadow: 0 4px 24px rgba(212,164,62,0.32); }
+    .btn-primary:hover { background: var(--gold-lt); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(212,164,62,0.42); }
+    .btn-primary svg { width: 15px; height: 15px; transition: transform 0.2s; }
+    .btn-primary:hover svg { transform: translateX(4px); }
+
+    .btn-ghost { display: inline-flex; align-items: center; background: transparent; color: rgba(255,255,255,0.72); padding: 15px 26px; border-radius: 3px; font-size: 0.88rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; border: 1px solid rgba(255,255,255,0.18); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: border-color 0.2s, color 0.2s; }
+    .btn-ghost:hover { border-color: rgba(212,164,62,0.55); color: var(--gold-lt); }
+
+    .trust-strip { display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; margin-top: 4rem; padding-top: 2.5rem; border-top: 1px solid rgba(255,255,255,0.08); animation: fadeUp 0.6s 0.4s ease both; }
+    .trust-item { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(255,255,255,0.38); font-weight: 500; }
+    .trust-item svg { color: var(--gold); opacity: 0.75; flex-shrink: 0; }
+
+    /* SCORE CARD */
+    .score-card-wrap { flex: 0 0 390px; animation: fadeLeft 0.8s 0.35s ease both; }
+
+    .score-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(212,164,62,0.3); border-radius: 10px; padding: 26px 26px 22px; backdrop-filter: blur(12px); box-shadow: 0 24px 64px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04) inset; }
+
+    .sc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .sc-title { font-family: 'JetBrains Mono', monospace; font-size: 0.63rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+    .sc-badge { background: rgba(212,164,62,0.15); border: 1px solid rgba(212,164,62,0.35); border-radius: 2px; padding: 3px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; letter-spacing: 0.1em; color: var(--gold-lt); text-transform: uppercase; }
+
+    .sc-doc-snippet { background: rgba(255,255,255,0.06); border-radius: 5px; padding: 13px 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.07); }
+    .sc-doc-label { font-family: 'JetBrains Mono', monospace; font-size: 0.56rem; letter-spacing: 0.14em; color: rgba(255,255,255,0.25); text-transform: uppercase; margin-bottom: 9px; }
+    .sc-doc-line { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.12); margin-bottom: 6px; filter: blur(1px); }
+    .sc-doc-line:last-child { margin-bottom: 0; width: 60%; }
+
+    .sc-rows { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+    .sc-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .sc-row-label { font-size: 0.77rem; color: rgba(255,255,255,0.75); }
+    .sc-row-score { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--gold); font-weight: 600; }
+    .sc-bar-track { height: 5px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+    .sc-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--gold), var(--gold-lt)); width: 0%; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
+
+    .sc-overall { background: rgba(212,164,62,0.1); border: 1px solid rgba(212,164,62,0.3); border-radius: 6px; padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; }
+    .sc-overall-label { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 3px; }
+    .sc-overall-num { font-family: 'DM Serif Display', serif; font-size: 1.85rem; color: var(--gold); line-height: 1; }
+    .sc-overall-num span { font-size: 0.95rem; color: rgba(255,255,255,0.38); font-family: 'DM Sans', sans-serif; font-weight: 300; }
+
+    .sc-ready { display: flex; align-items: center; gap: 7px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); border-radius: 4px; padding: 8px 13px; }
+    .sc-ready-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.6); animation: pulse 2s infinite; }
+    .sc-ready-text { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #4ade80; }
+
+    .sc-footer { margin-top: 13px; text-align: center; font-size: 0.7rem; color: rgba(255,255,255,0.27); line-height: 1.5; }
+    .sc-footer strong { color: rgba(212,164,62,0.7); font-weight: 500; }
+
+    /* DIVIDER */
+    .divider { height: 3px; background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-lt) 50%, var(--gold) 70%, transparent); opacity: 0.35; }
+
+    /* FEATURES */
+    .features { padding: 96px 5vw; background: var(--cream); }
+    .section-header { max-width: 580px; margin: 0 auto 4.5rem; text-align: center; }
+    .section-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(212,164,62,0.35); padding: 5px 14px; border-radius: 2px; margin-bottom: 1.1rem; }
+    .section-header h2 { font-family: 'DM Serif Display', serif; font-size: clamp(1.9rem, 3.2vw, 2.8rem); color: var(--navy); line-height: 1.15; margin-bottom: 0.9rem; }
+    .section-header p { color: var(--muted); font-size: 0.97rem; line-height: 1.7; font-weight: 300; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2px; background: var(--fog); border: 2px solid var(--fog); border-radius: 8px; overflow: hidden; max-width: 1100px; margin: 0 auto; }
+    .feature-card { background: var(--white); padding: 42px 34px; transition: background 0.25s; }
+    .feature-card:hover { background: var(--gold-pale); }
+    .feature-card:hover .feat-icon { color: var(--gold); }
+    .feat-icon { width: 38px; height: 38px; margin-bottom: 1.3rem; color: var(--navy); transition: color 0.25s; }
+    .feature-card h3 { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--navy); margin-bottom: 0.6rem; }
+    .feature-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.65; font-weight: 300; }
+
+    /* HOW IT WORKS */
+    .how { padding: 96px 5vw; background: linear-gradient(160deg, #0D2137 0%, #163352 100%); position: relative; overflow: hidden; }
+    .how::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(212,164,62,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(212,164,62,0.04) 1px, transparent 1px); background-size: 64px 64px; pointer-events: none; }
+    .how .section-header h2 { color: var(--white); }
+    .how .section-header p { color: rgba(255,255,255,0.42); }
+
+    .steps { display: flex; gap: 0; max-width: 960px; margin: 0 auto; position: relative; }
+    .steps::before { content: ''; position: absolute; top: 32px; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,164,62,0.35), transparent); }
+    .step { flex: 1; text-align: center; padding: 0 24px; }
+    .step-num { width: 64px; height: 64px; border-radius: 50%; border: 1px solid rgba(212,164,62,0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.4rem; font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 600; color: var(--gold); background: rgba(212,164,62,0.08); position: relative; z-index: 1; transition: background 0.25s, border-color 0.25s; }
+    .step:hover .step-num { background: rgba(212,164,62,0.18); border-color: var(--gold); }
+    .step h3 { font-family: 'DM Serif Display', serif; font-size: 1.12rem; color: var(--white); margin-bottom: 0.55rem; }
+    .step p { font-size: 0.86rem; color: rgba(255,255,255,0.4); line-height: 1.6; font-weight: 300; }
+
+    /* PRICING */
+    .pricing { padding: 96px 5vw; background: var(--cream); }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 22px; max-width: 960px; margin: 0 auto; }
+    .pricing-card { background: var(--white); border: 1px solid var(--fog); border-radius: 6px; padding: 42px 34px; position: relative; transition: transform 0.2s, box-shadow 0.2s; }
+    .pricing-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(13,33,55,0.1); }
+    .pricing-card.featured { background: var(--navy); border-color: var(--gold); border-width: 1.5px; }
+    .pricing-card.featured:hover { box-shadow: 0 16px 48px rgba(13,33,55,0.3), 0 0 40px rgba(212,164,62,0.12); }
+    .pricing-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--gold); color: var(--navy); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 16px; border-radius: 2px; }
+    .plan-name { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.7rem; }
+    .plan-price { font-family: 'DM Serif Display', serif; font-size: 2.9rem; color: var(--navy); line-height: 1; margin-bottom: 0.25rem; }
+    .pricing-card.featured .plan-price { color: var(--white); }
+    .plan-price sup { font-size: 1.3rem; vertical-align: super; }
+    .plan-note { font-size: 0.77rem; color: var(--muted); margin-bottom: 1.8rem; }
+    .pricing-card.featured .plan-note { color: rgba(255,255,255,0.4); }
+    .plan-features { list-style: none; margin-bottom: 2.2rem; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.87rem; color: var(--body-txt); margin-bottom: 0.7rem; line-height: 1.4; }
+    .pricing-card.featured .plan-features li { color: rgba(255,255,255,0.68); }
+    .plan-features li svg { flex-shrink: 0; margin-top: 2px; color: var(--gold); }
+    .btn-plan { display: block; width: 100%; text-align: center; padding: 13px; border-radius: 3px; font-size: 0.84rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+    .btn-plan-outline { background: transparent; border: 1px solid var(--fog); color: var(--navy); }
+    .btn-plan-outline:hover { border-color: var(--navy); background: var(--fog); }
+    .btn-plan-gold { background: var(--gold); color: var(--navy); }
+    .btn-plan-gold:hover { background: var(--gold-lt); }
+
+    /* TESTIMONIALS */
+    .testimonial-band { padding: 76px 5vw; background: var(--fog); border-top: 1px solid rgba(13,33,55,0.07); }
+    .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; max-width: 960px; margin: 0 auto; }
+    .testimonial { background: var(--white); border-radius: 6px; padding: 30px 26px; border-left: 3px solid var(--gold); }
+    .testimonial blockquote { font-family: 'DM Serif Display', serif; font-size: 1.02rem; color: var(--navy); line-height: 1.55; margin-bottom: 1.1rem; font-style: italic; }
+    .testimonial-author { font-size: 0.76rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; }
+
+    /* FOOTER CTA */
+    .footer-cta { padding: 96px 5vw; background: linear-gradient(135deg, #0D2137 0%, #163352 100%); text-align: center; position: relative; overflow: hidden; }
+    .footer-cta::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(212,164,62,0.08) 0%, transparent 65%); pointer-events: none; }
+    .footer-cta h2 { font-family: 'DM Serif Display', serif; font-size: clamp(2.1rem, 3.8vw, 3.2rem); color: var(--white); margin-bottom: 1.1rem; }
+    .footer-cta h2 em { color: var(--gold); font-style: italic; }
+    .footer-cta p { color: rgba(255,255,255,0.42); font-size: 1rem; font-weight: 300; max-width: 460px; margin: 0 auto 2.4rem; line-height: 1.65; }
+
+    /* FOOTER */
+    footer { background: var(--navy); border-top: 1px solid rgba(255,255,255,0.06); padding: 30px 5vw; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    footer .logo-sm { font-family: 'DM Serif Display', serif; font-size: 1.08rem; color: var(--white); }
+    footer .logo-sm span { color: var(--gold); }
+    footer p { font-size: 0.76rem; color: rgba(255,255,255,0.28); }
+    footer nav a { color: rgba(255,255,255,0.32); text-decoration: none; font-size: 0.76rem; margin-left: 1.4rem; transition: color 0.2s; }
+    footer nav a:hover { color: var(--gold-lt); }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeLeft { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 900px) {
+      .hero-inner { flex-direction: column; }
+      .score-card-wrap { flex: none; width: 100%; max-width: 420px; margin: 0 auto; }
+    }
+    @media (max-width: 680px) {
+      nav .nav-links { display: none; }
+      .steps { flex-direction: column; gap: 2.5rem; }
+      .steps::before { display: none; }
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Nexus<span>247</span>.ai</div>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('start').scrollIntoView({behavior:'smooth'})">Get Started</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+
+    <!-- LEFT -->
+    <div class="hero-copy">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-line"></div>
+        <div class="hero-eyebrow-text">Trusted by Veterans Nationwide</div>
+      </div>
+      <h1>Your Service<br>Deserves a <em>Fight<br>Worth Winning.</em></h1>
+      <p class="hero-sub">AI-powered nexus letters, personal statements, and NODs grounded in 38 CFR — scored for quality before you ever submit.</p>
+      <div class="hero-actions">
+        <a href="#start" class="btn-primary">
+          Start Your Claim
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="#pricing" class="btn-ghost">View Pricing</a>
+      </div>
+      <div class="trust-strip">
+        <div class="trust-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          HIPAA Compliant
+        </div>
+        <div class="trust-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Encrypted & Secure
+        </div>
+        <div class="trust-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          38 CFR Grounded
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SCORE CARD -->
+    <div class="score-card-wrap">
+      <div class="score-card">
+        <div class="sc-header">
+          <div class="sc-title">RPA Quality Score</div>
+          <div class="sc-badge">Live Preview</div>
+        </div>
+        <div class="sc-doc-snippet">
+          <div class="sc-doc-label">Nexus Letter · Veteran Sample</div>
+          <div class="sc-doc-line" style="width:100%"></div>
+          <div class="sc-doc-line" style="width:88%"></div>
+          <div class="sc-doc-line" style="width:95%"></div>
+          <div class="sc-doc-line" style="width:80%"></div>
+          <div class="sc-doc-line"></div>
+        </div>
+        <div class="sc-rows">
+          <div class="sc-row">
+            <div class="sc-row-top">
+              <div class="sc-row-label">CFR Compliance</div>
+              <div class="sc-row-score" data-score="9">0/10</div>
+            </div>
+            <div class="sc-bar-track"><div class="sc-bar-fill" data-width="90"></div></div>
+          </div>
+          <div class="sc-row">
+            <div class="sc-row-top">
+              <div class="sc-row-label">Nexus Strength</div>
+              <div class="sc-row-score" data-score="9">0/10</div>
+            </div>
+            <div class="sc-bar-track"><div class="sc-bar-fill" data-width="90"></div></div>
+          </div>
+          <div class="sc-row">
+            <div class="sc-row-top">
+              <div class="sc-row-label">Evidence Grounding</div>
+              <div class="sc-row-score" data-score="8">0/10</div>
+            </div>
+            <div class="sc-bar-track"><div class="sc-bar-fill" data-width="80"></div></div>
+          </div>
+          <div class="sc-row">
+            <div class="sc-row-top">
+              <div class="sc-row-label">Diagnostic Clarity</div>
+              <div class="sc-row-score" data-score="8">0/10</div>
+            </div>
+            <div class="sc-bar-track"><div class="sc-bar-fill" data-width="80"></div></div>
+          </div>
+          <div class="sc-row">
+            <div class="sc-row-top">
+              <div class="sc-row-label">Rater Readiness</div>
+              <div class="sc-row-score" data-score="9">0/10</div>
+            </div>
+            <div class="sc-bar-track"><div class="sc-bar-fill" data-width="90"></div></div>
+          </div>
+        </div>
+        <div class="sc-overall">
+          <div>
+            <div class="sc-overall-label">Overall Score</div>
+            <div class="sc-overall-num" id="overall-num">0<span>/100</span></div>
+          </div>
+          <div class="sc-ready">
+            <div class="sc-ready-dot"></div>
+            <div class="sc-ready-text">Ready to Submit</div>
+          </div>
+        </div>
+        <div class="sc-footer">Every letter is scored like this <strong>before you submit</strong>.<br>Low scores get flagged for revision automatically.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-header reveal">
+    <div class="section-tag">What You Get</div>
+    <h2>Everything You Need to Win Your Claim</h2>
+    <p>Professional-grade tools built by claims experts, powered by AI trained on real VA decisions — not generic templates.</p>
+  </div>
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <h3>CFR-Grounded Letters</h3>
+      <p>Nexus letters, personal statements, and NODs — each citing the exact 38 CFR sections VA raters look for. No guesswork.</p>
+    </div>
+    <div class="feature-card">
+      <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <h3>Trained on Real Decisions</h3>
+      <p>Our AI learns from actual VA approvals and denials to understand how raters think and which arguments win claims.</p>
+    </div>
+    <div class="feature-card">
+      <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <h3>RPA Quality Scoring</h3>
+      <p>Every letter scored across 5 dimensions — CFR compliance, nexus strength, evidence, clarity, and rater readiness — before you submit.</p>
+    </div>
+    <div class="feature-card">
+      <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <h3>AI Claims Advisor</h3>
+      <p>Instant answers on your claim, C&P exam prep, filing strategy, and appeal options — available around the clock.</p>
+    </div>
+    <div class="feature-card">
+      <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <h3>Rating Estimator</h3>
+      <p>Calculate your combined VA disability rating using the official whole-person method and see where you stand before filing.</p>
+    </div>
+    <div class="feature-card">
+      <svg class="feat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <h3>Human Expert Support</h3>
+      <p>Request manual review from claims experts when you need human guidance on complex evidence or appeal strategy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-header reveal">
+    <div class="section-tag">The Process</div>
+    <h2>Three Steps to a Stronger Claim</h2>
+    <p>Stripped of complexity so you can focus on what matters — getting the rating you've earned.</p>
+  </div>
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Upload Your Records</h3>
+      <p>Securely submit your medical records, service history, and supporting documents in minutes.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>AI Builds Your Case</h3>
+      <p>Your records are analyzed against 38 CFR and a nexus letter, personal statement, or NOD is generated.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Score, Review & Submit</h3>
+      <p>Your letter is scored across 5 dimensions. Review, refine if needed, then submit with confidence.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-header reveal">
+    <div class="section-tag">Pricing</div>
+    <h2>One-Time. No Subscriptions.</h2>
+    <p>Pay once for the support you need. No monthly fees, no percentage of your back pay. Ever.</p>
+  </div>
+  <div class="pricing-grid reveal">
+    <div class="pricing-card">
+      <div class="plan-name">Basic</div>
+      <div class="plan-price"><sup>$</sup>49</div>
+      <div class="plan-note">One-time payment</div>
+      <ul class="plan-features">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 CFR-grounded letter</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>RPA quality score</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>AI Claims Advisor access</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Rating estimator</li>
+      </ul>
+      <button class="btn-plan btn-plan-outline">Get Started</button>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pricing-badge">Most Popular</div>
+      <div class="plan-name">Multi</div>
+      <div class="plan-price"><sup>$</sup>129</div>
+      <div class="plan-note">One-time payment</div>
+      <ul class="plan-features">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Up to 5 CFR-grounded letters</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Full RPA scoring on all letters</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Priority AI Claims Advisor</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Rating estimator</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>1 expert review session</li>
+      </ul>
+      <button class="btn-plan btn-plan-gold">Get Started</button>
+    </div>
+    <div class="pricing-card">
+      <div class="plan-name">Complete</div>
+      <div class="plan-price"><sup>$</sup>249</div>
+      <div class="plan-note">One-time payment</div>
+      <ul class="plan-features">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Unlimited letters</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Full RPA scoring suite</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Priority AI Claims Advisor</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Rating estimator</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>3 expert review sessions</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>C&P exam prep guide</li>
+      </ul>
+      <button class="btn-plan btn-plan-outline">Get Started</button>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonial-band">
+  <div class="testimonials reveal">
+    <div class="testimonial">
+      <blockquote>"The nexus letter cited specific CFR sections I didn't even know applied to my case. Night and day from what I'd been submitting."</blockquote>
+      <div class="testimonial-author">Army Veteran — 70% Rating Awarded</div>
+    </div>
+    <div class="testimonial">
+      <blockquote>"Three years fighting my claim. Within 60 days of using Nexus247, I had my decision. The quality scoring alone was worth every penny."</blockquote>
+      <div class="testimonial-author">Marine Corps Veteran — Claim Approved</div>
+    </div>
+    <div class="testimonial">
+      <blockquote>"Finally a tool built for veterans, not built to confuse them. The AI advisor actually understood my situation."</blockquote>
+      <div class="testimonial-author">Navy Veteran — Appeal Successful</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER CTA -->
+<section class="footer-cta" id="start">
+  <h2>Your Benefits Are<br><em>Not Optional.</em></h2>
+  <p>You earned them. Let's build a claim that proves it — professional, precise, and ready to win.</p>
+  <a href="#" class="btn-primary" style="display:inline-flex;justify-content:center;">
+    Start Your Claim
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;margin-left:10px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo-sm">Nexus<span>247</span>.ai</div>
+  <p>© 2025 Nexus247.ai · Not a law firm · Not affiliated with the VA</p>
+  <nav>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </nav>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => io.observe(el));
+
+  // Score card animation
+  function animateScore() {
+    const bars = document.querySelectorAll('.sc-bar-fill');
+    const scoreEls = document.querySelectorAll('.sc-row-score');
+    const overallEl = document.getElementById('overall-num');
+
+    bars.forEach((bar, i) => {
+      const targetWidth = parseInt(bar.dataset.width);
+      const targetScore = parseInt(scoreEls[i].dataset.score);
+      setTimeout(() => {
+        bar.style.width = targetWidth + '%';
+        let current = 0;
+        const tick = setInterval(() => {
+          current++;
+          scoreEls[i].textContent = current + '/10';
+          if (current >= targetScore) clearInterval(tick);
+        }, 90);
+      }, 500 + i * 200);
+    });
+
+    // overall count-up
+    setTimeout(() => {
+      let n = 0;
+      const target = 86;
+      const tick = setInterval(() => {
+        n += 2;
+        overallEl.innerHTML = Math.min(n, target) + '<span>/100</span>';
+        if (n >= target) clearInterval(tick);
+      }, 20);
+    }, 500 + 5 * 200 + 300);
+  }
+
+  window.addEventListener('load', () => setTimeout(animateScore, 700));
+</script>
+
+</body>
+</html>
