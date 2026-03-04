@@ -7,8 +7,8 @@ import { MONTHLY_RATES, SMC_RATES, SMC_INFO } from "@shared/va-rates";
 import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
 import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
+const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url);
+const pdfParse = _require("pdf-parse");
 
 const TIER_LIMITS: Record<string, number> = {
   none: 0,
