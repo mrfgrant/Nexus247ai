@@ -7,11 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Send, MessageCircle, Bot, User, Lightbulb, BookOpen, FileText, Shield, Upload } from "lucide-react";
+import { Send, MessageCircle, Bot, User, Lightbulb, BookOpen, FileText, Shield, Upload, ArrowLeft, Menu } from "lucide-react";
 import type { ChatMessage, SupportingDocument, LetterAnalysis } from "@shared/schema";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { getRankDisplayName } from "@shared/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const THINKING_MESSAGES = [
   "Analyzing your question...",
@@ -225,6 +227,9 @@ export default function Chat() {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const { toggleSidebar } = useSidebar();
+  const [, navigate] = useLocation();
 
   const { data: profile } = useQuery<any>({ queryKey: ["/api/profile"] });
   const rankName = getRankDisplayName(profile?.rank, profile?.branch, user?.lastName, user?.firstName);
@@ -284,18 +289,48 @@ export default function Chat() {
   };
 
   return (
-    <div className="p-3 sm:p-6 max-w-3xl mx-auto flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-2rem)]">
-      <div className="mb-2 sm:mb-4">
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-chat-title">
-          AI Claims Advisor
-        </h1>
-        <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1">
-          Get expert guidance on VA claims, CFR regulations, and filing strategy.
-        </p>
+    <div className={
+      isMobile
+        ? "fixed inset-0 z-50 bg-background flex flex-col"
+        : "p-3 sm:p-6 max-w-3xl mx-auto flex flex-col h-[calc(100vh-4rem)] sm:h-[calc(100vh-2rem)]"
+    }>
+      <div className={isMobile ? "flex items-center gap-2 px-3 py-2 border-b border-border shrink-0" : "mb-2 sm:mb-4"}>
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/dashboard")}
+            data-testid="button-chat-exit"
+            aria-label="Exit chat"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        )}
+        <div className="flex-1 min-w-0">
+          <h1 className={isMobile ? "text-sm font-bold text-foreground truncate" : "text-xl sm:text-2xl font-bold text-foreground"} data-testid="text-chat-title">
+            AI Claims Advisor
+          </h1>
+          {!isMobile && (
+            <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1">
+              Get expert guidance on VA claims, CFR regulations, and filing strategy.
+            </p>
+          )}
+        </div>
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            data-testid="button-chat-menu"
+            aria-label="Open menu"
+          >
+            <Menu className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {hasAnyContext ? (
-        <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground/80 flex items-center gap-2 flex-wrap" data-testid="text-chat-context-banner">
+        <div className={`p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs text-foreground/80 flex items-center gap-2 flex-wrap ${isMobile ? "mx-3 mt-2" : ""}`} data-testid="text-chat-context-banner">
           <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="font-medium">Your advisor has access to:</span>
           {medicalRecordCount > 0 && (
@@ -318,7 +353,7 @@ export default function Chat() {
           )}
         </div>
       ) : (
-        <div className="p-2.5 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground flex items-center gap-2" data-testid="text-chat-no-context-banner">
+        <div className={`p-2.5 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground flex items-center gap-2 ${isMobile ? "mx-3 mt-2" : ""}`} data-testid="text-chat-no-context-banner">
           <Upload className="w-3.5 h-3.5 shrink-0" />
           <span>
             <Link href="/intake" className="text-primary underline underline-offset-2 hover:text-primary/80">Upload medical records</Link>
@@ -327,7 +362,7 @@ export default function Chat() {
         </div>
       )}
 
-      <Card className="flex-1 flex flex-col min-h-0">
+      <Card className={`flex-1 flex flex-col min-h-0 ${isMobile ? "border-0 shadow-none rounded-none" : ""}`}>
         <CardContent className="flex-1 flex flex-col min-h-0 p-0">
           <ScrollArea className="flex-1 p-4">
             {isLoading ? (
@@ -411,14 +446,14 @@ export default function Chat() {
             )}
           </ScrollArea>
 
-          <div className="p-4 border-t border-border">
+          <div className={`p-4 border-t border-border ${isMobile ? "pb-6" : ""}`}>
             <div className="flex gap-2">
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about VA claims, CFR regulations, appeals..."
-                rows={2}
+                rows={isMobile ? 1 : 2}
                 className="resize-none"
                 data-testid="input-chat-message"
               />
@@ -431,9 +466,11 @@ export default function Chat() {
                 <Send className="w-4 h-4" />
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-2 italic">
-              This is general guidance, not legal advice. Consult an accredited VA claims agent or attorney.
-            </p>
+            {!isMobile && (
+              <p className="text-xs text-muted-foreground mt-2 italic">
+                This is general guidance, not legal advice. Consult an accredited VA claims agent or attorney.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

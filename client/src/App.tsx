@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -29,15 +29,20 @@ import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
 function AuthenticatedLayout() {
+  const [location] = useLocation();
+  const isChatPage = location === "/chat";
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto">
-          <div className="md:hidden flex items-center gap-3 p-3 border-b border-border bg-background sticky top-0 z-30">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <span className="text-sm font-semibold text-foreground">Nexus247</span>
-          </div>
+          {!isChatPage && (
+            <div className="md:hidden flex items-center gap-3 p-3 border-b border-border bg-background sticky top-0 z-30">
+              <SidebarTrigger data-testid="button-sidebar-toggle" />
+              <span className="text-sm font-semibold text-foreground">Nexus247</span>
+            </div>
+          )}
           <Switch>
             <Route path="/dashboard" component={Dashboard} />
             <Route path="/intake" component={Intake} />
