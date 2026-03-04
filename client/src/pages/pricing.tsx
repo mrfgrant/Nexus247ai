@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Lock, Star, Shield, ChevronDown, Loader2 } from "lucide-react";
+import { CheckCircle, Lock, Star, Shield, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -20,46 +17,38 @@ const tiers = [
       {
         text: "5 AI-generated letters per month",
         included: true,
-        detail: "Generate nexus letters, personal statements, buddy letters, NODs, secondary condition letters, and increase claim letters — all grounded in 38 CFR citations and scored for rater readiness.",
       },
       {
         text: "Nexus, personal statements, buddy letters",
         included: true,
-        detail: "Each letter is tailored to your specific condition, service history, and medical records. Nexus letters are concise and formatted for a real medical professional to sign.",
       },
       {
         text: "NODs and secondary condition letters",
         included: true,
-        detail: "Notices of Disagreement cite specific rater errors and CFR violations. Secondary condition letters establish the medical link between your service-connected and secondary conditions.",
       },
       {
         text: "Increase claim letters",
         included: true,
-        detail: "Built around the DBQ scoring criteria for your specific diagnostic code, citing the exact rating thresholds from 38 CFR Part 4 that justify a higher rating.",
       },
       {
         text: "2 decision letter analyses per month",
         included: true,
-        detail: "Upload your VA decision letter and get an AI breakdown of denial reasons, rater errors, missed evidence, CFR violations, and recommended next steps.",
       },
       {
         text: "Rating estimator",
         included: true,
-        detail: "Calculate your combined VA disability rating using the bilateral factor and VA math. See your estimated monthly compensation at 2026 COLA rates.",
       },
       {
         text: "AI Claims Chat",
         included: true,
-        detail: "Ask questions about VA claims, CFR regulations, appeals strategies, and your specific case. The advisor references your profile and conditions.",
       },
       {
         text: "RPA quality scoring on every letter",
         included: true,
-        detail: "Every generated document is scored across 4 dimensions: CFR citation accuracy, evidence strength, nexus clarity, and rater readiness — with specific improvement suggestions.",
       },
-      { text: "C&P Exam Prep", included: false, detail: "Available on Pro and above. Get a personalized 8-section preparation guide and printable exam day cheat sheet for your C&P exam." },
-      { text: "AOD Motions", included: false, detail: "Available on Concierge. Advance on Docket motions under 38 CFR § 20.900(c) for expediting your appeal." },
-      { text: "Good Cause Letters", included: false, detail: "Available on Concierge. Letters establishing good cause for late filing under 38 U.S.C. § 7107." },
+      { text: "C&P Exam Prep", included: false },
+      { text: "AOD Motions", included: false },
+      { text: "Good Cause Letters", included: false },
     ],
     popular: false,
   },
@@ -72,45 +61,37 @@ const tiers = [
       {
         text: "50 AI-generated letters per month",
         included: true,
-        detail: "Ten times the Basic limit. Generate letters for multiple conditions, iterations, and appeals without worrying about running out.",
       },
       {
         text: "All Basic document types",
         included: true,
-        detail: "Every document type available in Basic — nexus letters, personal statements, buddy letters, NODs, secondary condition letters, and increase claims.",
-      },
-      {
-        text: "10 decision letter analyses per month",
-        included: true,
-        detail: "Five times the Basic limit. Analyze multiple decision letters, track patterns across denials, and build a comprehensive appeal strategy.",
       },
       {
         text: "C&P Exam Prep with printable cheat sheet",
         included: true,
-        detail: "A personalized 8-section preparation guide covering examiner questions, DBQ scoring criteria, worst-day symptom descriptions, and red flags for bad faith exams. Plus a printable one-pager you bring to the exam.",
       },
       {
-        text: "Smart document gap alerts",
+        text: "10 decision letter analyses per month",
         included: true,
-        detail: "Before your C&P exam, the system checks if you're missing a nexus letter or buddy letter for that condition and lets you generate them with one click.",
       },
       {
         text: "Cross-reference evidence analysis",
         included: true,
-        detail: "Compares your uploaded medical records against decision letter findings to identify evidence gaps, calculate win probabilities, and recommend specific medical tests or documentation needed.",
+      },
+      {
+        text: "Smart document gap alerts",
+        included: true,
       },
       {
         text: "AI Claims Chat with medical records context",
         included: true,
-        detail: "The AI advisor reads your uploaded medical records and decision letter analysis, giving advice specific to your actual evidence — not generic guidance.",
       },
       {
         text: "RPA quality scoring on every letter",
         included: true,
-        detail: "Same 4-dimension scoring as Basic with detailed improvement suggestions to strengthen each document before submission.",
       },
-      { text: "AOD Motions", included: false, detail: "Available on Concierge. Advance on Docket motions under 38 CFR § 20.900(c) for expediting your appeal." },
-      { text: "Good Cause Letters", included: false, detail: "Available on Concierge. Letters establishing good cause for late filing under 38 U.S.C. § 7107." },
+      { text: "AOD Motions", included: false },
+      { text: "Good Cause Letters", included: false },
     ],
     popular: true,
   },
@@ -123,91 +104,71 @@ const tiers = [
       {
         text: "Unlimited AI-generated letters",
         included: true,
-        detail: "No monthly limits. Generate as many documents as you need — iterate on nexus letters, create statements for every condition, build a complete claims package.",
       },
       {
         text: "All Pro features",
         included: true,
-        detail: "Everything in Pro including C&P Exam Prep, cross-reference analysis, smart document gap alerts, and AI chat with full medical records context.",
       },
       {
         text: "50 decision letter analyses per month",
         included: true,
-        detail: "Analyze every decision letter in your claims history. Build a comprehensive picture of rater patterns, recurring errors, and systemic issues across your entire case.",
       },
       {
         text: "50 C&P Exam Prep guides per month",
         included: true,
-        detail: "Prepare for every exam across all your conditions. Generate updated prep guides as your evidence evolves.",
       },
       {
         text: "AOD Motions (38 CFR § 20.900(c))",
         included: true,
-        detail: "Advance on Docket motions to expedite your appeal when you meet the criteria — financial hardship, serious illness, or advanced age. CFR-grounded and ready to file.",
       },
       {
         text: "Good Cause Letters (38 U.S.C. § 7107)",
         included: true,
-        detail: "Establish good cause for late evidence submission or missed deadlines. Cites the specific statutory requirements and frames your circumstances persuasively.",
       },
       {
         text: "Priority human expert review",
         included: true,
-        detail: "Your generated documents are reviewed by a claims specialist who provides feedback on strategy, evidence gaps, and submission timing.",
       },
       {
         text: "1-on-1 claims strategy sessions",
         included: true,
-        detail: "Schedule a session with a claims advisor to discuss your overall strategy, prioritize conditions, and plan your appeals approach.",
       },
       {
         text: "Priority support response",
         included: true,
-        detail: "Your support requests are handled first, with faster turnaround on questions and technical issues.",
       },
     ],
     popular: false,
   },
 ];
 
-function FeatureItem({ feature, onRpaClick }: { feature: { text: string; included: boolean; detail?: string }; onRpaClick?: () => void }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasDetail = !!feature.detail;
+function FeatureItem({ feature, onRpaClick }: { feature: { text: string; included: boolean }; onRpaClick?: () => void }) {
   const isRpa = feature.text.toLowerCase().includes("rpa quality scoring");
 
   return (
-    <li className="text-sm">
-      <button
-        type="button"
-        onClick={() => {
-          if (isRpa && onRpaClick) {
-            onRpaClick();
-          } else if (hasDetail) {
-            setExpanded(!expanded);
-          }
-        }}
-        className={`flex items-start gap-2 w-full text-left ${hasDetail || isRpa ? "cursor-pointer" : "cursor-default"}`}
-        data-testid={`feature-${feature.text.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`}
-      >
-        {feature.included ? (
-          <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-        ) : (
-          <Lock className="w-4 h-4 text-muted-foreground/40 mt-0.5 shrink-0" />
-        )}
-        <span className={`flex-1 ${feature.included ? "text-foreground" : "text-muted-foreground/60"} ${isRpa ? "underline decoration-primary/50 underline-offset-2" : ""}`}>
-          {feature.text}
-        </span>
-        {hasDetail && !isRpa && (
-          <ChevronDown
-            className={`w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
-          />
-        )}
-      </button>
-      {expanded && feature.detail && !isRpa && (
-        <p className="text-xs text-muted-foreground mt-1.5 ml-6 leading-relaxed">
-          {feature.detail}
-        </p>
+    <li
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        fontSize: "0.88rem",
+        lineHeight: 1.5,
+        cursor: isRpa ? "pointer" : "default",
+      }}
+      onClick={isRpa && onRpaClick ? onRpaClick : undefined}
+      data-testid={`feature-${feature.text.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`}
+    >
+      {feature.included ? (
+        <CheckCircle style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0, color: "var(--gold)" }} />
+      ) : (
+        <Lock style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0, color: "rgba(255,255,255,0.25)" }} />
       )}
+      <span style={{
+        color: feature.included ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.35)",
+        ...(isRpa ? { textDecoration: "underline", textDecorationColor: "var(--gold)", textUnderlineOffset: 3 } : {}),
+      }}>
+        {feature.text}
+      </span>
     </li>
   );
 }
@@ -252,55 +213,143 @@ export default function Pricing() {
   const currentTier = profile?.subscriptionTier || "none";
 
   return (
-    <div className="p-3 sm:p-6 max-w-5xl mx-auto space-y-8">
-      <div className="text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-pricing-title">
+    <div style={{ padding: "32px 16px", maxWidth: 1100, margin: "0 auto" }}>
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
+        <h1
+          style={{
+            fontFamily: "'DM Serif Display', serif",
+            fontSize: "clamp(1.6rem, 3vw, 2.4rem)",
+            color: "var(--foreground)",
+            marginBottom: 8,
+          }}
+          data-testid="text-pricing-title"
+        >
           Choose Your Plan
         </h1>
-        <p className="text-muted-foreground text-sm sm:text-base mt-2 max-w-lg mx-auto">
-          Every plan includes RPA quality scoring, AI Claims Chat, and CFR-grounded letter generation. Click any feature to learn more.
+        <p style={{ color: "var(--muted-foreground)", fontSize: "0.95rem", maxWidth: 520, margin: "0 auto" }}>
+          Every plan includes RPA quality scoring, AI Claims Chat, and CFR-grounded letter generation.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+      <div className="pricing-grid" style={{ display: "grid", gap: 24, alignItems: "start" }}>
         {tiers.map((tier) => {
           const isCurrent = currentTier === tier.tier;
           return (
-            <Card
+            <div
               key={tier.name}
-              className={`relative hover-elevate ${tier.popular ? "ring-2 ring-primary" : ""}`}
               data-testid={`card-tier-${tier.tier}`}
+              style={{
+                position: "relative",
+                backgroundColor: "#0D2137",
+                backgroundImage: "linear-gradient(170deg, #0D2137 0%, #132c47 50%, #0D2137 100%)",
+                borderRadius: 12,
+                border: tier.popular ? "2px solid var(--gold)" : "1px solid rgba(255,255,255,0.08)",
+                overflow: "hidden",
+                transition: "transform 0.25s, box-shadow 0.25s",
+              }}
+              className="pricing-card"
             >
               {tier.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge><Star className="w-3 h-3 mr-1" /> Most Popular</Badge>
+                <div style={{
+                  position: "absolute",
+                  top: -1,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "var(--gold)",
+                  color: "#0D2137",
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  padding: "6px 20px",
+                  borderRadius: "0 0 6px 6px",
+                }}>
+                  Most Popular
                 </div>
               )}
-              <CardContent className="p-6 space-y-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-foreground">{tier.name}</h3>
-                    {isCurrent && <Badge variant="outline" className="text-xs">Current</Badge>}
+
+              <div style={{ padding: tier.popular ? "52px 28px 36px" : "36px 28px" }}>
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--gold)",
+                    marginBottom: 16,
+                  }}>
+                    {tier.name}
+                    {isCurrent && (
+                      <span style={{
+                        marginLeft: 10,
+                        fontSize: "0.6rem",
+                        color: "#fff",
+                        background: "rgba(255,255,255,0.12)",
+                        padding: "2px 8px",
+                        borderRadius: 3,
+                        letterSpacing: "0.1em",
+                      }}>
+                        CURRENT
+                      </span>
+                    )}
+                  </h3>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 8 }}>
+                    <span style={{
+                      fontFamily: "'DM Serif Display', serif",
+                      fontSize: "2.8rem",
+                      fontWeight: 700,
+                      color: "#fff",
+                      lineHeight: 1,
+                    }}>
+                      {tier.price}
+                    </span>
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem" }}>/month</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">{tier.description}</p>
+                  <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.88rem", lineHeight: 1.5 }}>
+                    {tier.description}
+                  </p>
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">{tier.price}</span>
-                  <span className="text-muted-foreground">/month</span>
+
+                <div style={{
+                  borderTop: "1px solid rgba(255,255,255,0.08)",
+                  paddingTop: 20,
+                  marginBottom: 28,
+                }}>
+                  <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+                    {tier.features.map((feature) => (
+                      <FeatureItem key={feature.text} feature={feature} onRpaClick={() => setRpaModalOpen(true)} />
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-3">
-                  {tier.features.map((feature) => (
-                    <FeatureItem key={feature.text} feature={feature} onRpaClick={() => setRpaModalOpen(true)} />
-                  ))}
-                </ul>
+
                 {isCurrent ? (
-                  <Button className="w-full" variant="outline" disabled>
-                    <Shield className="w-4 h-4 mr-2" /> Current Plan
-                  </Button>
+                  <button
+                    disabled
+                    style={{
+                      width: "100%",
+                      padding: "14px 24px",
+                      borderRadius: 8,
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "transparent",
+                      color: "rgba(255,255,255,0.4)",
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      cursor: "not-allowed",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Shield style={{ width: 14, height: 14 }} /> Current Plan
+                  </button>
                 ) : (
-                  <Button
-                    className="w-full"
-                    variant={tier.popular ? "default" : "outline"}
+                  <button
                     data-testid={`button-select-${tier.tier}`}
                     disabled={checkoutMutation.isPending}
                     onClick={() => {
@@ -310,30 +359,83 @@ export default function Pricing() {
                         checkoutMutation.mutate(tier.tier);
                       }
                     }}
+                    style={{
+                      width: "100%",
+                      padding: "14px 24px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: tier.popular
+                        ? "linear-gradient(135deg, var(--gold) 0%, #c4942e 100%)"
+                        : "rgba(255,255,255,0.06)",
+                      color: tier.popular ? "#0D2137" : "#fff",
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      cursor: checkoutMutation.isPending ? "wait" : "pointer",
+                      transition: "background 0.2s, transform 0.15s",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                    className="pricing-cta"
                   >
                     {checkoutMutation.isPending && checkoutMutation.variables === tier.tier ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
                     ) : null}
                     {currentTier === "none" ? `Start ${tier.name}` : `Upgrade to ${tier.name}`}
-                  </Button>
+                  </button>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <Card>
-        <CardContent className="p-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            All plans include a legal disclaimer on every generated document.
-            Nexus247 is not a law firm and does not provide legal advice.
-            Cancel anytime. No long-term contracts.
-          </p>
-        </CardContent>
-      </Card>
+      <div style={{
+        marginTop: 36,
+        textAlign: "center",
+        padding: "18px 24px",
+        background: "rgba(13,33,55,0.04)",
+        borderRadius: 10,
+        border: "1px solid rgba(13,33,55,0.08)",
+      }}>
+        <p style={{ fontSize: "0.82rem", color: "var(--muted-foreground)", lineHeight: 1.6 }}>
+          All plans include a legal disclaimer on every generated document.
+          Nexus247 is not a law firm and does not provide legal advice.
+          Cancel anytime. No long-term contracts.
+        </p>
+      </div>
 
       <RpaScoringModal open={rpaModalOpen} onOpenChange={setRpaModalOpen} authenticated />
+
+      <style>{`
+        .pricing-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        @media (max-width: 900px) {
+          .pricing-grid {
+            grid-template-columns: 1fr !important;
+            max-width: 420px;
+            margin-left: auto;
+            margin-right: auto;
+          }
+        }
+        .pricing-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+        }
+        .pricing-cta:hover:not(:disabled) {
+          filter: brightness(1.08);
+          transform: scale(1.01);
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

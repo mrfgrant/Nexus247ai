@@ -150,7 +150,7 @@ function LandingFeatureItem({ feature }: { feature: { text: string; detail: stri
         type="button"
         onClick={() => setExpanded(!expanded)}
         className="flex items-start gap-2.5 w-full text-left cursor-pointer"
-        style={{ background: "none", border: "none", padding: 0, font: "inherit" }}
+        style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "rgba(255,255,255,0.85)" }}
         data-testid={`feature-${feature.text.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`}
       >
         <CheckCircle style={{ width: 15, height: 15, marginTop: 2, flexShrink: 0, color: "var(--gold)" }} />
@@ -162,13 +162,14 @@ function LandingFeatureItem({ feature }: { feature: { text: string; detail: stri
             marginTop: 2,
             flexShrink: 0,
             opacity: 0.4,
+            color: "rgba(255,255,255,0.5)",
             transition: "transform 0.2s",
             transform: expanded ? "rotate(180deg)" : "none",
           }}
         />
       </button>
       {expanded && (
-        <p style={{ fontSize: "0.82rem", color: "var(--landing-muted)", marginTop: 6, marginLeft: 26, lineHeight: 1.6, fontWeight: 300 }}>
+        <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", marginTop: 6, marginLeft: 26, lineHeight: 1.6, fontWeight: 300 }}>
           {feature.detail}
         </p>
       )}
@@ -636,9 +637,10 @@ export default function Landing() {
             <div
               key={tier.name}
               style={{
-                background: tier.popular ? "var(--navy)" : "var(--landing-white)",
-                border: tier.popular ? "1.5px solid var(--gold)" : "1px solid var(--fog)",
-                borderRadius: 6, padding: "44px 36px", position: "relative",
+                backgroundColor: "#0D2137",
+                backgroundImage: "linear-gradient(170deg, #0D2137 0%, #132c47 50%, #0D2137 100%)",
+                border: tier.popular ? "2px solid var(--gold)" : "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 10, padding: "44px 36px", position: "relative",
                 transition: "transform 0.2s, box-shadow 0.2s",
               }}
               className="landing-pricing-card"
@@ -646,10 +648,10 @@ export default function Landing() {
             >
               {tier.popular && (
                 <div style={{
-                  position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)",
-                  background: "var(--gold)", color: "var(--navy)", fontSize: "0.68rem", fontWeight: 700,
-                  letterSpacing: "0.12em", textTransform: "uppercase", padding: "5px 16px", borderRadius: 2,
-                  whiteSpace: "nowrap",
+                  position: "absolute", top: -1, left: "50%", transform: "translateX(-50%)",
+                  background: "var(--gold)", color: "#0D2137", fontSize: "0.65rem", fontWeight: 700,
+                  letterSpacing: "0.15em", textTransform: "uppercase", padding: "6px 20px",
+                  borderRadius: "0 0 6px 6px", whiteSpace: "nowrap",
                 }}>
                   Most Popular
                 </div>
@@ -657,19 +659,20 @@ export default function Landing() {
               <div style={{
                 fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", letterSpacing: "0.2em",
                 textTransform: "uppercase", color: "var(--gold)", marginBottom: "0.8rem",
+                ...(tier.popular ? { marginTop: 8 } : {}),
               }}>
                 {tier.name}
               </div>
               <div style={{
                 fontFamily: "'DM Serif Display', serif", fontSize: "3rem",
-                color: tier.popular ? "#fff" : "var(--navy)", lineHeight: 1, marginBottom: "0.3rem",
+                color: "#fff", lineHeight: 1, marginBottom: "0.3rem",
               }}>
-                {tier.price}<span style={{ fontSize: "1rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}>{tier.period}</span>
+                {tier.price}<span style={{ fontSize: "1rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 300, color: "rgba(255,255,255,0.5)" }}>/month</span>
               </div>
-              <div style={{ fontSize: "0.78rem", color: tier.popular ? "rgba(255,255,255,0.45)" : "var(--landing-muted)", marginBottom: "2rem" }}>
+              <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", marginBottom: "2rem", lineHeight: 1.5 }}>
                 {tier.description}
               </div>
-              <ul style={{ listStyle: "none", marginBottom: "2.5rem", padding: 0 }}>
+              <ul style={{ listStyle: "none", marginBottom: "2.5rem", padding: 0, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
                 {tier.features.map((feature) => (
                   <LandingFeatureItem key={feature.text} feature={feature} />
                 ))}
@@ -677,14 +680,15 @@ export default function Landing() {
               <a
                 href="/api/login"
                 style={{
-                  display: "block", width: "100%", textAlign: "center", padding: 14, borderRadius: 3,
-                  fontSize: "0.85rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                  display: "block", width: "100%", textAlign: "center", padding: 14, borderRadius: 6,
+                  fontSize: "0.82rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
                   textDecoration: "none", cursor: "pointer",
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "'JetBrains Mono', monospace",
                   ...(tier.popular
-                    ? { background: "var(--gold)", color: "var(--navy)", border: "none" }
-                    : { background: "transparent", border: "1px solid var(--fog)", color: "var(--navy)" }),
+                    ? { background: "linear-gradient(135deg, var(--gold) 0%, #c4942e 100%)", color: "#0D2137", border: "none" }
+                    : { background: "rgba(255,255,255,0.06)", border: "none", color: "#fff" }),
                 }}
+                className="landing-pricing-cta"
                 data-testid={`button-${tier.name.toLowerCase()}-cta`}
               >
                 {tier.cta}
@@ -780,7 +784,11 @@ export default function Landing() {
         }
         .landing-pricing-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 16px 48px rgba(13,33,55,0.1);
+          box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+        }
+        .landing-pricing-cta:hover {
+          filter: brightness(1.08);
+          transform: scale(1.01);
         }
         @media (max-width: 900px) {
           .landing-hero-inner {
