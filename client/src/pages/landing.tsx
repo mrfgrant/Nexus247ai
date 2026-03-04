@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import {
   CheckCircle,
   ArrowRight,
   Lock,
+  ChevronDown,
   Scale,
   Brain,
 } from "lucide-react";
@@ -61,13 +63,13 @@ const tiers = [
     period: "/month",
     description: "Get started with essential claim tools",
     features: [
-      "5 AI-generated letters per month",
-      "Nexus, personal statements, buddy letters",
-      "NODs and secondary condition letters",
-      "2 decision letter analyses per month",
-      "Rating estimator",
-      "AI Claims Chat",
-      "RPA quality scoring",
+      { text: "5 AI-generated letters per month", detail: "Nexus letters, personal statements, buddy letters, NODs, secondary condition letters, and increase claims — all CFR-grounded and scored for quality." },
+      { text: "Nexus, personal statements, buddy letters", detail: "Each letter is tailored to your specific condition, service history, and medical records. Nexus letters are concise and ready for a medical professional to sign." },
+      { text: "NODs and secondary condition letters", detail: "Notices of Disagreement cite specific rater errors and CFR violations. Secondary condition letters establish the medical link between conditions." },
+      { text: "2 decision letter analyses per month", detail: "Upload your VA decision letter and get an AI breakdown of denial reasons, rater errors, missed evidence, and recommended next steps." },
+      { text: "Rating estimator", detail: "Calculate your combined VA disability rating with 2026 COLA rates and SMC eligibility check." },
+      { text: "AI Claims Chat", detail: "Ask questions about VA claims, CFR regulations, and appeals strategies. The advisor references your profile and conditions." },
+      { text: "RPA quality scoring", detail: "Every document is scored on CFR accuracy, evidence strength, nexus clarity, and rater readiness — with specific improvement suggestions." },
     ],
     cta: "Start Basic",
     popular: false,
@@ -78,12 +80,12 @@ const tiers = [
     period: "/month",
     description: "For veterans serious about winning claims",
     features: [
-      "50 AI-generated letters per month",
-      "All Basic features",
-      "C&P Exam Prep with printable cheat sheet",
-      "10 decision letter analyses per month",
-      "Cross-reference evidence analysis",
-      "Smart document gap alerts",
+      { text: "50 AI-generated letters per month", detail: "Ten times the Basic limit. Generate letters for multiple conditions and iterations without worrying about running out." },
+      { text: "All Basic features", detail: "Every document type, rating estimator, AI chat, and RPA quality scoring included." },
+      { text: "C&P Exam Prep with printable cheat sheet", detail: "A personalized 8-section prep guide covering examiner questions, DBQ scoring criteria, worst-day symptom descriptions, and a printable one-pager to bring to your exam." },
+      { text: "10 decision letter analyses per month", detail: "Analyze multiple decision letters, track patterns across denials, and build a comprehensive appeal strategy." },
+      { text: "Cross-reference evidence analysis", detail: "Compares your medical records against decision letter findings to identify evidence gaps and calculate win probabilities." },
+      { text: "Smart document gap alerts", detail: "Before your C&P exam, checks if you're missing a nexus letter or buddy letter and lets you generate them with one click." },
     ],
     cta: "Start Pro",
     popular: true,
@@ -94,17 +96,41 @@ const tiers = [
     period: "/month",
     description: "White-glove service for complex claims",
     features: [
-      "Unlimited AI-generated letters",
-      "All Pro features",
-      "50 C&P Exam Prep guides per month",
-      "AOD Motions & Good Cause Letters",
-      "Priority human expert review",
-      "1-on-1 claims strategy sessions",
+      { text: "Unlimited AI-generated letters", detail: "No monthly limits. Generate as many documents as you need for every condition and appeal." },
+      { text: "All Pro features", detail: "Everything in Pro including C&P Exam Prep, cross-reference analysis, smart gap alerts, and AI chat with full medical records context." },
+      { text: "50 C&P Exam Prep guides per month", detail: "Prepare for every exam across all your conditions. Generate updated prep guides as your evidence evolves." },
+      { text: "AOD Motions & Good Cause Letters", detail: "Advance on Docket motions under 38 CFR § 20.900(c) and Good Cause letters under 38 U.S.C. § 7107 — exclusive to Concierge." },
+      { text: "Priority human expert review", detail: "Your documents are reviewed by a claims specialist who provides feedback on strategy, evidence gaps, and submission timing." },
+      { text: "1-on-1 claims strategy sessions", detail: "Schedule a session with a claims advisor to discuss your overall strategy and plan your appeals approach." },
     ],
     cta: "Start Concierge",
     popular: false,
   },
 ];
+
+function LandingFeatureItem({ feature }: { feature: { text: string; detail: string } }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <li className="text-sm">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-start gap-2 w-full text-left cursor-pointer"
+      >
+        <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+        <span className="flex-1 text-foreground">{feature.text}</span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 mt-0.5 shrink-0 text-muted-foreground/50 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
+      {expanded && (
+        <p className="text-xs text-muted-foreground mt-1.5 ml-6 leading-relaxed">
+          {feature.detail}
+        </p>
+      )}
+    </li>
+  );
+}
 
 export default function Landing() {
   return (
@@ -240,10 +266,7 @@ export default function Landing() {
                   </div>
                   <ul className="space-y-3">
                     {tier.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                        <span className="text-foreground">{feature}</span>
-                      </li>
+                      <LandingFeatureItem key={feature.text} feature={feature} />
                     ))}
                   </ul>
                   <a href="/api/login">
