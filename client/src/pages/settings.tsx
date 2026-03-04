@@ -228,7 +228,7 @@ export default function Settings() {
           ) : (
             <p className="text-sm text-muted-foreground">No profile created yet.</p>
           )}
-          <Link href="/intake">
+          <Link href="/intake?from=settings">
             <Button variant="outline" size="sm" className="mt-4" data-testid="button-edit-profile">
               Edit Profile
             </Button>

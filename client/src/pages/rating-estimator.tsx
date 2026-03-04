@@ -5,6 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -211,7 +228,9 @@ export default function RatingEstimator() {
     setEntries(updated);
   };
 
-  const loadFromProfile = () => {
+  const [showLoadConfirm, setShowLoadConfirm] = useState(false);
+
+  const doLoadFromProfile = () => {
     if (conditionsList.length) {
       setEntries(
         conditionsList.map((c) => ({
@@ -221,6 +240,17 @@ export default function RatingEstimator() {
       );
     }
   };
+
+  const loadFromProfile = () => {
+    const hasManualData = entries.some((e) => e.name.trim() !== "" || e.rating > 0);
+    if (hasManualData) {
+      setShowLoadConfirm(true);
+    } else {
+      doLoadFromProfile();
+    }
+  };
+
+  const VA_RATINGS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
   return (
     <div className="p-3 sm:p-6 max-w-3xl mx-auto space-y-6">
@@ -272,15 +302,19 @@ export default function RatingEstimator() {
                 {i === 0 && (
                   <Label className="text-xs text-muted-foreground">VA Rating</Label>
                 )}
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={10}
-                  value={entry.rating}
-                  onChange={(e) => updateEntry(i, "rating", parseInt(e.target.value) || 0)}
-                  data-testid={`input-rating-${i}`}
-                />
+                <Select
+                  value={String(entry.rating)}
+                  onValueChange={(val) => updateEntry(i, "rating", parseInt(val))}
+                >
+                  <SelectTrigger data-testid={`input-rating-${i}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VA_RATINGS.map((r) => (
+                      <SelectItem key={r} value={String(r)}>{r}%</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {entries.length > 1 && (
                 <Button size="icon" variant="ghost" onClick={() => removeEntry(i)}>
@@ -478,6 +512,21 @@ export default function RatingEstimator() {
           </Card>
         </div>
       )}
+
+      <AlertDialog open={showLoadConfirm} onOpenChange={setShowLoadConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace current entries?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will replace your current entries with conditions from your profile. Any manually entered data will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={doLoadFromProfile} data-testid="button-confirm-load">Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

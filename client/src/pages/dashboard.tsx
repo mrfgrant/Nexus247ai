@@ -139,7 +139,13 @@ export default function Dashboard() {
             <p className="text-2xl sm:text-3xl font-bold text-foreground" data-testid="text-conditions-count">
               {dashboard?.conditionsCount || 0}
             </p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Tracked</p>
+            {dashboard?.conditionsCount === 0 ? (
+              <Link href="/conditions">
+                <p className="text-[10px] sm:text-xs text-primary mt-0.5 hover:underline cursor-pointer" data-testid="link-add-condition-nudge">Add first condition →</p>
+              </Link>
+            ) : (
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Tracked</p>
+            )}
           </CardContent>
         </Card>
       </div>

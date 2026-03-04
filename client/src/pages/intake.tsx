@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 import type { SupportingDocument } from "@shared/schema";
 
 const BRANCHES = ["Army", "Navy", "Air Force", "Marines", "Coast Guard", "Space Force"];
@@ -31,7 +32,10 @@ const DOC_CATEGORIES = [
 
 export default function Intake() {
   const { toast } = useToast();
-  const [step, setStep] = useState(0);
+  const urlParams = new URLSearchParams(window.location.search);
+  const fromSettings = urlParams.get("from") === "settings";
+  const initialStep = parseInt(urlParams.get("step") || "0", 10);
+  const [step, setStep] = useState(isNaN(initialStep) ? 0 : Math.min(Math.max(initialStep, 0), 4));
   const [formData, setFormData] = useState<any>({});
   const [uploadCategory, setUploadCategory] = useState("decision_letter");
   const [deploymentLocationsText, setDeploymentLocationsText] = useState("");
@@ -147,9 +151,18 @@ export default function Intake() {
         </Card>
       )}
 
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-intake-title">Veteran Profile Intake</h1>
-        <p className="text-muted-foreground text-sm mt-1">Complete your profile to generate accurate claim documents.</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-intake-title">Veteran Profile Intake</h1>
+          <p className="text-muted-foreground text-sm mt-1">Complete your profile to generate accurate claim documents.</p>
+        </div>
+        {fromSettings && (
+          <Link href="/settings">
+            <Button variant="outline" size="sm" data-testid="button-back-to-settings">
+              <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Settings
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">

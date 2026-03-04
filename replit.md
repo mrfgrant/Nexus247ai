@@ -147,6 +147,17 @@ Concierge only: aod_motion, good_cause_letter
 - "Feature Request" → `/support?type=feature` (Lightbulb icon)
 - Support page reads `type` query param and auto-opens dialog with pre-filled subject
 
+### UX Flow Improvements
+- Cross-reference "no records" toast includes actionable "Upload Records" button that navigates to intake Step 4
+- Intake page reads `step` query param to auto-jump to specific step (e.g., `/intake?step=3` = Supporting Documents)
+- Analyze letter page shows empty state placeholder when no past analyses exist
+- Rating estimator uses Select dropdown with valid VA increments (0-100 by 10s) instead of free-form number input
+- "Load from Profile" in rating estimator shows confirmation dialog before replacing manually entered data
+- TDIU eligibility implements both 38 CFR § 4.16(a) rules: 60/60 AND 70/40
+- Analysis retry button appears after failure without requiring re-upload
+- Conditions page + Dashboard show empty-state nudges guiding new users to add their first condition
+- Settings "Edit Profile" links to `/intake?from=settings`; intake shows "Back to Settings" button when from=settings
+
 ### Veteran Addressing Convention
 Veterans are addressed by rank + last name throughout the app (e.g., "SPC Grant", "PO2 Smith"). The `getRankDisplayName()` utility in `shared/utils.ts` maps pay grades to branch-specific abbreviations. Used in: dashboard greeting, sidebar profile, chat UI + AI prompt, settings page, and all AI document generation prompts.
 

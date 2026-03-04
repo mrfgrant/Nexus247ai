@@ -330,8 +330,11 @@ export default function Conditions() {
         <Card>
           <CardContent className="py-12 text-center">
             <Stethoscope className="w-12 h-12 mx-auto mb-4 text-muted-foreground/40" />
-            <h3 className="font-semibold text-foreground">No conditions yet</h3>
-            <p className="text-sm text-muted-foreground mt-1">Add your first condition to start building your claim.</p>
+            <h3 className="font-semibold text-foreground">No conditions tracked yet</h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">Add your first service-connected condition to start generating targeted claim letters and prep guides.</p>
+            <Button className="mt-4" onClick={() => { setShowConditionDialog(true); }} data-testid="button-add-first-condition">
+              <Plus className="w-4 h-4 mr-2" /> Add Your First Condition
+            </Button>
           </CardContent>
         </Card>
       ) : (

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ThinkingSteps } from "@/components/thinking-steps";
+import { ToastAction } from "@/components/ui/toast";
 import {
   Upload,
   FileText,
@@ -38,6 +39,8 @@ import {
   Zap,
   Lock,
   Crown,
+  RefreshCw,
+  Inbox,
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -432,8 +435,13 @@ function AnalysisResultView({
         if (data.noRecords) {
           toast({
             title: "No medical records found",
-            description: "Upload your medical records in the Intake section (Step 4: Supporting Documents) first, then come back to cross-reference.",
+            description: "Upload your medical records in the Intake section (Step 4) first, then come back to cross-reference.",
             variant: "destructive",
+            action: (
+              <ToastAction altText="Upload Records" onClick={() => navigate("/intake?step=3")}>
+                Upload Records
+              </ToastAction>
+            ),
           });
         } else {
           toast({ title: "Cross-reference failed", description: data.error || "Please try again.", variant: "destructive" });
@@ -853,6 +861,7 @@ export default function AnalyzeLetter() {
   const [crossRefData, setCrossRefData] = useState<CrossReferenceResult | null>(null);
   const [inputMode, setInputMode] = useState<"upload" | "paste">("upload");
   const [viewingLabel, setViewingLabel] = useState<string | undefined>(undefined);
+  const [analysisError, setAnalysisError] = useState(false);
 
   const { data: savedAnalyses, isLoading: loadingHistory } = useQuery<SavedAnalysis[]>({
     queryKey: ["/api/letter-analyses"],
@@ -878,6 +887,7 @@ export default function AnalyzeLetter() {
 
   async function handleAnalyze() {
     setIsAnalyzing(true);
+    setAnalysisError(false);
     try {
       const formData = new FormData();
       if (inputMode === "upload" && selectedFile) {
@@ -923,6 +933,7 @@ export default function AnalyzeLetter() {
         description: `Your decision letter has been reviewed and saved.${data.remaining !== undefined ? ` ${data.remaining} analyses remaining this month.` : ""}`,
       });
     } catch (error: any) {
+      setAnalysisError(true);
       toast({ title: "Analysis failed", description: error.message, variant: "destructive" });
     } finally {
       setIsAnalyzing(false);
@@ -1123,6 +1134,16 @@ export default function AnalyzeLetter() {
           )}
 
           {isAnalyzing && <ThinkingSteps isActive={isAnalyzing} steps={THINKING_STEPS} delays={STEP_DELAYS} />}
+
+          {analysisError && !isAnalyzing && (
+            <div className="flex items-center gap-3 p-3 rounded-md bg-destructive/5 border border-destructive/20 mt-3">
+              <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+              <p className="text-sm text-destructive flex-1">Analysis failed. Your file is still loaded — you can retry without re-uploading.</p>
+              <Button size="sm" variant="outline" onClick={handleAnalyze} data-testid="button-retry-analysis">
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Retry
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -1202,6 +1223,14 @@ export default function AnalyzeLetter() {
                 </div>
               );
             })}
+          </CardContent>
+        </Card>
+      ) : !loadingHistory ? (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <Inbox className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-sm font-medium text-foreground">No analyses yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Upload a VA decision letter above to get your first AI-powered analysis.</p>
           </CardContent>
         </Card>
       ) : null}

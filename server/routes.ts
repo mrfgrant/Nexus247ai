@@ -661,7 +661,8 @@ export async function registerRoutes(
           ? MONTHLY_RATES[nextTier] - monthly
           : 0,
         tdiuEligible:
-          combined >= 60 && ratings.some((r: number) => r >= 60),
+          (combined >= 60 && ratings.some((r: number) => r >= 60)) ||
+          (combined >= 70 && ratings.some((r: number) => r >= 40)),
         smcEligible: combined === 100,
         smcSEligible,
         smcSRate: SMC_RATES.S,
