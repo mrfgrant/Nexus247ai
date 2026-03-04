@@ -134,10 +134,18 @@ export async function registerRoutes(
       if (safeData.serviceStartDate === "") safeData.serviceStartDate = null;
       if (safeData.serviceEndDate === "") safeData.serviceEndDate = null;
       if (safeData.dateOfBirth === "") safeData.dateOfBirth = null;
-      const profile = await storage.upsertVeteranProfile({
-        ...safeData,
-        userId,
-      });
+
+      const existing = await storage.getVeteranProfile(userId);
+      const profileData: any = { ...safeData, userId };
+
+      if (!existing) {
+        const trialEnd = new Date();
+        trialEnd.setDate(trialEnd.getDate() + 3);
+        profileData.subscriptionTier = "pro";
+        profileData.trialEndsAt = trialEnd;
+      }
+
+      const profile = await storage.upsertVeteranProfile(profileData);
       res.json(profile);
     } catch (error) {
       console.error("Profile error:", error);
