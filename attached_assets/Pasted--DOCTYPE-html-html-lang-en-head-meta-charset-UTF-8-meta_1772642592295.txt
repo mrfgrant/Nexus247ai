@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Scored Letter — Nexus247.ai Trial</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #0D2137;
+      --navy-mid: #163352;
+      --gold:     #D4A43E;
+      --gold-lt:  #EAC76A;
+      --gold-pale:#FDF3DC;
+      --cream:    #FAFAF7;
+      --fog:      #EFF0F3;
+      --white:    #FFFFFF;
+      --body-txt: #2C3340;
+      --muted:    #6B7280;
+      --red:      #DC2626;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--body-txt);
+      overflow-x: hidden;
+      /* Disable text selection sitewide */
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5vw; height: 64px;
+      background: rgba(13,33,55,0.97);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(212,164,62,0.2);
+    }
+    .nav-logo { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--white); }
+    .nav-logo span { color: var(--gold); }
+    .nav-trial-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--gold); border: 1px solid rgba(212,164,62,0.4);
+      padding: 4px 12px; border-radius: 2px;
+    }
+    .nav-unlock {
+      background: var(--gold); color: var(--navy);
+      border: none; padding: 9px 20px; border-radius: 3px;
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .nav-unlock:hover { background: var(--gold-lt); transform: translateY(-1px); }
+
+    /* ── PAGE WRAPPER ── */
+    .page { max-width: 860px; margin: 0 auto; padding: 48px 5vw 80px; }
+
+    /* ── SCORE HEADER ── */
+    .score-header {
+      background: var(--navy);
+      border-radius: 10px; padding: 32px 36px;
+      margin-bottom: 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 24px;
+      border: 1px solid rgba(212,164,62,0.25);
+    }
+    .sh-left {}
+    .sh-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 6px;
+    }
+    .sh-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.6rem; color: var(--white); margin-bottom: 4px;
+    }
+    .sh-meta { font-size: 0.82rem; color: rgba(255,255,255,0.4); }
+
+    .sh-score-ring {
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .ring-wrap {
+      position: relative; width: 100px; height: 100px;
+      margin-bottom: 8px;
+    }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 8; }
+    .ring-fill {
+      fill: none; stroke: var(--gold); stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 251.2;
+      stroke-dashoffset: 251.2;
+      transition: stroke-dashoffset 1.6s cubic-bezier(0.22,1,0.36,1);
+    }
+    .ring-num {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ring-num .big {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.7rem; color: var(--gold); line-height: 1;
+    }
+    .ring-num .small {
+      font-size: 0.65rem; color: rgba(255,255,255,0.35);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ring-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* 5 dimension mini bars */
+    .sh-dims {
+      display: flex; flex-direction: column; gap: 8px; min-width: 200px;
+    }
+    .dim-row { display: flex; align-items: center; gap: 10px; }
+    .dim-label { font-size: 0.75rem; color: rgba(255,255,255,0.55); width: 130px; flex-shrink: 0; }
+    .dim-track { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; }
+    .dim-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--gold), var(--gold-lt)); width: 0; transition: width 1.2s cubic-bezier(0.22,1,0.36,1); }
+    .dim-score { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--gold); width: 28px; text-align: right; }
+
+    /* ready badge */
+    .sh-ready {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.28);
+      border-radius: 4px; padding: 7px 14px;
+      align-self: flex-start;
+    }
+    .ready-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.5); animation: pulse 2s infinite; }
+    .ready-text { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #4ade80; }
+
+    /* ── TRIAL BANNER ── */
+    .trial-banner {
+      background: linear-gradient(90deg, rgba(212,164,62,0.12), rgba(212,164,62,0.06));
+      border: 1px solid rgba(212,164,62,0.3);
+      border-radius: 6px; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      margin-bottom: 28px;
+    }
+    .tb-left { display: flex; align-items: center; gap: 12px; }
+    .tb-icon { color: var(--gold); flex-shrink: 0; }
+    .tb-text { font-size: 0.88rem; color: var(--body-txt); line-height: 1.4; }
+    .tb-text strong { color: var(--navy); font-weight: 600; }
+    .tb-btn {
+      background: var(--gold); color: var(--navy);
+      border: none; padding: 10px 22px; border-radius: 3px;
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.05em;
+      text-transform: uppercase; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s; white-space: nowrap;
+    }
+    .tb-btn:hover { background: var(--gold-lt); }
+
+    /* ── LETTER CONTAINER ── */
+    .letter-wrap { position: relative; }
+
+    /* Shared letter paper style */
+    .letter-paper {
+      background: var(--white);
+      border: 1px solid var(--fog);
+      border-radius: 6px;
+      padding: 48px 52px;
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: var(--body-txt);
+      position: relative;
+    }
+
+    /* ── WATERMARK (diagonal repeat) ── */
+    .letter-paper::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 80px,
+        rgba(212,164,62,0.045) 80px,
+        rgba(212,164,62,0.045) 81px
+      );
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Watermark text stamps */
+    .wm-stamp {
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(212,164,62,0.18);
+      transform: rotate(-35deg);
+      pointer-events: none;
+      z-index: 2;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+
+    /* Letter content sits above watermark */
+    .letter-content { position: relative; z-index: 3; }
+
+    /* Letter header */
+    .letter-header { margin-bottom: 32px; }
+    .letter-date { color: var(--muted); font-size: 0.88rem; margin-bottom: 16px; }
+    .letter-to { margin-bottom: 16px; }
+    .letter-to p { font-size: 0.9rem; line-height: 1.6; }
+    .letter-subject {
+      font-weight: 600; font-size: 0.92rem;
+      border-left: 3px solid var(--gold);
+      padding-left: 12px; margin-top: 20px;
+      color: var(--navy);
+    }
+
+    /* Preview paragraph (visible, clean) */
+    .para-visible { margin-bottom: 20px; }
+    .para-visible p { margin-bottom: 12px; }
+
+    .cfr-cite {
+      background: var(--gold-pale);
+      border-left: 2px solid var(--gold);
+      padding: 10px 16px; border-radius: 0 4px 4px 0;
+      font-size: 0.88rem; margin: 16px 0;
+      color: var(--navy);
+    }
+    .cfr-cite strong { color: var(--gold); font-weight: 600; }
+
+    /* ── BLUR GATE ── */
+    .blur-gate {
+      position: relative; margin-top: 24px;
+    }
+    .blurred-content {
+      filter: blur(6px);
+      user-select: none;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .blurred-content p { margin-bottom: 12px; }
+
+    /* Gradient fade into blur */
+    .fade-into-blur {
+      position: absolute; top: -60px; left: 0; right: 0; height: 80px;
+      background: linear-gradient(to bottom, transparent, var(--white));
+      z-index: 4; pointer-events: none;
+    }
+
+    /* Lock overlay */
+    .lock-overlay {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 10; gap: 16px;
+      background: rgba(250,250,247,0.5);
+      backdrop-filter: blur(2px);
+      border-radius: 0 0 6px 6px;
+    }
+    .lock-card {
+      background: var(--white);
+      border: 1px solid var(--fog);
+      border-radius: 8px;
+      padding: 32px 40px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(13,33,55,0.12);
+      max-width: 420px; width: 90%;
+    }
+    .lock-icon {
+      width: 48px; height: 48px;
+      background: var(--gold-pale);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--gold);
+    }
+    .lock-card h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.35rem; color: var(--navy); margin-bottom: 8px;
+    }
+    .lock-card p {
+      font-size: 0.87rem; color: var(--muted);
+      line-height: 1.6; margin-bottom: 22px;
+    }
+    .lock-card p strong { color: var(--navy); }
+    .lock-cta {
+      display: block; width: 100%;
+      background: var(--gold); color: var(--navy);
+      border: none; padding: 14px;
+      border-radius: 3px; font-size: 0.88rem;
+      font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(212,164,62,0.28);
+    }
+    .lock-cta:hover { background: var(--gold-lt); transform: translateY(-1px); }
+    .lock-sub {
+      margin-top: 10px;
+      font-size: 0.74rem; color: var(--muted);
+    }
+
+    /* Pricing chips below lock */
+    .price-chips {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    }
+    .price-chip {
+      background: var(--white); border: 1px solid var(--fog);
+      border-radius: 4px; padding: 10px 18px; text-align: center;
+      cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+    }
+    .price-chip:hover { border-color: var(--gold); transform: translateY(-2px); }
+    .price-chip.featured { border-color: var(--gold); background: var(--gold-pale); }
+    .chip-name { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+    .chip-price { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--navy); }
+
+    /* ── WHAT YOU GET STRIP ── */
+    .unlock-strip {
+      margin-top: 32px;
+      background: var(--navy);
+      border-radius: 8px; padding: 28px 32px;
+      display: flex; align-items: flex-start; gap: 32px;
+      flex-wrap: wrap;
+    }
+    .us-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 12px;
+    }
+    .us-items { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 200px; }
+    .us-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.85rem; color: rgba(255,255,255,0.68);
+    }
+    .us-item svg { flex-shrink: 0; margin-top: 2px; color: var(--gold); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+    .page > * { animation: fadeUp 0.5s ease both; }
+    .score-header { animation-delay: 0.05s; }
+    .trial-banner { animation-delay: 0.1s; }
+    .letter-wrap { animation-delay: 0.15s; }
+    .unlock-strip { animation-delay: 0.2s; }
+
+    /* Disable print */
+    @media print { body { display: none !important; } }
+
+    @media (max-width: 640px) {
+      .letter-paper { padding: 28px 24px; }
+      .score-header { flex-direction: column; }
+      .lock-card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Nexus<span>247</span>.ai</div>
+  <div class="nav-trial-badge">Trial Preview</div>
+  <button class="nav-unlock" onclick="showUnlock()">Generate My Scored Letter</button>
+</nav>
+
+<div class="page">
+
+  <!-- SCORE HEADER -->
+  <div class="score-header">
+    <div class="sh-left">
+      <div class="sh-eyebrow">RPA Quality Analysis Complete</div>
+      <div class="sh-title">Your Nexus Letter Is Ready</div>
+      <div class="sh-meta">Veteran Sample · Lumbar Condition · Service Connection</div>
+      <div class="sh-ready" style="margin-top:14px;">
+        <div class="ready-dot"></div>
+        <div class="ready-text">Scores Above Submission Threshold</div>
+      </div>
+    </div>
+
+    <!-- Circular score ring -->
+    <div class="sh-score-ring">
+      <div class="ring-wrap">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="40"/>
+          <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="40"/>
+        </svg>
+        <div class="ring-num">
+          <span class="big" id="ringNum">0</span>
+          <span class="small">/100</span>
+        </div>
+      </div>
+      <div class="ring-label">Overall Score</div>
+    </div>
+
+    <!-- 5 dim bars -->
+    <div class="sh-dims">
+      <div class="us-label">5-Point Breakdown</div>
+      <div class="dim-row">
+        <div class="dim-label">CFR Compliance</div>
+        <div class="dim-track"><div class="dim-fill" data-w="90"></div></div>
+        <div class="dim-score" data-s="9">0</div>
+      </div>
+      <div class="dim-row">
+        <div class="dim-label">Nexus Strength</div>
+        <div class="dim-track"><div class="dim-fill" data-w="90"></div></div>
+        <div class="dim-score" data-s="9">0</div>
+      </div>
+      <div class="dim-row">
+        <div class="dim-label">Evidence Grounding</div>
+        <div class="dim-track"><div class="dim-fill" data-w="80"></div></div>
+        <div class="dim-score" data-s="8">0</div>
+      </div>
+      <div class="dim-row">
+        <div class="dim-label">Diagnostic Clarity</div>
+        <div class="dim-track"><div class="dim-fill" data-w="80"></div></div>
+        <div class="dim-score" data-s="8">0</div>
+      </div>
+      <div class="dim-row">
+        <div class="dim-label">Rater Readiness</div>
+        <div class="dim-track"><div class="dim-fill" data-w="90"></div></div>
+        <div class="dim-score" data-s="9">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIAL BANNER -->
+  <div class="trial-banner">
+    <div class="tb-left">
+      <svg class="tb-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div class="tb-text">
+        <strong>Trial Preview</strong> — Your letter scored 86/100 and is ready to submit. The first paragraph is shown below. <strong>Unlock the full letter</strong> to access all CFR citations and submit to the VA.
+      </div>
+    </div>
+    <button class="tb-btn" onclick="showUnlock()">Unlock Full Letter →</button>
+  </div>
+
+  <!-- LETTER -->
+  <div class="letter-wrap">
+    <div class="letter-paper">
+
+      <!-- Watermark stamps -->
+      <div class="wm-stamp" style="top:12%;left:8%">TRIAL — Nexus247.ai — Not for Submission</div>
+      <div class="wm-stamp" style="top:38%;left:15%">TRIAL — Nexus247.ai — Not for Submission</div>
+      <div class="wm-stamp" style="top:62%;left:5%">TRIAL — Nexus247.ai — Not for Submission</div>
+      <div class="wm-stamp" style="top:82%;left:20%">TRIAL — Nexus247.ai — Not for Submission</div>
+
+      <div class="letter-content">
+
+        <!-- VISIBLE: first section clean -->
+        <div class="para-visible">
+          <div class="letter-header">
+            <div class="letter-date">March 4, 2026</div>
+            <div class="letter-to">
+              <p>Department of Veterans Affairs<br>
+              Veterans Benefits Administration<br>
+              Claims Processing Center</p>
+            </div>
+            <div class="letter-subject">
+              RE: Nexus Letter in Support of Service Connection Claim<br>
+              Veteran: [Veteran Name] · SSN: XXX-XX-XXXX · Claim No.: XXXXXXXXXX
+            </div>
+          </div>
+
+          <p>To Whom It May Concern,</p>
+          <br>
+          <p>I am writing this nexus letter in support of the above-named veteran's claim for service-connected disability benefits for <strong>chronic lumbar strain with degenerative disc disease</strong>. Based on a thorough review of the veteran's service treatment records, post-service medical records, and applicable medical literature, it is my professional opinion that the veteran's current diagnosis is <strong>at least as likely as not</strong> related to their active military service.</p>
+
+          <div class="cfr-cite">
+            <strong>38 CFR § 3.303(a)</strong> — Direct Service Connection: "Service connection may be established by showing the existence of a present disability, in-service incurrence or aggravation of a disease or injury, and a causal relationship between the present disability and the disease or injury incurred or aggravated during service."
+          </div>
+
+          <p>The veteran served on active duty from [Service Start Date] to [Service End Date] with the [Branch of Service]. Service treatment records document repeated treatment for lower back pain beginning in [Year], consistent with the physical demands of [MOS/Rate]. The documented in-service events are causally connected to the veteran's current diagnosis as described below.</p>
+        </div>
+
+        <!-- BLURRED GATE -->
+        <div class="blur-gate">
+          <div class="fade-into-blur"></div>
+          <div class="blurred-content">
+            <p>The medical evidence establishes a clear nexus between the veteran's active duty service and their current lumbar condition. Specifically, the veteran's service treatment records document seventeen separate treatment encounters for acute and chronic lower back pain between [Date] and [Date], including two instances requiring referral to physical therapy and one instance of temporary limited duty status pursuant to the demands placed on the musculoskeletal system during service.</p>
+
+            <div class="cfr-cite">
+              <strong>38 CFR § 3.304(f)</strong> — The Board finds that the competent and credible evidence of record supports the finding that the veteran's current disability had its onset during active military service and has persisted to the present day without material improvement.
+            </div>
+
+            <p>Post-service medical records from [Healthcare Provider] dated [Date] confirm a diagnosis of chronic lumbar strain with L4-L5 degenerative disc disease. The treating physician notes a direct correlation between the veteran's occupational history during military service and the progression of the current condition. The mechanism of injury and pattern of symptom onset are consistent with the type of physical stress documented in the veteran's service records.</p>
+
+            <p>Furthermore, pursuant to <strong>38 CFR § 3.102</strong>, when there is an approximate balance of positive and negative evidence regarding any issue material to the determination of a matter, the Secretary shall give the benefit of the doubt to the claimant. In this case, the preponderance of evidence supports a finding of service connection, and this opinion is rendered to a degree of medical certainty consistent with the standard required under <strong>38 CFR § 3.303</strong>.</p>
+
+            <p>Based on the totality of the evidence reviewed — including service treatment records, post-service medical documentation, and applicable medical literature — it is my professional medical opinion, expressed to a reasonable degree of medical certainty, that the veteran's chronic lumbar strain with degenerative disc disease is <strong>at least as likely as not</strong> (50% or greater probability) caused by or a result of the veteran's active military service.</p>
+
+            <p>I am available to provide additional documentation or clarification as required. This letter is submitted in good faith to assist in the adjudication of the veteran's disability claim.</p>
+
+            <p>Respectfully submitted,<br><br>
+            [Provider Name], [Credentials]<br>
+            [Title / Specialty]<br>
+            [Practice / Institution]<br>
+            [Address]<br>
+            [Phone] · [Email]<br>
+            NPI: [Number] · License: [State/Number]</p>
+          </div>
+
+          <!-- LOCK OVERLAY -->
+          <div class="lock-overlay" id="lockOverlay">
+            <div class="lock-card">
+              <div class="lock-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <h3>Your Letter Scored 86/100</h3>
+              <p>The full CFR-cited letter is written and ready. <strong>Unlock it now</strong> to access every paragraph, all 38 CFR citations, and a submission-ready version you can send to the VA today.</p>
+              <button class="lock-cta" onclick="showUnlock()">Generate My Scored Letter</button>
+              <div class="lock-sub">One-time payment · No subscription · Instant access</div>
+            </div>
+
+            <div class="price-chips">
+              <div class="price-chip" onclick="showUnlock()">
+                <div class="chip-name">Basic</div>
+                <div class="chip-price">$19</div>
+              </div>
+              <div class="price-chip featured" onclick="showUnlock()">
+                <div class="chip-name">Multi ★</div>
+                <div class="chip-price">$49</div>
+              </div>
+              <div class="price-chip" onclick="showUnlock()">
+                <div class="chip-name">Complete</div>
+                <div class="chip-price">$149</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT YOU UNLOCK STRIP -->
+  <div class="unlock-strip">
+    <div>
+      <div class="us-label">What You Unlock</div>
+      <div class="us-items">
+        <div class="us-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Complete letter with all CFR citations intact
+        </div>
+        <div class="us-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Watermark removed — submission ready
+        </div>
+        <div class="us-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Downloadable PDF formatted for the VA
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="us-label">Also Included</div>
+      <div class="us-items">
+        <div class="us-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          86/100 RPA score report saved to your account
+        </div>
+        <div class="us-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          AI Claims Advisor access for follow-up questions
+        </div>
+        <div class="us-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Rating estimator to see your projected combined rating
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .page -->
+
+<!-- UNLOCK MODAL -->
+<div id="unlockModal" style="display:none; position:fixed; inset:0; z-index:999; background:rgba(13,33,55,0.85); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--white); border-radius:10px; padding:44px 40px; max-width:440px; width:100%; text-align:center; position:relative; box-shadow:0 24px 80px rgba(0,0,0,0.4);">
+    <button onclick="hideUnlock()" style="position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.3rem;">✕</button>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Your Letter Is Ready</div>
+    <h2 style="font-family:'DM Serif Display',serif;font-size:1.7rem;color:var(--navy);margin-bottom:8px;">Choose Your Plan</h2>
+    <p style="font-size:0.87rem;color:var(--muted);line-height:1.6;margin-bottom:28px;">One-time payment. Instant access. No subscription.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+      <div style="border:1px solid var(--fog);border-radius:5px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#D4A43E'" onmouseout="this.style.borderColor='#EFF0F3'">
+        <div style="text-align:left;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);">Basic</div>
+          <div style="font-size:0.87rem;color:var(--body-txt);margin-top:2px;">1 scored letter + AI Advisor</div>
+        </div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--navy);">$19</div>
+      </div>
+      <div style="border:1.5px solid var(--gold);border-radius:5px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--gold-pale);position:relative;">
+        <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--navy);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 12px;border-radius:2px;">Most Popular</div>
+        <div style="text-align:left;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);">Multi</div>
+          <div style="font-size:0.87rem;color:var(--body-txt);margin-top:2px;">5 letters + expert review session</div>
+        </div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--navy);">$49</div>
+      </div>
+      <div style="border:1px solid var(--fog);border-radius:5px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#D4A43E'" onmouseout="this.style.borderColor='#EFF0F3'">
+        <div style="text-align:left;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);">Complete</div>
+          <div style="font-size:0.87rem;color:var(--body-txt);margin-top:2px;">Unlimited + 3 expert sessions + C&P prep</div>
+        </div>
+        <div style="font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--navy);">$149</div>
+      </div>
+    </div>
+    <p style="font-size:0.73rem;color:var(--muted);">HIPAA Compliant · Encrypted · Not affiliated with the VA</p>
+  </div>
+</div>
+
+<script>
+  // Disable right-click
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Disable common screenshot keyboard shortcuts (partial deterrent)
+  document.addEventListener('keydown', e => {
+    if (e.key === 'PrintScreen') { e.preventDefault(); }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['s','S','4','3'].includes(e.key)) { e.preventDefault(); }
+    // Disable Ctrl+P (print)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); }
+    // Disable Ctrl+C on blurred content (user-select:none handles most of this)
+  });
+
+  // Modal
+  function showUnlock() {
+    const m = document.getElementById('unlockModal');
+    m.style.display = 'flex';
+  }
+  function hideUnlock() {
+    document.getElementById('unlockModal').style.display = 'none';
+  }
+  document.getElementById('unlockModal').addEventListener('click', function(e) {
+    if (e.target === this) hideUnlock();
+  });
+
+  // Animate score ring + dim bars on load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      // Ring
+      const target = 86;
+      const circumference = 251.2;
+      const offset = circumference - (target / 100) * circumference;
+      document.getElementById('ringFill').style.strokeDashoffset = offset;
+
+      // Count up ring number
+      let n = 0;
+      const tick = setInterval(() => {
+        n += 2;
+        document.getElementById('ringNum').textContent = Math.min(n, target);
+        if (n >= target) clearInterval(tick);
+      }, 18);
+
+      // Dim bars
+      const fills = document.querySelectorAll('.dim-fill');
+      const scores = document.querySelectorAll('.dim-score');
+      fills.forEach((bar, i) => {
+        setTimeout(() => {
+          bar.style.width = bar.dataset.w + '%';
+          let s = 0;
+          const st = parseInt(scores[i].dataset.s);
+          const si = setInterval(() => {
+            s++;
+            scores[i].textContent = s;
+            if (s >= st) clearInterval(si);
+          }, 100);
+        }, 300 + i * 150);
+      });
+    }, 400);
+  });
+</script>
+
+</body>
+</html>
