@@ -366,7 +366,7 @@ export default function Landing() {
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              Get Started
+              Generate My Scored Letter
             </button>
           </a>
         </div>
@@ -398,7 +398,7 @@ export default function Landing() {
             <a href="/api/login" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="button-login-mobile">Log In</a>
             <a href="/api/login" data-testid="button-get-started-mobile">
               <button type="button" style={{ background: "var(--gold)", color: "var(--navy)", border: "none", padding: "12px 22px", borderRadius: 3, fontSize: "0.83rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", width: "100%" }}>
-                Get Started
+                Generate My Scored Letter
               </button>
             </a>
           </div>
@@ -463,7 +463,7 @@ export default function Landing() {
                 }}
                 data-testid="button-hero-cta"
               >
-                Start Your Claim
+                Generate My Scored Letter
                 <ArrowRight style={{ width: 15, height: 15 }} />
               </a>
               <a
@@ -743,7 +743,7 @@ export default function Landing() {
           }}
           data-testid="button-footer-cta"
         >
-          Start Your Claim
+          Generate My Scored Letter
           <ArrowRight style={{ width: 16, height: 16 }} />
         </a>
       </section>
