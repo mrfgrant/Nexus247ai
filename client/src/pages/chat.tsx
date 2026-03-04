@@ -10,6 +10,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Send, MessageCircle, Bot, User, Lightbulb, BookOpen, FileText, Shield, Upload } from "lucide-react";
 import type { ChatMessage, SupportingDocument, LetterAnalysis } from "@shared/schema";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { getRankDisplayName } from "@shared/utils";
 
 const THINKING_MESSAGES = [
   "Analyzing your question...",
@@ -220,8 +222,12 @@ const SUGGESTED_QUESTIONS = [
 
 export default function Chat() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [message, setMessage] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const { data: profile } = useQuery<any>({ queryKey: ["/api/profile"] });
+  const rankName = getRankDisplayName(profile?.rank, profile?.branch, user?.lastName, user?.firstName);
 
   const { data: messages = [], isLoading } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages"],
@@ -393,8 +399,8 @@ export default function Chat() {
                       </p>
                     </div>
                     {msg.role === "user" && (
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
-                        <User className="w-4 h-4 text-muted-foreground" />
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1" title={rankName}>
+                        <span className="text-xs font-medium text-muted-foreground">{user?.lastName?.[0] || user?.firstName?.[0] || <User className="w-4 h-4 text-muted-foreground" />}</span>
                       </div>
                     )}
                   </div>

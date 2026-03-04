@@ -37,6 +37,7 @@ Nexus247 is a SaaS application that helps veterans generate professional, CFR-gr
 
 ### Shared Modules
 - `shared/va-rates.ts` — Centralized 2026 VA compensation rates (MONTHLY_RATES, SMC_RATES, SMC_INFO)
+- `shared/utils.ts` — `getRankDisplayName(rank, branch, lastName, firstName)` utility for branch-specific rank abbreviation mapping (all branches E-1 through E-9, O-1 through O-10, W-1 through W-5). Used in dashboard greeting, sidebar, chat, settings, AI prompts, and document generation.
 
 ### Frontend (client/src/)
 - `App.tsx` — Routes + auth-gated layout (print page rendered outside sidebar)
@@ -98,6 +99,9 @@ Concierge only: aod_motion, good_cause_letter
 - `getEffectiveTier()` in routes.ts checks trialEndsAt — expired trials revert to "none"
 - Dashboard shows trial badge with remaining days
 - `veteranProfiles.trialEndsAt` timestamp field tracks trial expiry
+
+### Veteran Addressing Convention
+Veterans are addressed by rank + last name throughout the app (e.g., "SPC Grant", "PO2 Smith"). The `getRankDisplayName()` utility in `shared/utils.ts` maps pay grades to branch-specific abbreviations. Used in: dashboard greeting, sidebar profile, chat UI + AI prompt, settings page, and all AI document generation prompts.
 
 ### Design Theme
 Navy blue primary (#1a3a6b), warm gold accent (#d4a017), dark sidebar, military/veteran aesthetic

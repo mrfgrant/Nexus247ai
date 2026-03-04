@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { getRankDisplayName } from "@shared/utils";
 
 const tips = [
   "PACT Act: If you served post-9/11, you may qualify for presumptive service connection for toxic exposure conditions.",
@@ -79,7 +80,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground" data-testid="text-dashboard-title">
-            Welcome back, {user?.firstName || "Veteran"}
+            Welcome back, {getRankDisplayName(dashboard?.profile?.rank, dashboard?.profile?.branch, user?.lastName, user?.firstName)}
           </h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
             Your VA claims command center

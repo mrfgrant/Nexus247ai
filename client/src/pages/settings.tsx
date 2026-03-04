@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Shield, CreditCard, User, Settings as SettingsIcon, Loader2, ExternalLink } from "lucide-react";
+import { getRankDisplayName } from "@shared/utils";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -128,7 +129,7 @@ export default function Settings() {
             <div>
               <p className="text-muted-foreground">Name</p>
               <p className="font-medium text-foreground">
-                {user?.firstName} {user?.lastName}
+                {getRankDisplayName(profile?.rank, profile?.branch, user?.lastName, user?.firstName)}
               </p>
             </div>
             <div>

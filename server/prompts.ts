@@ -10,10 +10,11 @@ interface PromptContext {
   incidents?: ServiceIncident[];
   knowledgeBase?: KnowledgeBaseEntry[];
   additionalContext?: string;
+  veteranDisplayName?: string;
 }
 
-function formatVeteranInfo(vetProfile?: VeteranProfile | null): string {
-  if (!vetProfile) return "Veteran profile not provided.";
+function formatVeteranInfo(vetProfile?: VeteranProfile | null, veteranDisplayName?: string): string {
+  if (!vetProfile) return veteranDisplayName ? `VETERAN: ${veteranDisplayName}\nVeteran profile not provided.` : "Veteran profile not provided.";
   const exposures = [
     vetProfile.agentOrangeExposure && "Agent Orange",
     vetProfile.campLejeune && "Camp Lejeune contaminated water",
@@ -23,7 +24,7 @@ function formatVeteranInfo(vetProfile?: VeteranProfile | null): string {
     .filter(Boolean)
     .join(", ");
 
-  return `MILITARY SERVICE:
+  return `${veteranDisplayName ? `VETERAN: ${veteranDisplayName}\n` : ""}MILITARY SERVICE:
 - Branch: ${vetProfile.branch || "Not specified"}
 - Rank: ${vetProfile.rank || "Not specified"}
 - Service Dates: ${vetProfile.serviceStartDate || "N/A"} to ${vetProfile.serviceEndDate || "N/A"}
@@ -96,7 +97,7 @@ Your letters MUST:
 - If denial reasons or decision letter findings are provided, directly address them${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a concise nexus letter for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -122,7 +123,7 @@ Your statements MUST:
 - Include specific dates, locations, and examples where possible${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a personal statement for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -148,7 +149,7 @@ Your buddy letters MUST:
 - Reference 38 CFR § 3.303(a) regarding competent lay evidence${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a buddy letter template for this veteran's claim:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -174,7 +175,7 @@ Your NODs MUST:
 - Request appropriate review lane (Higher-Level Review, Supplemental Claim, or Board Appeal)${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a Notice of Disagreement for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -200,7 +201,7 @@ Your letters MUST:
 - Use the IMO format for maximum credibility${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a secondary condition letter for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -226,7 +227,7 @@ Your letters MUST:
 - Apply 38 CFR § 3.102 Benefit of the Doubt where evidence is in equipoise${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate an increased rating letter for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -255,7 +256,7 @@ Your AOD motions MUST:
 - Request expedited consideration with specific relief sought${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate an Advancement on Docket (AOD) motion for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 ${ctx.additionalContext ? `\nGOOD CAUSE / HARDSHIP DETAILS:\n${ctx.additionalContext}` : ""}
@@ -280,7 +281,7 @@ Your Good Cause letters MUST:
 - Request specific relief with clear justification${PLAIN_TEXT_INSTRUCTION}`,
     user: `Generate a Good Cause letter for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -472,6 +473,7 @@ Important guidelines:
 - If asked about medical questions, recommend consulting their treating physician
 
 Personalized context guidelines:
+- When a VETERAN DISPLAY NAME is provided, always address the veteran by that name (e.g., "SGT Grant" or "SPC Smith"). Use it in greetings and throughout your responses to maintain a professional, respectful tone.
 - When VETERAN PROFILE data is provided below, use it to tailor your answers to their specific branch, service dates, MOS, exposures, and current rating
 - When CLAIMED CONDITIONS are listed, reference their actual conditions, diagnostic codes, and ratings rather than giving generic examples
 - When MEDICAL RECORDS summaries are provided, cite specific findings from their records when relevant to their question
@@ -545,7 +547,7 @@ Be specific to the veteran's actual condition, diagnostic code, and service hist
   getUserPrompt: (ctx: PromptContext) =>
     `Generate a comprehensive C&P Exam Preparation Guide for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 
@@ -597,7 +599,7 @@ Be specific to the veteran's actual condition and history. Write in the veteran'
   getUserPrompt: (ctx: PromptContext) =>
     `Create a one-page C&P Exam cheat sheet for this veteran:
 
-${formatVeteranInfo(ctx.vetProfile)}
+${formatVeteranInfo(ctx.vetProfile, ctx.veteranDisplayName)}
 
 ${formatConditionInfo(ctx.condition)}
 

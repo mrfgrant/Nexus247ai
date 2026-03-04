@@ -34,6 +34,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import logoIcon from "@assets/Nexus247_Logo_Shield_1772555600715.png";
+import { getRankDisplayName } from "@shared/utils";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -161,12 +162,12 @@ export function AppSidebar() {
             <Avatar className="h-8 w-8">
               <AvatarImage src={user.profileImageUrl || ""} />
               <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-xs">
-                {user.firstName?.[0] || user.email?.[0] || "V"}
+                {user.lastName?.[0] || user.firstName?.[0] || user.email?.[0] || "V"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-sidebar-foreground truncate">
-                {user.firstName || user.email}
+                {getRankDisplayName(profile?.rank, profile?.branch, user.lastName, user.firstName) || user.email}
               </p>
             </div>
             <Button

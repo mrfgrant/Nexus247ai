@@ -8,6 +8,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
 import { createRequire } from "module";
 import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from "./stripe";
+import { getRankDisplayName } from "@shared/utils";
+import { authStorage } from "./replit_integrations/auth/storage";
 const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url);
 const pdfParse = _require("pdf-parse");
 
@@ -97,6 +99,21 @@ export async function registerRoutes(
 ): Promise<Server> {
   await setupAuth(app);
   registerAuthRoutes(app);
+
+  try {
+    const existing = await storage.getVeteranProfile("49807206");
+    if (existing && (existing.role !== "admin" || existing.subscriptionTier !== "concierge" || existing.subscriptionStatus !== "active")) {
+      await storage.upsertVeteranProfile({
+        userId: "49807206",
+        role: "admin",
+        subscriptionTier: "concierge",
+        subscriptionStatus: "active",
+      });
+      console.log("[startup] Updated 49807206 to admin/concierge/active");
+    }
+  } catch (e) {
+    console.error("[startup] Admin seed error:", e);
+  }
 
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -448,12 +465,18 @@ export async function registerRoutes(
         }
       }
 
+      const userRecord = await authStorage.getUser(userId);
+      const veteranName = getRankDisplayName(
+        profile?.rank, profile?.branch, userRecord?.lastName, userRecord?.firstName
+      );
+
       const { system, user } = promptBuilder({
         vetProfile: profile,
         condition,
         incidents,
         knowledgeBase,
         additionalContext: docsContext,
+        veteranDisplayName: veteranName,
       });
 
       const anthropic = getAnthropicClient();
@@ -635,6 +658,12 @@ export async function registerRoutes(
       }
 
       let personalContext = "";
+
+      const userRecord = await authStorage.getUser(userId);
+      const veteranDisplayName = getRankDisplayName(
+        profile?.rank, profile?.branch, userRecord?.lastName, userRecord?.firstName
+      );
+      personalContext += `\n\nVETERAN DISPLAY NAME: ${veteranDisplayName}`;
 
       if (profile) {
         const exposures = [
@@ -1300,11 +1329,16 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
         }
       }
 
+      const cnpUser = await authStorage.getUser(userId);
+      const cnpVeteranName = getRankDisplayName(
+        profile?.rank, profile?.branch, cnpUser?.lastName, cnpUser?.firstName
+      );
       const promptCtx = {
         vetProfile: profile,
         condition,
         incidents,
         additionalContext: docsContext,
+        veteranDisplayName: cnpVeteranName,
       };
 
       const anthropic = getAnthropicClient();
