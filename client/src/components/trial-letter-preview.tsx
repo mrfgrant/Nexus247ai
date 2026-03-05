@@ -356,7 +356,7 @@ Furthermore, the Board of Veterans' Appeals has consistently held that lay testi
                       }}
                       data-testid="button-generate-scored-letter"
                     >
-                      Generate My Scored Letter
+                      START MY FREE TRIAL
                       <ArrowRight className="ml-1.5 h-4 w-4" />
                     </Button>
                   </Link>

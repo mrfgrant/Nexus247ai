@@ -411,7 +411,7 @@ export default function Pricing() {
                       <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
                     ) : null}
                     {tier.tier === "pro" && currentTier === "none"
-                      ? "Start Free Trial"
+                      ? "START MY FREE TRIAL"
                       : currentTier === "none"
                         ? `Start ${tier.name}`
                         : `Upgrade to ${tier.name}`}

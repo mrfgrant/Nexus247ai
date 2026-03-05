@@ -72,7 +72,7 @@ const tiers = [
       { text: "AI Claims Chat", detail: "Ask questions about VA claims, CFR regulations, and appeals strategies. The advisor references your profile and conditions." },
       { text: "RPA quality scoring", detail: "Every document is scored on CFR accuracy, evidence strength, nexus clarity, and rater readiness — with specific improvement suggestions." },
     ],
-    cta: "Start Basic",
+    cta: "START MY FREE TRIAL",
     popular: false,
   },
   {
@@ -88,7 +88,7 @@ const tiers = [
       { text: "Cross-reference evidence analysis", detail: "Compares your medical records against decision letter findings to identify evidence gaps and calculate win probabilities." },
       { text: "Smart document gap alerts", detail: "Before your C&P exam, checks if you're missing a nexus letter or buddy letter and lets you generate them with one click." },
     ],
-    cta: "Start Pro",
+    cta: "START MY FREE TRIAL",
     popular: true,
   },
   {
@@ -104,7 +104,7 @@ const tiers = [
       { text: "Priority human expert review", detail: "Your documents are reviewed by a claims specialist who provides feedback on strategy, evidence gaps, and submission timing." },
       { text: "1-on-1 claims strategy sessions", detail: "Schedule a session with a claims advisor to discuss your overall strategy and plan your appeals approach." },
     ],
-    cta: "Start Concierge",
+    cta: "START MY FREE TRIAL",
     popular: false,
   },
 ];
@@ -366,7 +366,7 @@ export default function Landing() {
                 fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              Generate My Scored Letter
+              START MY FREE TRIAL
             </button>
           </a>
         </div>
@@ -398,7 +398,7 @@ export default function Landing() {
             <a href="/api/login" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="button-login-mobile">Log In</a>
             <a href="/api/login" data-testid="button-get-started-mobile">
               <button type="button" style={{ background: "var(--gold)", color: "var(--navy)", border: "none", padding: "12px 22px", borderRadius: 3, fontSize: "0.83rem", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", width: "100%" }}>
-                Generate My Scored Letter
+                START MY FREE TRIAL
               </button>
             </a>
           </div>
@@ -463,7 +463,7 @@ export default function Landing() {
                 }}
                 data-testid="button-hero-cta"
               >
-                Generate My Scored Letter
+                START MY FREE TRIAL
                 <ArrowRight style={{ width: 15, height: 15 }} />
               </a>
               <a
@@ -752,7 +752,7 @@ export default function Landing() {
           }}
           data-testid="button-footer-cta"
         >
-          Generate My Scored Letter
+          START MY FREE TRIAL
           <ArrowRight style={{ width: 16, height: 16 }} />
         </a>
       </section>
