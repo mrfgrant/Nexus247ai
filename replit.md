@@ -1,200 +1,49 @@
 # Nexus247 - AI-Powered VA Claims Assistant
 
 ## Overview
-Nexus247 is a SaaS application that helps veterans generate professional, CFR-grounded VA claims documents using AI. It includes document generation, RPA-style quality scoring, AI claims advisor chat, combined rating estimator, and subscription management.
+Nexus247 is a SaaS application designed to empower veterans by providing an AI-powered assistant for generating professional, CFR-grounded VA claims documents. The project aims to streamline the complex VA claims process through intelligent document generation, quality scoring, AI-driven advisory chat, and comprehensive rating estimations. It targets a market need for accessible, accurate, and efficient claim preparation, ultimately striving to improve veterans' access to entitled benefits. Key capabilities include AI-assisted document creation, RPA-style quality checks, an AI claims advisor, a combined rating estimator, and robust subscription management.
 
-## Tech Stack
-- **Frontend**: React + TypeScript, Vite, TailwindCSS, shadcn/ui, wouter (routing), TanStack React Query
-- **Backend**: Express.js + TypeScript
-- **Database**: PostgreSQL via Drizzle ORM
-- **Auth**: Replit Auth (OIDC)
-- **AI**: Anthropic Claude Sonnet (user's API key via ANTHROPIC_API_KEY env secret)
-- **Payments**: Stripe (live keys configured, checkout + webhooks + portal)
+## User Preferences
+The agent should prioritize delivering accurate, CFR-grounded information. When generating documents or providing advice, ensure conciseness and clarity, suitable for official use and easy comprehension. For document generation, prioritize output that is signable by medical professionals and adheres to VA guidelines. When explaining complex topics, break them down into easily digestible parts.
 
-## Architecture
+## System Architecture
+The Nexus247 application is built with a modern web stack, featuring a React + TypeScript frontend, an Express.js + TypeScript backend, and a PostgreSQL database managed via Drizzle ORM. Authentication is handled by Replit Auth (OIDC), and AI functionalities are powered by Anthropic Claude Sonnet. Payments and subscription management are integrated using Stripe.
 
-### Database Schema (shared/schema.ts)
-- `users` + `sessions` — Replit Auth (shared/models/auth.ts)
-- `veteranProfiles` — military service, exposures, subscription tier, Stripe IDs
-- `conditions` — ICD-10 codes, diagnostic codes, ratings
-- `serviceIncidents` — linked to conditions
-- `documents` — generated letters with RPA quality scores (5 dimensions)
-- `knowledgeBaseEntries` — admin-uploaded real claim decisions
-- `chatMessages` — AI claims advisor chat history
-- `supportRequests` — human assistance tickets
-- `ratingEstimates` — saved rating calculations
-- `usageLogs` — usage tracking
-- `supportingDocuments` — uploaded VA decision letters, denial letters, medical records
-- `letterAnalyses` — saved decision letter analysis results (AI-parsed conditions, errors, appeals, recommendations) + cross-reference evidence gap data
+**UI/UX Decisions:**
+The application adopts a military/veteran aesthetic with a color scheme of navy, gold, smoke, and fog. A dark sidebar provides consistent navigation. Key components like the RPA Scoring Modal and Landing Page Hero are designed for intuitive user interaction, with the hero featuring an animated Score Card for immediate engagement. Print-ready layouts are provided for documents.
 
-### Backend (server/)
-- `server/index.ts` — Express app setup (rawBody capture for Stripe webhooks)
-- `server/routes.ts` — All API routes (profile, conditions, incidents, documents, generate, chat, support, knowledge base, rating, dashboard, Stripe checkout/webhook/portal)
-- `server/storage.ts` — DatabaseStorage with IStorage interface
-- `server/stripe.ts` — Stripe client, price/tier mappings, customer creation helper
-- `server/prompts.ts` — CFR-grounded AI prompts for 8 document types + RPA scoring + chat + decision letter analysis
-- `server/replit_integrations/auth/` — Replit Auth OIDC integration
+**Technical Implementations:**
+- **Database Schema:** Centralized schema (`shared/schema.ts`) includes tables for users, veteran profiles, conditions, service incidents, generated documents, knowledge base entries, chat messages, support requests, rating estimates, usage logs, supporting documents, and letter analyses.
+- **Backend Structure:** An Express.js server (`server/index.ts`) handles API routes for all core functionalities, including profile management, document generation, chat, support, knowledge base, and Stripe integrations. Prompts for AI interactions are centralized in `server/prompts.ts`.
+- **Frontend Structure:** A React application (`client/src/`) manages routes and authentication-gated layouts. Key pages include a dashboard, multi-step veteran profile intake, conditions management, document generation and viewing, an AI claims advisor chat, a rating estimator, and a decision letter analysis tool.
+- **Shared Modules:** Common utilities like VA compensation rates (`shared/va-rates.ts`) and a `getRankDisplayName` utility for veteran addressing (`shared/utils.ts`) are centralized.
 
-### Shared Modules
-- `shared/va-rates.ts` — Centralized 2026 VA compensation rates (MONTHLY_RATES, SMC_RATES, SMC_INFO)
-- `shared/utils.ts` — `getRankDisplayName(rank, branch, lastName, firstName)` utility for branch-specific rank abbreviation mapping (all branches E-1 through E-9, O-1 through O-10, W-1 through W-5). Used in dashboard greeting, sidebar, chat, settings, AI prompts, and document generation.
+**Feature Specifications:**
+- **Document Types:** Supports 8 types of VA claims documents, with some specific to higher subscription tiers.
+- **C&P Exam Prep:** A Pro+ feature providing AI-generated preparation guides and cheat sheets for C&P exams, with smart alerts and one-click generation buttons.
+- **Subscription Tiers:** Differentiated access based on Basic, Pro, and Concierge tiers, impacting document generation limits, analysis capabilities, and feature access. A 3-day Pro trial is automatically granted.
+- **Decision Letter Analysis:** AI-powered analysis of VA decision letters, identifying conditions, errors, and recommendations. Includes a cross-reference feature to compare medical records against decision findings and highlight evidence gaps.
+- **Document Generation Enhancements:** Incorporates RPA scoring, conciseness for nexus letters, and context injection from decision letter analyses.
+- **Trial System:** Provides gated access to features during a trial period, offering previews of generated content with upgrade CTAs. Chat and C&P prep are also trial-gated, offering general guidance without personalized data.
+- **Profile Completion Gate:** Enforces profile completion for full app access, directing users to the intake wizard.
+- **Tier-Based Record Limits:** AI context limits for medical records and documents are scaled according to subscription tiers to ensure optimal AI analysis for paying users.
+- **Veteran Addressing:** Standardized addressing convention using rank and last name throughout the application for a personalized experience.
 
-### Frontend (client/src/)
-- `App.tsx` — Routes + auth-gated layout (print page rendered outside sidebar)
-- `components/app-sidebar.tsx` — Navigation sidebar with logo
-- **Pages:**
-  - `landing.tsx` — Public landing page with hero, features, pricing
-  - `dashboard.tsx` — Veteran command center with stats, quick actions, SMC-S eligibility
-  - `intake.tsx` — Multi-step veteran profile wizard (5 steps incl. supporting docs upload; deployment locations as free-text)
-  - `conditions.tsx` — Conditions + service incidents CRUD (sidebar: "My Conditions")
-  - `generate-document.tsx` — Document generation with RPA scoring, URL param pre-fill from analysis, animated thinking steps
-  - `documents.tsx` — Document list with filtering, copy/download/print actions
-  - `document-print.tsx` — Print-ready document layout for browser Save as PDF
-  - `chat.tsx` — AI Claims Advisor chat with rich-text rendering, personalized context (profile, conditions, medical records, decision letter analysis), context banner (sidebar: "Ask VA Questions")
-  - `rating-estimator.tsx` — Combined rating calculator with 40-condition auto-suggest combobox, CFR diagnostic codes, min ratings, SMC levels
-  - `analyze-letter.tsx` — Upload/paste VA decision letters for AI analysis with saved history (sidebar: "Analyze Decision Letter")
-  - `pricing.tsx` — 3-tier pricing comparison
-  - `support.tsx` — Human assistance request form
-  - `settings.tsx` — Account and subscription management
-  - `admin-knowledge-base.tsx` — Admin: manage knowledge base entries
-  - `admin-support.tsx` — Admin: manage support requests
-  - `admin-users.tsx` — Admin: user management with tier/role/trial controls
+## External Dependencies
+- **Anthropic Claude Sonnet:** Used for all AI functionalities, including document generation, claims advisor chat, decision letter analysis, and C&P exam prep. Requires `ANTHROPIC_API_KEY`.
+- **Stripe:** Integrated for payment processing, subscription management, and customer portals. Utilizes `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY`, and `STRIPE_WEBHOOK_SECRET`.
+- **PostgreSQL:** The primary database for storing all application data, accessed via Drizzle ORM. Requires `DATABASE_URL`.
+- **Replit Auth (OIDC):** Provides user authentication and session management. Requires `SESSION_SECRET`.
+- **Resend:** Email service for sending branded welcome emails to new signups. Connected via Replit integration (connector). Domain verification required at resend.com/domains for production sending.
 
-### Document Types (8)
-All tiers: nexus_letter, personal_statement, buddy_letter, nod, secondary_condition, increase_claim
-Concierge only: aod_motion, good_cause_letter
+## Engagement Features (Unauthenticated Visitors)
+- **Welcome Overlay** (`client/src/components/welcome-overlay.tsx`): Full-screen overlay on first visit thanking the veteran for their service. Auto-dismisses after 8s. Tracked via localStorage key `nexus247_welcome_shown`. z-index 70.
+- **Cookie Consent Banner** (`client/src/components/cookie-consent.tsx`): Fixed bottom banner with Accept/Decline. Tracked via localStorage key `nexus247_cookies_accepted`. z-index 60. Shows after 1.5s delay.
+- **Exit Intent Popup** (`client/src/components/exit-intent.tsx`): Triggers on desktop mouseleave (cursor exits viewport upward) after 10s on page. Shows "nothing to lose, 3-day free trial" message with CTA. Tracked via sessionStorage key `nexus247_exit_shown`. z-index 80.
 
-### C&P Exam Prep (Pro+ Feature)
-- Page: `client/src/pages/cnp-prep.tsx` — route `/cnp-prep`
-- API: `POST /api/cnp-prep` with `{ conditionId }` — Pro/Concierge only
-- Two parallel AI calls: full 8-section prep guide (4000 tokens) + printable one-pager cheat sheet (1500 tokens)
-- Smart alerts: checks for missing nexus letter (warning) and always recommends buddy letter, with one-click generate buttons pre-filling the generate form
-- Monthly limits via usageLogs (action "cnp_prep"): Pro=10, Concierge=50
-- Prompts: `CNP_EXAM_PREP_PROMPT` + `CNP_EXAM_CHEATSHEET_PROMPT` in `server/prompts.ts`
-- Sidebar: after "Generate Letter" with ClipboardCheck icon and Pro badge
-
-### Subscription Tiers
-- None: 0 docs/mo, 0 analyses/mo, 0 C&P preps/mo
-- Basic ($19/mo): 5 docs/mo, 2 analyses/mo, 0 C&P preps/mo
-- Pro ($49/mo): 50 docs/mo, 10 analyses/mo, 10 C&P preps/mo
-- Concierge ($149/mo): 999 docs/mo, 50 analyses/mo, 50 C&P preps/mo + AOD/Good Cause
-
-### Decision Letter Analysis
-- Tier-gated: free users blocked, paid users limited by ANALYSIS_LIMITS
-- Auto-includes uploaded medical records (category: medical_records) in analysis context
-- Cross-reference feature: POST /api/analyze-letter/:id/cross-reference compares medical records against decision findings
-- Cross-reference data saved to letterAnalyses.crossReferenceData (jsonb)
-- Frontend shows Evidence Gap tab with completeness ratings, win probabilities, priority actions, medical tests needed
-- Analysis recommendations have "Generate" buttons that pre-fill the generate form with type, condition, and context (denial reasons, rater errors, missed evidence)
-
-### Document Generation Enhancements
-- RPA scoring uses JSON extraction fallback (regex match for `{...}` if JSON.parse fails)
-- Nexus letters capped at 2000 max_tokens and prompted for conciseness (under 800 words, signable by real medical professional)
-- Generation route fetches latest decision letter analysis and injects findings (denial reasons, rater errors, missed evidence, CFR violations, cross-reference data) into prompt context
-- Shared ThinkingSteps component (`client/src/components/thinking-steps.tsx`) used on both analyze and generate pages
-
-### Trial System
-- 3-day Pro trial auto-granted on first profile creation (`POST /api/profile`)
-- Admin can grant time-limited trials (1-30 days) via Admin > Manage Users
-- Trials auto-set tier to Basic if user has no tier
-- `getEffectiveTier()` in routes.ts checks trialEndsAt — expired trials revert to "none"
-- `isTrialUser()` helper: returns true if trialEndsAt is future AND subscriptionStatus !== "active"
-- Dashboard shows trial badge with remaining days
-- `veteranProfiles.trialEndsAt` timestamp field tracks trial expiry
-
-### Trial Document Gating
-- Full documents generated and stored in DB during trial — gating is API-response-level only
-- `getPreviewContent()` extracts first ~3 paragraphs as preview
-- `POST /api/generate`: trial users get `{ trialMode: true, previewContent, content: null, document }`
-- `GET /api/documents` + `GET /api/documents/:id`: trial users get gated responses with previewContent
-- Frontend: `TrialLetterPreview` component (`client/src/components/trial-letter-preview.tsx`) renders animated score ring, 5-dimension bars, trial banner, visible preview content, watermarked/blurred remainder with lock overlay, pricing chips, upgrade CTAs → `/pricing`
-- `generate-document.tsx`: conditionally renders TrialLetterPreview vs full content based on `trialMode`
-- `documents.tsx`: gold "Trial" badge on cards, gated preview dialog with blur + upgrade CTA
-- `document-print.tsx`: blocks print, shows upgrade message with link to pricing
-- On Stripe subscription activation, `isTrialUser()` returns false → full content flows normally
-
-### Trial Chat Gating
-- Trial users can access AI chat but without personal data context
-- Users without profiles (safety net) also get general-guidance chat instead of 403
-- Users with expired trials (tier "none" + profile exists) get blocked with 403
-- Chat skips profile details, conditions, uploaded documents, and decision letter analysis
-- Knowledge base (general CFR/VA info) still included
-- Veteran display name still used for addressing
-- AI instructed to provide general VA claims guidance and mention that paid subscription unlocks personalized, data-driven advice
-
-### Trial C&P Exam Prep Gating
-- Trial users can generate C&P prep but get `trialMode: true` response with preview content only
-- `prepGuidePreview` and `cheatSheetPreview` contain first ~3 paragraphs
-- Full `prepGuide` and `cheatSheet` nulled out in trial response
-- Frontend shows preview content, blurred section with watermark, lock overlay with upgrade CTA and pricing chips
-- Copy/Download/Print buttons hidden in trial mode
-
-### Profile Completion Gate
-- `AuthenticatedLayout` in App.tsx queries `/api/profile`
-- If no profile, redirects to `/intake` (except `/intake`, `/pricing`, `/settings`, `/support`)
-- Intake page shows a prominent banner when no profile exists explaining why it's needed
-- Medical records only accept `.txt` files (frontend + backend validation)
-- Decision/denial letters still accept `.pdf,.txt`
-
-### Tier-Based Record Limits
-- `getRecordLimit(tier)`: Basic/Trial=5000 chars, Pro=20000, Concierge=50000 per record
-- `getDocLimit(tier)`: Basic=5 docs, Pro=20, Concierge=50 docs in AI context
-- Applied across all AI routes: document generation, chat, decision letter analysis, cross-reference, C&P exam prep
-- Ensures paying customers get their full medical records included in AI analysis
-
-### Sidebar Feedback Links
-- "Report a Problem" → `/support?type=bug` (AlertTriangle icon)
-- "Feature Request" → `/support?type=feature` (Lightbulb icon)
-- Support page reads `type` query param and auto-opens dialog with pre-filled subject
-
-### UX Flow Improvements
-- Cross-reference "no records" toast includes actionable "Upload Records" button that navigates to intake Step 4
-- Intake page reads `step` query param to auto-jump to specific step (e.g., `/intake?step=3` = Supporting Documents)
-- Analyze letter page shows empty state placeholder when no past analyses exist
-- Rating estimator uses Select dropdown with valid VA increments (0-100 by 10s) instead of free-form number input
-- "Load from Profile" in rating estimator shows confirmation dialog before replacing manually entered data
-- TDIU eligibility implements both 38 CFR § 4.16(a) rules: 60/60 AND 70/40
-- Analysis retry button appears after failure without requiring re-upload
-- Conditions page + Dashboard show empty-state nudges guiding new users to add their first condition
-- Settings "Edit Profile" links to `/intake?from=settings`; intake shows "Back to Settings" button when from=settings
-
-### Veteran Addressing Convention
-Veterans are addressed by rank + last name throughout the app (e.g., "SPC Grant", "PO2 Smith"). The `getRankDisplayName()` utility in `shared/utils.ts` maps pay grades to branch-specific abbreviations. Used in: dashboard greeting, sidebar profile, chat UI + AI prompt, settings page, and all AI document generation prompts.
-
-### Design Theme
-Navy (#0D2137), navy-mid (#163352), gold (#D4A43E), gold-lt (#EAC76A), smoke (#FAFAF7), fog (#EFF0F3). Dark sidebar, military/veteran aesthetic.
-
-### RPA Scoring Modal
-- Reusable component: `client/src/components/rpa-scoring-modal.tsx`
-- Shows 5 scoring dimensions table with navy/gold design, CTA to login or generate
-- Triggered from: landing page feature card, pricing page feature lists, FAQ "How does RPA Quality Scoring work?" question
-- Props: `open`, `onOpenChange`, `authenticated` (controls CTA link target)
-
-### Landing Page Hero
-- Two-column hero: left = copy + CTAs, right = animated Score Card widget
-- Score Card shows 5 animated bars (CFR Compliance, Nexus Strength, Evidence Grounding, Diagnostic Clarity, Rater Readiness) with count-up to 86/100
-- Mobile (<900px) stacks vertically
-
-### Stripe Payment Integration
-- `server/stripe.ts` — Stripe client + price/tier mappings + customer helper
-- Price IDs: Basic=`price_1T776nEBRMFySHqpEY8vdmE9`, Pro=`price_1T777GEBRMFySHqpCBvns2rX`, Concierge=`price_1T778MEBRMFySHqpeyk2TGS4`
-- Routes:
-  - `POST /api/create-checkout-session` — creates Stripe Checkout Session (requires auth, takes `{ tier }`)
-  - `POST /api/create-portal-session` — creates Stripe Customer Portal session (requires auth, needs stripeCustomerId)
-  - `POST /api/stripe-webhook` — handles checkout.session.completed, subscription.updated, subscription.deleted, invoice.payment_failed
-  - `GET /api/stripe-config` — returns publishable key
-- Flow: Pricing button → checkout session → Stripe hosted payment → webhook updates subscriptionTier/status → redirect to /settings?stripe=success
-- Webhook uses rawBody from index.ts for signature verification (STRIPE_WEBHOOK_SECRET optional but recommended for production)
-- Storage methods: `updateStripeCustomerId`, `getProfileByStripeCustomerId`, `updateSubscriptionFromStripe`
-
-## Environment Secrets
-- `ANTHROPIC_API_KEY` — Claude API key
-- `SESSION_SECRET` — Express session secret
-- `STRIPE_SECRET_KEY` — Stripe secret key (sk_live_...)
-- `VITE_STRIPE_PUBLISHABLE_KEY` — Stripe publishable key (pk_live_...) for frontend
-- `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret (optional, for signature verification)
-- `DATABASE_URL` — PostgreSQL connection string (auto-provisioned)
-
-## Running
-- `npm run dev` — starts Express + Vite dev server on port 5000
-- `npm run db:push` — push schema to database
+## Welcome Email
+- **Server modules**: `server/resend.ts` (Resend client via Replit connector), `server/emails.ts` (HTML template + send function)
+- Triggered on first profile creation (`POST /api/profile` when no existing profile)
+- Addresses veteran by rank + last name (e.g., "Dear SFC Grant")
+- Navy/gold branded HTML email with 6 feature sections, "Where to Start" steps, gold CTA
+- Admin test endpoint: `POST /api/test-welcome-email` (userId 49807206 only)

@@ -27,6 +27,9 @@ import CnpPrep from "@/pages/cnp-prep";
 import DocumentPrint from "@/pages/document-print";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
+import { CookieConsent } from "@/components/cookie-consent";
+import { WelcomeOverlay } from "@/components/welcome-overlay";
+import { ExitIntent } from "@/components/exit-intent";
 
 function AuthenticatedLayout() {
   const [location] = useLocation();
@@ -122,12 +125,17 @@ function Router() {
 
   if (!user) {
     return (
-      <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/faq" component={Faq} />
-        <Route path="/terms" component={Terms} />
-        <Route component={Landing} />
-      </Switch>
+      <>
+        <Switch>
+          <Route path="/" component={Landing} />
+          <Route path="/faq" component={Faq} />
+          <Route path="/terms" component={Terms} />
+          <Route component={Landing} />
+        </Switch>
+        <WelcomeOverlay />
+        <CookieConsent />
+        <ExitIntent />
+      </>
     );
   }
 
