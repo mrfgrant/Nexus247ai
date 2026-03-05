@@ -20,8 +20,8 @@ function buildStep(text: string): string {
 </td></tr>`;
 }
 
-export function buildWelcomeEmailHtml(firstName: string): string {
-  const name = firstName || "Veteran";
+export function buildWelcomeEmailHtml(rankTitle: string, lastName: string): string {
+  const greeting = rankTitle && lastName ? `${rankTitle} ${lastName}` : lastName || "Veteran";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -39,7 +39,7 @@ export function buildWelcomeEmailHtml(firstName: string): string {
   <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#ffffff;letter-spacing:0.5px;">
     Nexus<span style="color:#D4A43E;">247</span>.ai
   </h1>
-  <p style="margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.5);letter-spacing:1.5px;text-transform:uppercase;">
+  <p style="margin:8px 0 0;font-size:13px;color:#ffffff;letter-spacing:1.5px;text-transform:uppercase;">
     Your AI Battle Buddy for VA Claims
   </p>
 </td></tr>
@@ -47,7 +47,7 @@ export function buildWelcomeEmailHtml(firstName: string): string {
 <tr><td style="background:#D4A43E;height:3px;font-size:0;line-height:0;">&nbsp;</td></tr>
 
 <tr><td style="padding:36px 40px 0;">
-  <p style="margin:0;font-size:16px;color:#333;">Dear <strong>${name}</strong>,</p>
+  <p style="margin:0;font-size:16px;color:#333;">Dear <strong>${greeting}</strong>,</p>
 </td></tr>
 
 <tr><td style="padding:20px 40px 0;">
@@ -154,10 +154,10 @@ ${buildFeature("06", "Human Expert Support", "When you need a real person in you
 </html>`;
 }
 
-export async function sendWelcomeEmail(toEmail: string, firstName: string): Promise<void> {
+export async function sendWelcomeEmail(toEmail: string, rankTitle: string, lastName: string): Promise<void> {
   try {
     const { client, fromEmail } = await getUncachableResendClient();
-    const html = buildWelcomeEmailHtml(firstName);
+    const html = buildWelcomeEmailHtml(rankTitle, lastName);
 
     const result = await client.emails.send({
       from: fromEmail || "Nexus247 <noreply@nexus247.ai>",

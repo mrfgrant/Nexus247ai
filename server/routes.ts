@@ -178,9 +178,10 @@ export async function registerRoutes(
 
       if (isNewProfile) {
         const email = req.user?.claims?.email;
-        const firstName = safeData.firstName || req.user?.claims?.first_name || "Veteran";
+        const rankTitle = safeData.rank ? getRankDisplayName(safeData.rank) : "";
+        const lastName = safeData.lastName || "";
         if (email) {
-          sendWelcomeEmail(email, firstName).catch(() => {});
+          sendWelcomeEmail(email, rankTitle, lastName).catch(() => {});
         }
       }
 
@@ -198,8 +199,9 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Admin only" });
       }
       const email = req.user.claims.email || "jamie@mrfgrant.com";
-      const firstName = req.body.firstName || "Jamie";
-      await sendWelcomeEmail(email, firstName);
+      const rankTitle = req.body.rankTitle || "";
+      const lastName = req.body.lastName || "";
+      await sendWelcomeEmail(email, rankTitle, lastName);
       res.json({ success: true, sentTo: email });
     } catch (error) {
       console.error("Test email error:", error);
