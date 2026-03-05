@@ -16,6 +16,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { SiTiktok } from "react-icons/si";
 import { RpaScoringModal } from "@/components/rpa-scoring-modal";
 
 const features = [
@@ -769,10 +770,21 @@ export default function Landing() {
         <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", margin: 0 }}>
           2025 Nexus247.ai · Not a law firm · Not affiliated with the VA
         </p>
-        <nav style={{ display: "flex", gap: 0 }}>
+        <nav style={{ display: "flex", alignItems: "center", gap: 0 }}>
           <a href="/faq" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-faq">FAQ</a>
           <a href="/terms" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-terms">Terms</a>
           <a href="/terms" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-privacy">Privacy</a>
+          <a
+            href="https://www.tiktok.com/@nexus247.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "rgba(255,255,255,0.5)", marginLeft: "1.4rem", display: "inline-flex", transition: "color 0.2s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#D4A43E")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
+            data-testid="link-footer-tiktok"
+          >
+            <SiTiktok size={16} />
+          </a>
         </nav>
       </footer>
 
