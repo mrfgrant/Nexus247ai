@@ -9,6 +9,7 @@ import multer from "multer";
 import { createRequire } from "module";
 import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from "./stripe";
 import { getRankDisplayName } from "@shared/utils";
+import { sendWelcomeEmail } from "./emails";
 import { authStorage } from "./replit_integrations/auth/storage";
 const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url);
 const pdfParse = _require("pdf-parse");
@@ -165,7 +166,8 @@ export async function registerRoutes(
       const existing = await storage.getVeteranProfile(userId);
       const profileData: any = { ...safeData, userId };
 
-      if (!existing) {
+      const isNewProfile = !existing;
+      if (isNewProfile) {
         const trialEnd = new Date();
         trialEnd.setDate(trialEnd.getDate() + 3);
         profileData.subscriptionTier = "pro";
@@ -173,10 +175,35 @@ export async function registerRoutes(
       }
 
       const profile = await storage.upsertVeteranProfile(profileData);
+
+      if (isNewProfile) {
+        const email = req.user?.claims?.email;
+        const firstName = safeData.firstName || req.user?.claims?.first_name || "Veteran";
+        if (email) {
+          sendWelcomeEmail(email, firstName).catch(() => {});
+        }
+      }
+
       res.json(profile);
     } catch (error) {
       console.error("Profile error:", error);
       res.status(500).json({ error: "Failed to save profile" });
+    }
+  });
+
+  app.post("/api/test-welcome-email", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      if (userId !== "49807206") {
+        return res.status(403).json({ error: "Admin only" });
+      }
+      const email = req.user.claims.email || "jamie@mrfgrant.com";
+      const firstName = req.body.firstName || "Jamie";
+      await sendWelcomeEmail(email, firstName);
+      res.json({ success: true, sentTo: email });
+    } catch (error) {
+      console.error("Test email error:", error);
+      res.status(500).json({ error: "Failed to send test email" });
     }
   });
 
