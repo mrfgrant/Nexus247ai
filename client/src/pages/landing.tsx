@@ -19,6 +19,8 @@ import {
 import { SiTiktok } from "react-icons/si";
 import { RpaScoringModal } from "@/components/rpa-scoring-modal";
 import TikTokBanner from "@/components/TikTokBanner";
+import OurStory from "@/components/OurStory";
+import RatingTimeline from "@/components/RatingTimeline";
 import DashboardDemo from "@/components/DashboardDemo";
 
 const features = [
@@ -566,6 +568,8 @@ export default function Landing() {
         <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 64px" }}>
           <BounceArrow />
           <DashboardDemo />
+          <OurStory />  
+          <RatingTimeline />
         </div>
 
         {/* Feature cards */}
