@@ -1843,7 +1843,21 @@ function getMyscoreHtml(): string {
   .score-btn:hover:not(:disabled) { background: var(--gold-lt); }
   .score-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .spinner { width: 20px; height: 20px; border: 3px solid rgba(13,33,55,0.2); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  .spinner-sm { width: 16px; height: 16px; border: 2px solid rgba(13,33,55,0.15); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .thinking-panel { display: none; background: #f8f9fa; border-radius: 12px; padding: 24px 28px; border: 1px solid #e5e7eb; margin-bottom: 24px; }
+  .thinking-panel.visible { display: block; animation: fadeUp 0.4s ease; }
+  .thinking-panel .tp-subtitle { font-size: 12px; color: #999; margin-bottom: 16px; }
+  .thinking-panel .tp-steps { display: flex; flex-direction: column; gap: 10px; }
+  .thinking-step { display: flex; align-items: center; gap: 10px; animation: fadeUp 0.5s ease; }
+  .thinking-step .ts-icon { width: 16px; height: 16px; flex-shrink: 0; }
+  .thinking-step .ts-label { font-size: 14px; }
+  .thinking-step.current .ts-label { color: #333; font-weight: 600; }
+  .thinking-step.done .ts-label { color: #999; }
+  .ts-check { color: #22c55e; }
+  @media (max-width: 640px) {
+    .thinking-panel { padding: 18px 20px; }
+  }
   .results { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; display: none; }
   .results.visible { display: block; animation: fadeUp 0.5s ease; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
@@ -1916,6 +1930,11 @@ function getMyscoreHtml(): string {
     Score My Letter
   </button>
 
+  <div class="thinking-panel" id="thinkingPanel" data-testid="thinking-steps">
+    <p class="tp-subtitle">This typically takes 15-30 seconds.</p>
+    <div class="tp-steps" id="thinkingSteps"></div>
+  </div>
+
   <div class="results" id="results">
     <div class="score-display">
       <div class="score-circle" id="scoreCircle">
@@ -1960,6 +1979,64 @@ const fileName = document.getElementById('fileName');
 const scoreBtn = document.getElementById('scoreBtn');
 const errorMsg = document.getElementById('errorMsg');
 const results = document.getElementById('results');
+const thinkingPanel = document.getElementById('thinkingPanel');
+const thinkingStepsEl = document.getElementById('thinkingSteps');
+
+const THINKING_STEPS = [
+  { label: 'Reading your nexus letter...', delay: 0 },
+  { label: 'Evaluating medical nexus clarity...', delay: 2500 },
+  { label: 'Assessing service connection strength...', delay: 5000 },
+  { label: 'Reviewing medical terminology...', delay: 7500 },
+  { label: 'Analyzing supporting evidence...', delay: 10000 },
+  { label: 'Scoring overall persuasiveness...', delay: 13000 },
+  { label: 'Generating your score report...', delay: 16000 }
+];
+
+const SPINNER_SVG = '<div class="spinner-sm"></div>';
+const CHECK_SVG = '<svg class="ts-icon ts-check" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+
+let thinkingTimers = [];
+
+function startThinking() {
+  thinkingStepsEl.innerHTML = '';
+  thinkingPanel.classList.add('visible');
+  thinkingTimers = [];
+
+  THINKING_STEPS.forEach((step, idx) => {
+    const timer = setTimeout(() => {
+      // Mark previous step as done
+      const prev = thinkingStepsEl.querySelector('.thinking-step.current');
+      if (prev) {
+        prev.classList.remove('current');
+        prev.classList.add('done');
+        prev.querySelector('.ts-icon-wrap').innerHTML = CHECK_SVG;
+      }
+      // Add new step
+      const div = document.createElement('div');
+      div.className = 'thinking-step current';
+      div.setAttribute('data-testid', 'thinking-step-' + idx);
+      div.innerHTML = '<span class="ts-icon-wrap">' + SPINNER_SVG + '</span><span class="ts-label">' + step.label + '</span>';
+      thinkingStepsEl.appendChild(div);
+    }, step.delay);
+    thinkingTimers.push(timer);
+  });
+}
+
+function stopThinking() {
+  thinkingTimers.forEach(clearTimeout);
+  thinkingTimers = [];
+  // Mark all as done
+  const current = thinkingStepsEl.querySelector('.thinking-step.current');
+  if (current) {
+    current.classList.remove('current');
+    current.classList.add('done');
+    current.querySelector('.ts-icon-wrap').innerHTML = CHECK_SVG;
+  }
+  // Brief delay then hide
+  setTimeout(() => {
+    thinkingPanel.classList.remove('visible');
+  }, 600);
+}
 
 textarea.addEventListener('input', () => {
   charCount.textContent = textarea.value.length;
@@ -1999,9 +2076,10 @@ async function scoreLetter() {
   }
 
   scoreBtn.disabled = true;
-  scoreBtn.innerHTML = '<div class="spinner"></div> Analyzing your letter...';
+  scoreBtn.innerHTML = '<div class="spinner"></div> Analyzing...';
   errorMsg.classList.remove('visible');
   results.classList.remove('visible');
+  startThinking();
 
   try {
     const resp = await fetch('/api/score-letter', {
@@ -2040,10 +2118,12 @@ async function scoreLetter() {
       improvementsList.appendChild(li);
     });
 
+    stopThinking();
     results.classList.add('visible');
-    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 700);
   } catch (err) {
     showError(err.message || 'Something went wrong. Please try again.');
+    stopThinking();
   } finally {
     scoreBtn.disabled = false;
     scoreBtn.innerHTML = 'Score My Letter';
