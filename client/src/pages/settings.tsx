@@ -10,6 +10,7 @@ import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Shield, CreditCard, User, Settings as SettingsIcon, Loader2, ExternalLink } from "lucide-react";
 import { getRankDisplayName } from "@shared/utils";
+import { trackPurchase } from "@/lib/analytics";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -33,6 +34,14 @@ export default function Settings() {
           .then((res) => res.json())
           .then((data) => {
             if (data.tier) {
+              try {
+                const trackKey = `nexus247_purchase_${sessionId}`;
+                if (!sessionStorage.getItem(trackKey)) {
+                  const prices: Record<string, number> = { basic: 19, pro: 49, concierge: 149 };
+                  trackPurchase(data.tier, prices[data.tier] || 0, sessionId || undefined);
+                  sessionStorage.setItem(trackKey, "true");
+                }
+              } catch {}
               toast({
                 title: "Subscription activated!",
                 description: `Your ${data.tier.charAt(0).toUpperCase() + data.tier.slice(1)} plan is now active.`,

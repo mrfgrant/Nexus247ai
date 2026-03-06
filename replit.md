@@ -51,3 +51,12 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 
 ## Standalone Pages
 - **MyScore** (`/myscore`): Public, standalone page for scoring nexus letters via AI. No auth, no database, no connection to main app. Uses Claude API via `POST /api/score-letter`. IP-based rate limiting (5 requests per 10 minutes per IP). PDF upload uses client-side pdf.js from CDN. Results show score (0-100), rating, summary, strengths, and improvements with CTA to sign up.
+
+## Google Analytics Conversion Tracking
+- **Analytics utility**: `client/src/lib/analytics.ts` — wraps `window.gtag()` calls with safe fallback
+- **GA ID**: G-0ZBRWF6PP6 (in `client/index.html` and `/myscore` page)
+- **Conversion events**:
+  - `sign_up` — fires once per device when a new user logs in without a profile (localStorage flag `nexus247_signup_tracked`)
+  - `trial_started` — fires when a new user saves their profile for the first time (triggers 3-day Pro trial)
+  - `begin_checkout` — fires when user clicks subscribe on the pricing page (includes tier name and price value)
+  - `purchase` — fires on successful Stripe checkout verification (includes tier, value, transaction_id; guarded by sessionStorage to prevent double-fire)

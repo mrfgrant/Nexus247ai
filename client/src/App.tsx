@@ -26,10 +26,12 @@ import AnalyzeLetter from "@/pages/analyze-letter";
 import CnpPrep from "@/pages/cnp-prep";
 import DocumentPrint from "@/pages/document-print";
 import NotFound from "@/pages/not-found";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { CookieConsent } from "@/components/cookie-consent";
 import { WelcomeOverlay } from "@/components/welcome-overlay";
 import { ExitIntent } from "@/components/exit-intent";
+import { trackSignUp } from "@/lib/analytics";
 
 function AuthenticatedLayout() {
   const [location] = useLocation();
@@ -42,6 +44,16 @@ function AuthenticatedLayout() {
   const hasProfile = !!profile && profile !== null && typeof profile === "object" && profile.id;
   const allowedWithoutProfile = ["/intake", "/pricing", "/settings", "/support", "/chat"];
   const needsRedirect = !profileLoading && !hasProfile && !allowedWithoutProfile.includes(location);
+  useEffect(() => {
+    if (!profileLoading && !hasProfile) {
+      try {
+        if (!localStorage.getItem("nexus247_signup_tracked")) {
+          trackSignUp();
+          localStorage.setItem("nexus247_signup_tracked", "true");
+        }
+      } catch {}
+    }
+  }, [profileLoading, hasProfile]);
 
   if (profileLoading) {
     return (

@@ -19,6 +19,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import type { SupportingDocument } from "@shared/schema";
+import { trackTrialStarted } from "@/lib/analytics";
 
 const BRANCHES = ["Army", "Navy", "Air Force", "Marines", "Coast Guard", "Space Force"];
 const DISCHARGE_TYPES = ["Honorable", "General (Under Honorable)", "Other Than Honorable", "Bad Conduct", "Dishonorable"];
@@ -69,8 +70,12 @@ export default function Intake() {
       return res.json();
     },
     onSuccess: () => {
+      const wasNew = !profile || !profile.id;
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      if (wasNew) {
+        trackTrialStarted();
+      }
       toast({ title: "Profile saved", description: "Your veteran profile has been updated." });
     },
     onError: () => {

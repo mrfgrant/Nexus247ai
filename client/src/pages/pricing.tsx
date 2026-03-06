@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { RpaScoringModal } from "@/components/rpa-scoring-modal";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 const tiers = [
   {
@@ -183,8 +184,10 @@ export default function Pricing() {
     enabled: isAuthenticated,
   });
 
+  const tierPrices: Record<string, number> = { basic: 19, pro: 49, concierge: 149 };
   const checkoutMutation = useMutation({
     mutationFn: async (tier: string) => {
+      trackBeginCheckout(tier, tierPrices[tier] || 0);
       const res = await apiRequest("POST", "/api/create-checkout-session", { tier });
       return res.json();
     },
