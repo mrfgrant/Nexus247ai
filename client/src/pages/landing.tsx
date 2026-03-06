@@ -564,16 +564,17 @@ export default function Landing() {
           </p>
         </div>
 
-        {/* ── ANIMATED DASHBOARD DEMO + ARROW ── */}
-        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 64px" }}>
-          <BounceArrow />
-          <DashboardDemo />
-          <OurStory />  
-          <RatingTimeline />
-        </div>
+          {/* ── ANIMATED DASHBOARD DEMO + ARROW ── */}
+          <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 64px" }}>
+            <BounceArrow />
+            <DashboardDemo />
+          </div>
 
-        {/* Feature cards */}
-        <div
+          <OurStory />
+          <RatingTimeline />
+
+          {/* Feature cards */}
+          <div
           ref={addRevealRef}
           className="reveal"
           style={{
