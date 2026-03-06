@@ -11,6 +11,7 @@ import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from 
 import { getRankDisplayName } from "@shared/utils";
 import { sendWelcomeEmail } from "./emails";
 import { authStorage } from "./replit_integrations/auth/storage";
+import { sitemapRouter } from './sitemap';
 const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url);
 const pdfParse = _require("pdf-parse");
 
@@ -144,7 +145,7 @@ export async function registerRoutes(
   }
 
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
-
+  app.use(sitemapRouter);
   app.get("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

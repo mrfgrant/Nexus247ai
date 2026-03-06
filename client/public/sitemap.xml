@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://nexus247.ai/</loc>
+    <lastmod>2026-03-06</lastmod>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://nexus247.ai/blog/how-to-write-a-nexus-letter-yourself</loc>
+    <lastmod>2026-03-06</lastmod>
+    <priority>0.9</priority>
+  </url>
+
+</urlset>
+```
+
+Then add every new blog post or page you create to this file. Each time you add a page, update the `lastmod` date — that signals to Google that there's fresh content worth recrawling.
+
+**After uploading:**
+1. Go to Google Search Console
+2. Left sidebar → Sitemaps
+3. Enter `sitemap.xml` and hit Submit
+4. Google will confirm it's valid and start processing
+
+**One more thing that matters as much as the sitemap — `robots.txt`.** Make sure you have one in your `public` folder that isn't accidentally blocking Googlebot:
+```
+User-agent: *
+Allow: /
+
+Sitemap: https://nexus247.ai/sitemap.xml
