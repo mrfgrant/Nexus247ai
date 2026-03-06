@@ -15,6 +15,13 @@ const MAX = 2102;
 
 const TIMELINE = [
   {
+    date: "Jul 2020",
+    title: "Retained Attorney",
+    detail: "Attorney retained before the original award. Filed claims for multiple conditions with zero supporting evidence — the cause of 99% of VA denials. Of everything filed, only Tinnitus won.",
+    type: "bad",
+    rating: null,
+  },
+  {
     date: "Nov 3, 2020",
     title: "Tinnitus — Original Award",
     detail: "10% service-connected. Direct/Primary connection. First payment $144/mo.",
@@ -23,15 +30,15 @@ const TIMELINE = [
   },
   {
     date: "2021",
-    title: "Retained Attorney — Appeal Filed",
-    detail: "Attorney files appeal for multiple conditions. Then goes silent. Missed deadlines. No communication. Claim stalls for years while COLA bumps trickle in.",
+    title: "Appeal Filed — Then Ghosted",
+    detail: "Knowing a VA appeal takes years to resolve, the attorney filed it strategically — the longer it drags, the more retro pay accumulates, and the larger his percentage fee at the end. Then he stopped communicating. Evidence deadlines were missed. No updates. No responses. Years of silence.",
     type: "bad",
     rating: null,
   },
   {
     date: "Dec 2021 – Dec 2024",
     title: "4 Years. Nothing.",
-    detail: "$144 → $175. Four cost-of-living adjustments. Zero rating changes. The VA doesn't come looking for you — and neither did the attorney.",
+    detail: "$144 → $175. Four cost-of-living adjustments. Zero rating changes. An appeal sitting in limbo. The VA doesn't come looking for you — and neither did the attorney.",
     type: "stall",
     rating: null,
   },
@@ -100,8 +107,8 @@ const TIMELINE = [
   },
   {
     date: "Mar 11, 2026",
-    title: "Hearing + C&P Exam — TDIU",
-    detail: "Two virtual appointments on the same day. Board hearing for verifiable service-connected conditions + C&P exam for TDIU. Nexus247's C&P Prep tool used to prepare for both.",
+    title: "Board Hearing + TDIU C&P Exam",
+    detail: "11:00 AM — Board Denied Conditions Hearing (virtual). 2:00 PM — TDIU Virtual C&P Exam (MDD). Nexus247's C&P Prep tool used to prepare for both appointments.",
     type: "live",
     rating: null,
   },
@@ -181,12 +188,10 @@ export default function RatingTimeline() {
   }, []);
 
   return (
-    <section ref={ref} style={{ padding: "100px 5vw", backgroundColor: "#080f1a", position: "relative", overflow: "hidden" }}>
+    <section ref={ref} style={{ padding: "80px 5vw", backgroundColor: "#f0efe9", position: "relative", overflow: "hidden" }}>
 
-      {/* Background glow */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", backgroundImage: `radial-gradient(circle at 20% 50%, rgba(212,164,62,0.07) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(96,165,250,0.05) 0%, transparent 40%)` }} />
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1, backgroundColor: "#080f1a", borderRadius: 16, boxShadow: "0 24px 64px rgba(11,28,46,0.22), 0 0 0 1px rgba(255,255,255,0.07)", padding: "60px 56px", overflow: "hidden" }}>
 
         {/* Header */}
         <div style={{ marginBottom: "3rem" }}>
@@ -329,11 +334,11 @@ export default function RatingTimeline() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "#4ade80", marginTop: 5, flexShrink: 0 }} />
-                  <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>Board hearing — verifiable service-connected conditions</div>
+                  <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>11:00 AM — Board Denied Conditions Hearing (virtual)</div>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "#4ade80", marginTop: 5, flexShrink: 0 }} />
-                  <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>C&P exam — TDIU · Prepared using Nexus247 C&P Prep</div>
+                  <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>2:00 PM — TDIU Virtual C&P Exam (MDD) · Prepared using Nexus247 C&P Prep</div>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                   <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: "#D4A43E", marginTop: 5, flexShrink: 0 }} />

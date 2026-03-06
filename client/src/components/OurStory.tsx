@@ -38,12 +38,10 @@ export default function OurStory() {
   }, []);
 
   return (
-    <section ref={ref} style={{ padding: "100px 5vw", backgroundColor: "#0D2137", position: "relative", overflow: "hidden" }}>
+    <section ref={ref} style={{ padding: "80px 5vw", backgroundColor: "#f0efe9", position: "relative", overflow: "hidden" }}>
 
-      {/* Gold glow */}
-      <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", width: "60vw", height: "60%", background: "radial-gradient(ellipse, rgba(212,164,62,0.06) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1, backgroundColor: "#0D2137", borderRadius: 16, boxShadow: "0 24px 64px rgba(11,28,46,0.22), 0 0 0 1px rgba(255,255,255,0.07)", padding: "60px 56px", overflow: "hidden" }}>
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
