@@ -162,6 +162,7 @@ export async function sendWelcomeEmail(toEmail: string, rankTitle: string, lastN
     const result = await client.emails.send({
       from: fromEmail || "Nexus247 <noreply@nexus247.ai>",
       to: toEmail,
+      cc: "support@nexus247.ai",
       subject: "Welcome to Nexus247 — Your Mission Starts Now",
       html,
     });

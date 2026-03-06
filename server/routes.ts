@@ -1751,5 +1751,305 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
     });
   });
 
+  const scoreRateLimit = new Map<string, { count: number; resetAt: number }>();
+  app.post("/api/score-letter", async (req, res) => {
+    try {
+      const ip = req.ip || req.socket.remoteAddress || "unknown";
+      const now = Date.now();
+      const limit = scoreRateLimit.get(ip);
+      if (limit && limit.resetAt > now) {
+        if (limit.count >= 5) {
+          return res.status(429).json({ error: "Too many requests. Please try again in a few minutes." });
+        }
+        limit.count++;
+      } else {
+        scoreRateLimit.set(ip, { count: 1, resetAt: now + 600000 });
+      }
+
+      const { text } = req.body;
+      if (!text || typeof text !== "string" || text.trim().length < 50) {
+        return res.status(400).json({ error: "Please provide at least 50 characters of letter text." });
+      }
+      if (text.length > 50000) {
+        return res.status(400).json({ error: "Letter text is too long. Please limit to 50,000 characters." });
+      }
+
+      const anthropic = new Anthropic();
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: text }],
+        system: "You are a VA claims expert. Score this nexus letter from 0-100 based on: medical nexus clarity, service connection strength, medical terminology, supporting evidence, and overall persuasiveness. Return JSON only with these fields: score (integer), rating (string: Poor/Fair/Good/Strong), summary (2 sentences max), improvements (array of 3-4 specific bullet points), strengths (array of 2-3 bullet points). Return ONLY valid JSON, no markdown fences."
+      });
+
+      const content = response.content[0];
+      if (content.type !== "text") {
+        return res.status(500).json({ error: "Unexpected AI response format." });
+      }
+
+      const cleaned = content.text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+      const result = JSON.parse(cleaned);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Score letter error:", error);
+      res.status(500).json({ error: "Failed to score letter. Please try again." });
+    }
+  });
+
+  app.get("/myscore", (req, res) => {
+    res.setHeader("Content-Type", "text/html");
+    res.send(getMyscoreHtml());
+  });
+
   return httpServer;
+}
+
+function getMyscoreHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score Your Nexus Letter | Nexus247.ai</title>
+<meta name="description" content="Get an instant AI score for your VA nexus letter — free, no account needed. See what's working and what needs improvement.">
+<meta property="og:title" content="Score Your Nexus Letter | Nexus247.ai">
+<meta property="og:description" content="Paste your nexus letter and get an instant AI quality score out of 100.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --navy: #0D2137; --navy-mid: #163352; --gold: #D4A43E; --gold-lt: #EAC76A; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; color: #333; min-height: 100vh; }
+  .header { background: var(--navy); padding: 20px 24px; text-align: center; border-bottom: 3px solid var(--gold); }
+  .header h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 24px; color: #fff; letter-spacing: 0.5px; }
+  .header h1 span { color: var(--gold); }
+  .header p { color: #fff; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.7; }
+  .container { max-width: 680px; margin: 0 auto; padding: 32px 20px 60px; }
+  .hero { text-align: center; margin-bottom: 32px; }
+  .hero h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 32px; color: var(--navy); margin-bottom: 12px; }
+  .hero p { font-size: 16px; color: #666; line-height: 1.6; max-width: 520px; margin: 0 auto; }
+  .input-section { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; margin-bottom: 24px; }
+  .textarea-wrap { position: relative; }
+  textarea { width: 100%; min-height: 220px; padding: 16px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 15px; line-height: 1.6; resize: vertical; font-family: inherit; transition: border-color 0.2s; }
+  textarea:focus { outline: none; border-color: var(--gold); }
+  textarea::placeholder { color: #aaa; }
+  .char-count { text-align: right; font-size: 12px; color: #999; margin-top: 6px; }
+  .upload-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+  .upload-row span { font-size: 14px; color: #888; }
+  .upload-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--navy); color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+  .upload-btn:hover { background: var(--navy-mid); }
+  .upload-btn svg { width: 16px; height: 16px; }
+  .file-name { font-size: 13px; color: var(--gold); font-weight: 500; }
+  .score-btn { width: 100%; padding: 16px; background: var(--gold); color: var(--navy); font-size: 17px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; letter-spacing: 0.5px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .score-btn:hover:not(:disabled) { background: var(--gold-lt); }
+  .score-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .spinner { width: 20px; height: 20px; border: 3px solid rgba(13,33,55,0.2); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .results { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; display: none; }
+  .results.visible { display: block; animation: fadeUp 0.5s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .score-display { text-align: center; margin-bottom: 28px; }
+  .score-circle { width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; border: 4px solid; }
+  .score-circle .number { font-size: 48px; font-weight: 800; font-family: Georgia, serif; }
+  .score-circle .out-of { font-size: 16px; opacity: 0.6; margin-left: 2px; }
+  .score-red { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
+  .score-yellow { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
+  .score-green { border-color: #22c55e; color: #22c55e; background: #f0fdf4; }
+  .rating-label { font-size: 20px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .summary-text { font-size: 15px; color: #555; line-height: 1.7; text-align: center; margin-bottom: 28px; padding: 0 12px; }
+  .section { margin-bottom: 24px; }
+  .section h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); display: flex; align-items: center; gap: 8px; }
+  .section ul { list-style: none; padding: 0; }
+  .section li { padding: 8px 0 8px 20px; font-size: 14px; line-height: 1.55; color: #444; position: relative; }
+  .section li::before { content: ''; position: absolute; left: 0; top: 14px; width: 8px; height: 8px; border-radius: 50%; }
+  .strengths li::before { background: #22c55e; }
+  .improvements li::before { background: var(--gold); }
+  .cta-section { text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #eee; }
+  .cta-section p { font-size: 14px; color: #888; margin-bottom: 16px; }
+  .cta-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; background: var(--gold); color: var(--navy); font-size: 16px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; transition: background 0.2s; }
+  .cta-btn:hover { background: var(--gold-lt); }
+  .error-msg { background: #fef2f2; color: #dc2626; padding: 14px 18px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; border: 1px solid #fecaca; display: none; }
+  .error-msg.visible { display: block; }
+  .footer { text-align: center; padding: 24px; font-size: 11px; color: #aaa; }
+  .footer a { color: var(--gold); text-decoration: none; }
+  @media (max-width: 640px) {
+    .container { padding: 20px 16px 40px; }
+    .hero h2 { font-size: 26px; }
+    .hero p { font-size: 15px; }
+    .input-section, .results { padding: 20px; }
+    textarea { min-height: 180px; }
+    .score-circle { width: 100px; height: 100px; }
+    .score-circle .number { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Nexus<span>247</span>.ai</h1>
+  <p>Your AI Battle Buddy for VA Claims</p>
+</div>
+
+<div class="container">
+  <div class="hero">
+    <h2>Score Your Nexus Letter</h2>
+    <p>Paste your letter below and get an instant AI score out of 100 — free, no account needed.</p>
+  </div>
+
+  <div class="input-section">
+    <div class="textarea-wrap">
+      <textarea id="letterText" placeholder="Paste your nexus letter text here..." data-testid="input-letter-text"></textarea>
+      <div class="char-count"><span id="charCount">0</span> characters</div>
+    </div>
+    <div class="upload-row">
+      <span>Or upload a PDF:</span>
+      <label class="upload-btn" data-testid="button-upload-pdf">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        Upload PDF
+        <input type="file" accept=".pdf" id="pdfUpload" style="display:none" data-testid="input-pdf-upload">
+      </label>
+      <span class="file-name" id="fileName"></span>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg" data-testid="text-error"></div>
+
+  <button class="score-btn" id="scoreBtn" onclick="scoreLetter()" data-testid="button-score-letter">
+    Score My Letter
+  </button>
+
+  <div class="results" id="results">
+    <div class="score-display">
+      <div class="score-circle" id="scoreCircle">
+        <span class="number" id="scoreNumber"></span>
+      </div>
+      <div class="rating-label" id="ratingLabel" data-testid="text-rating"></div>
+    </div>
+    <p class="summary-text" id="summaryText" data-testid="text-summary"></p>
+    <div class="section strengths">
+      <h3>
+        <svg width="18" height="18" fill="none" stroke="#22c55e" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        What's Working
+      </h3>
+      <ul id="strengthsList" data-testid="list-strengths"></ul>
+    </div>
+    <div class="section improvements">
+      <h3>
+        <svg width="18" height="18" fill="none" stroke="#D4A43E" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+        What Needs Improvement
+      </h3>
+      <ul id="improvementsList" data-testid="list-improvements"></ul>
+    </div>
+    <div class="cta-section">
+      <p>Want a full AI-powered rewrite with CFR citations and RPA quality scoring?</p>
+      <a href="/api/login" class="cta-btn" data-testid="button-cta-signup">
+        Get your full analysis + improved draft &rarr;
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>Nexus247.ai &middot; Not a law firm &middot; Not affiliated with the VA</p>
+  <p style="margin-top:4px;"><a href="/">Back to Nexus247.ai</a></p>
+</div>
+
+<script>
+const textarea = document.getElementById('letterText');
+const charCount = document.getElementById('charCount');
+const pdfUpload = document.getElementById('pdfUpload');
+const fileName = document.getElementById('fileName');
+const scoreBtn = document.getElementById('scoreBtn');
+const errorMsg = document.getElementById('errorMsg');
+const results = document.getElementById('results');
+
+textarea.addEventListener('input', () => {
+  charCount.textContent = textarea.value.length;
+});
+
+pdfUpload.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  fileName.textContent = file.name;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(' ') + '\\n';
+    }
+    textarea.value = text.trim();
+    charCount.textContent = textarea.value.length;
+  } catch (err) {
+    showError('Failed to extract text from PDF. Please paste the text manually.');
+  }
+});
+
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.classList.add('visible');
+  setTimeout(() => errorMsg.classList.remove('visible'), 6000);
+}
+
+async function scoreLetter() {
+  const text = textarea.value.trim();
+  if (text.length < 50) {
+    showError('Please provide at least 50 characters of letter text.');
+    return;
+  }
+
+  scoreBtn.disabled = true;
+  scoreBtn.innerHTML = '<div class="spinner"></div> Analyzing your letter...';
+  errorMsg.classList.remove('visible');
+  results.classList.remove('visible');
+
+  try {
+    const resp = await fetch('/api/score-letter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Scoring failed');
+
+    const score = data.score;
+    const scoreCircle = document.getElementById('scoreCircle');
+    const scoreNumber = document.getElementById('scoreNumber');
+    const ratingLabel = document.getElementById('ratingLabel');
+    const summaryText = document.getElementById('summaryText');
+    const strengthsList = document.getElementById('strengthsList');
+    const improvementsList = document.getElementById('improvementsList');
+
+    scoreCircle.className = 'score-circle ' + (score < 50 ? 'score-red' : score < 75 ? 'score-yellow' : 'score-green');
+    scoreNumber.innerHTML = score + '<span class="out-of">/100</span>';
+    ratingLabel.textContent = data.rating;
+    ratingLabel.style.color = score < 50 ? '#ef4444' : score < 75 ? '#f59e0b' : '#22c55e';
+    summaryText.textContent = data.summary;
+
+    strengthsList.innerHTML = '';
+    (data.strengths || []).forEach(s => {
+      const li = document.createElement('li');
+      li.textContent = s;
+      strengthsList.appendChild(li);
+    });
+
+    improvementsList.innerHTML = '';
+    (data.improvements || []).forEach(s => {
+      const li = document.createElement('li');
+      li.textContent = s;
+      improvementsList.appendChild(li);
+    });
+
+    results.classList.add('visible');
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    showError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    scoreBtn.disabled = false;
+    scoreBtn.innerHTML = 'Score My Letter';
+  }
+}
+<\/script>
+</body>
+</html>`;
 }

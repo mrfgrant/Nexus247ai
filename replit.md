@@ -46,4 +46,8 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 - Triggered on first profile creation (`POST /api/profile` when no existing profile)
 - Addresses veteran by rank + last name (e.g., "Dear SFC Grant")
 - Navy/gold branded HTML email with 6 feature sections, "Where to Start" steps, gold CTA
+- CC: `support@nexus247.ai` on every welcome email
 - Admin test endpoint: `POST /api/test-welcome-email` (userId 49807206 only)
+
+## Standalone Pages
+- **MyScore** (`/myscore`): Public, standalone page for scoring nexus letters via AI. No auth, no database, no connection to main app. Uses Claude API via `POST /api/score-letter`. IP-based rate limiting (5 requests per 10 minutes per IP). PDF upload uses client-side pdf.js from CDN. Results show score (0-100), rating, summary, strengths, and improvements with CTA to sign up.
