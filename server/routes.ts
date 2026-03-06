@@ -1814,6 +1814,13 @@ function getMyscoreHtml(): string {
 <meta name="description" content="Get an instant AI score for your VA nexus letter — free, no account needed. See what's working and what needs improvement.">
 <meta property="og:title" content="Score Your Nexus Letter | Nexus247.ai">
 <meta property="og:description" content="Paste your nexus letter and get an instant AI quality score out of 100.">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0ZBRWF6PP6"><\/script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-0ZBRWF6PP6');
+<\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
