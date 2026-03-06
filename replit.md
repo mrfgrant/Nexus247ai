@@ -55,6 +55,7 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 ## Google Tag Manager & Conversion Tracking
 - **GTM Container**: GTM-M43343V2 (in `client/index.html` and `/myscore` page — head script + noscript after body)
 - **GA Property**: G-0ZBRWF6PP6 (configured inside GTM, no longer inline)
+- **TikTok Pixel**: D6L6N5RC77U5VG9U3900 (in `client/index.html` and `/myscore` page — fires page view on all pages)
 - **Analytics utility**: `client/src/lib/analytics.ts` — pushes events to `window.dataLayer` for GTM
 - **Conversion events**:
   - `sign_up` — fires once per device when a new user logs in without a profile (localStorage flag `nexus247_signup_tracked`)
