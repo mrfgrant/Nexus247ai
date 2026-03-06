@@ -1,12 +1,14 @@
 declare global {
   interface Window {
+    dataLayer?: any[];
     gtag?: (...args: any[]) => void;
   }
 }
 
 function gtag(...args: any[]) {
-  if (typeof window !== "undefined" && window.gtag) {
-    window.gtag(...args);
+  if (typeof window !== "undefined") {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(arguments);
   }
 }
 

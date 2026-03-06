@@ -1814,13 +1814,11 @@ function getMyscoreHtml(): string {
 <meta name="description" content="Get an instant AI score for your VA nexus letter — free, no account needed. See what's working and what needs improvement.">
 <meta property="og:title" content="Score Your Nexus Letter | Nexus247.ai">
 <meta property="og:description" content="Paste your nexus letter and get an instant AI quality score out of 100.">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0ZBRWF6PP6"><\/script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-0ZBRWF6PP6');
-<\/script>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-M43343V2');<\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1904,6 +1902,8 @@ function getMyscoreHtml(): string {
 </style>
 </head>
 <body>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M43343V2"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="header">
   <h1>Nexus<span>247</span>.ai</h1>
   <p>Your AI Battle Buddy for VA Claims</p>
