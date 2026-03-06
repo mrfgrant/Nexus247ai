@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Shield,
   FileText,
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { RpaScoringModal } from "@/components/rpa-scoring-modal";
-import DashboardDemo from "@/components/DashboardDemo";
 
 const features = [
   {
@@ -312,30 +311,6 @@ function ScoreCard() {
   );
 }
 
-// ── Animated bounce arrow ──────────────────────────────────────────
-function BounceArrow() {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, margin: "0 auto 48px", userSelect: "none" }}>
-      <div style={{
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: "0.68rem",
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-        color: "var(--gold)",
-        opacity: 0.85,
-      }}>
-        See what's inside
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, animation: "arrowBounce 1.6s ease-in-out infinite" }}>
-        <div style={{ width: 1, height: 24, background: "linear-gradient(to bottom, transparent, var(--gold))" }} />
-        <svg width="18" height="10" viewBox="0 0 18 10" fill="none">
-          <path d="M1 1L9 9L17 1" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
-    </div>
-  );
-}
-
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rpaModalOpen, setRpaModalOpen] = useState(false);
@@ -543,8 +518,7 @@ export default function Landing() {
 
       {/* FEATURES */}
       <section id="features" style={{ padding: "100px 5vw", background: "var(--smoke)" }}>
-        {/* Section header */}
-        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 3rem", textAlign: "center" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 5rem", textAlign: "center" }}>
           <div style={{
             display: "inline-block", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
             letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)",
@@ -560,13 +534,6 @@ export default function Landing() {
           </p>
         </div>
 
-        {/* ── ANIMATED DASHBOARD DEMO + ARROW ── */}
-        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 64px" }}>
-          <BounceArrow />
-          <DashboardDemo />
-        </div>
-
-        {/* Feature cards */}
         <div
           ref={addRevealRef}
           className="reveal"
@@ -824,10 +791,6 @@ export default function Landing() {
       <RpaScoringModal open={rpaModalOpen} onOpenChange={setRpaModalOpen} />
 
       <style>{`
-        @keyframes arrowBounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(8px); }
-        }
         .landing-steps-container {
           flex-direction: row;
         }
