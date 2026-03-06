@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { RpaScoringModal } from "@/components/rpa-scoring-modal";
+import TikTokBanner from "@/components/TikTokBanner";
 import DashboardDemo from "@/components/DashboardDemo";
 
 const features = [
@@ -367,8 +368,9 @@ export default function Landing() {
 
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", background: "var(--smoke)", color: "var(--body-txt)", overflowX: "hidden" }}>
+      <TikTokBanner />
       {/* NAV */}
-      <nav className="landing-nav" data-testid="nav-landing">
+      <nav className="landing-nav" data-testid="nav-landing" style={{ marginTop: 44 }}>
         <a href="/" style={{ textDecoration: "none" }} data-testid="link-landing-logo">
           <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: "1.35rem", color: "#fff", letterSpacing: "0.02em" }}>
             Nexus<span style={{ color: "var(--gold)" }}>247</span>.ai
