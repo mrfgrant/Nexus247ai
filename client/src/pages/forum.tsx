@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowRight, ThumbsUp, Send, Menu, X, Loader2, MessageSquareText, Clock, ChevronDown } from "lucide-react";
+import { ArrowRight, ThumbsUp, Send, Menu, X, Loader2, MessageSquareText, Clock, ChevronDown, Share2, Twitter, Facebook, Link2 } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { getRankDisplayName } from "@shared/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface ForumUser {
   id: string;
@@ -57,6 +58,7 @@ function timeAgo(dateStr: string): string {
 
 export default function Forum() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [forumUser, setForumUser] = useState<ForumUser | null>(null);
   const [email, setEmail] = useState("");
@@ -75,6 +77,21 @@ export default function Forum() {
   const [questionError, setQuestionError] = useState("");
   const [pendingStartTime, setPendingStartTime] = useState<number | null>(null);
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const questionId = urlParams.get('q');
+    if (questionId) {
+      setExpandedIds(new Set([questionId]));
+      // Scroll to question
+      setTimeout(() => {
+        const element = document.querySelector(`[data-testid="card-question-${questionId}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+    }
+  }, [allQuestions]);
 
   useEffect(() => {
     try {
@@ -215,6 +232,24 @@ export default function Forum() {
       localStorage.setItem("nexus247_forum_upvoted", JSON.stringify([...newSet]));
     },
   });
+
+  const handleShare = (e: React.MouseEvent, type: 'twitter' | 'facebook' | 'copy', question: ForumQuestion) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/forum?q=${question.id}`;
+    const text = `Check out this VA claims Q&A on Nexus247.ai: "${question.question.substring(0, 100)}${question.question.length > 100 ? '...' : ''}"`;
+
+    if (type === 'twitter') {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+    } else if (type === 'facebook') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    } else if (type === 'copy') {
+      navigator.clipboard.writeText(url);
+      toast({
+        title: "Link Copied",
+        description: "The link to this question has been copied to your clipboard.",
+      });
+    }
+  };
 
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
@@ -812,6 +847,47 @@ export default function Forum() {
                         <ArrowRight style={{ width: 13, height: 13 }} />
                       </a>
                     )}
+                  </div>
+
+                  <div style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 12, 
+                    marginTop: 16, 
+                    paddingTop: 12, 
+                    borderTop: "1px solid #EFF0F3" 
+                  }}>
+                    <span style={{ 
+                      fontFamily: "'JetBrains Mono', monospace", 
+                      fontSize: "0.65rem", 
+                      color: "var(--landing-muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em"
+                    }}>Share:</span>
+                    <button 
+                      onClick={(e) => handleShare(e, 'twitter', q)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--landing-muted)", display: "flex", alignItems: "center" }}
+                      title="Share on Twitter"
+                      data-testid={`share-twitter-${q.id}`}
+                    >
+                      <Twitter style={{ width: 14, height: 14 }} />
+                    </button>
+                    <button 
+                      onClick={(e) => handleShare(e, 'facebook', q)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--landing-muted)", display: "flex", alignItems: "center" }}
+                      title="Share on Facebook"
+                      data-testid={`share-facebook-${q.id}`}
+                    >
+                      <Facebook style={{ width: 14, height: 14 }} />
+                    </button>
+                    <button 
+                      onClick={(e) => handleShare(e, 'copy', q)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--landing-muted)", display: "flex", alignItems: "center" }}
+                      title="Copy Link"
+                      data-testid={`share-copy-${q.id}`}
+                    >
+                      <Link2 style={{ width: 14, height: 14 }} />
+                    </button>
                   </div>
                 </div>
 
