@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowRight, ThumbsUp, Send, Menu, X, Loader2, MessageSquareText, Clock } from "lucide-react";
+import { ArrowRight, ThumbsUp, Send, Menu, X, Loader2, MessageSquareText, Clock, ChevronDown } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { getRankDisplayName } from "@shared/utils";
 
@@ -70,6 +70,7 @@ export default function Forum() {
   const [offset, setOffset] = useState(0);
   const [allQuestions, setAllQuestions] = useState<ForumQuestion[]>([]);
   const [upvotedIds, setUpvotedIds] = useState<Set<string>>(new Set());
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [regError, setRegError] = useState("");
   const [questionError, setQuestionError] = useState("");
   const [pendingStartTime, setPendingStartTime] = useState<number | null>(null);
@@ -205,6 +206,15 @@ export default function Forum() {
       localStorage.setItem("nexus247_forum_upvoted", JSON.stringify([...newSet]));
     },
   });
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -690,95 +700,132 @@ export default function Forum() {
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {allQuestions.map(q => (
-            <div
-              key={q.id}
-              data-testid={`card-question-${q.id}`}
-              style={{
-                background: "#FAFAF7", border: "1.5px solid #EFF0F3", borderRadius: 10,
-                padding: "1.25rem 1.5rem", transition: "box-shadow 0.2s",
-              }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem",
-                  color: "var(--landing-muted)", letterSpacing: "0.04em",
-                }} data-testid={`text-asker-${q.id}`}>
-                  {getRankDisplayName(q.rank, q.branch, q.lastName, q.firstName)}
-                  {q.branch ? ` · ${q.branch}` : ""}
-                  {" · "}{timeAgo(q.createdAt)}
-                </span>
-                {q.category && (
-                  <span style={{
-                    background: "var(--gold)", color: "var(--navy)", padding: "2px 10px",
-                    borderRadius: 3, fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
-                    fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
-                  }} data-testid={`badge-category-${q.id}`}>
-                    {q.category}
-                  </span>
-                )}
-              </div>
-
-              <p style={{
-                fontFamily: "'DM Sans', sans-serif", fontWeight: 600, color: "var(--navy)",
-                margin: "0 0 12px", fontSize: "0.95rem", lineHeight: 1.5,
-              }} data-testid={`text-question-${q.id}`}>
-                {q.question}
-              </p>
-
-              {q.aiAnswer && (
-                <div style={{
-                  fontFamily: "'DM Sans', sans-serif", fontSize: "0.88rem", color: "var(--body-txt)",
-                  lineHeight: 1.7, whiteSpace: "pre-wrap", borderTop: "1px solid #EFF0F3",
-                  paddingTop: 12,
-                }} data-testid={`text-answer-${q.id}`}>
-                  {q.aiAnswer}
+          {allQuestions.map(q => {
+            const isExpanded = expandedIds.has(q.id);
+            return (
+              <div
+                key={q.id}
+                data-testid={`card-question-${q.id}`}
+                style={{
+                  background: "#FAFAF7", border: "1.5px solid #EFF0F3", borderRadius: 10,
+                  padding: "1.25rem 1.5rem", transition: "all 0.2s ease-in-out",
+                  cursor: "pointer",
+                }}
+                onClick={() => toggleExpand(q.id)}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <ChevronDown style={{ 
+                      width: 16, height: 16, color: "var(--navy)", 
+                      transition: "transform 0.2s",
+                      transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)"
+                    }} />
+                    <span style={{
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem",
+                      color: "var(--landing-muted)", letterSpacing: "0.04em",
+                    }} data-testid={`text-asker-${q.id}`}>
+                      {getRankDisplayName(q.rank, q.branch, q.lastName, q.firstName)}
+                      {q.branch ? ` · ${q.branch}` : ""}
+                      {" · "}{timeAgo(q.createdAt)}
+                    </span>
+                  </div>
+                  {q.category && (
+                    <span style={{
+                      background: "var(--gold)", color: "var(--navy)", padding: "2px 10px",
+                      borderRadius: 3, fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
+                      fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase",
+                    }} data-testid={`badge-category-${q.id}`}>
+                      {q.category}
+                    </span>
+                  )}
                 </div>
-              )}
 
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                marginTop: 14, flexWrap: "wrap", gap: 8,
-              }}>
-                <button
-                  onClick={() => { if (!upvotedIds.has(q.id)) upvoteMutation.mutate(q.id); }}
-                  disabled={upvotedIds.has(q.id)}
-                  data-testid={`button-upvote-${q.id}`}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    background: "none", border: "1.5px solid #EFF0F3", borderRadius: 5,
-                    padding: "5px 12px", cursor: upvotedIds.has(q.id) ? "default" : "pointer",
-                    color: upvotedIds.has(q.id) ? "var(--gold)" : "var(--landing-muted)",
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: "0.75rem",
-                    fontWeight: 600, transition: "all 0.2s",
-                  }}
-                >
-                  <ThumbsUp style={{ width: 14, height: 14 }} />
-                  {q.upvotes}
-                </button>
+                <p style={{
+                  fontFamily: "'DM Sans', sans-serif", fontWeight: 600, color: "var(--navy)",
+                  margin: "0 0 12px", fontSize: "0.95rem", lineHeight: 1.5,
+                }} data-testid={`text-question-${q.id}`}>
+                  {q.question}
+                </p>
 
-                {q.featureCta && q.featureCta !== "/" && (
-                  <a
-                    href={q.featureCta}
-                    data-testid={`link-cta-${q.id}`}
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 5,
-                      color: "var(--gold)", fontFamily: "'DM Sans', sans-serif",
-                      fontSize: "0.82rem", fontWeight: 600, textDecoration: "none",
-                      letterSpacing: "0.03em",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
-                    onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
-                  >
-                    {CTA_LABELS[q.featureCta] || "Try It Now"}
-                    <ArrowRight style={{ width: 13, height: 13 }} />
-                  </a>
+                <div style={{
+                  maxHeight: isExpanded ? "2000px" : "0px",
+                  overflow: "hidden",
+                  transition: "max-height 0.3s ease-in-out",
+                }}>
+                  {q.aiAnswer && (
+                    <div style={{
+                      fontFamily: "'DM Sans', sans-serif", fontSize: "0.88rem", color: "var(--body-txt)",
+                      lineHeight: 1.7, whiteSpace: "pre-wrap", borderTop: "1px solid #EFF0F3",
+                      paddingTop: 12,
+                    }} data-testid={`text-answer-${q.id}`}>
+                      {q.aiAnswer}
+                    </div>
+                  )}
+
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    marginTop: 14, flexWrap: "wrap", gap: 8,
+                  }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (!upvotedIds.has(q.id)) upvoteMutation.mutate(q.id); }}
+                      disabled={upvotedIds.has(q.id)}
+                      data-testid={`button-upvote-${q.id}`}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        background: "none", border: "1.5px solid #EFF0F3", borderRadius: 5,
+                        padding: "5px 12px", cursor: upvotedIds.has(q.id) ? "default" : "pointer",
+                        color: upvotedIds.has(q.id) ? "var(--gold)" : "var(--landing-muted)",
+                        fontFamily: "'JetBrains Mono', monospace", fontSize: "0.75rem",
+                        fontWeight: 600, transition: "all 0.2s",
+                      }}
+                    >
+                      <ThumbsUp style={{ width: 14, height: 14 }} />
+                      {q.upvotes}
+                    </button>
+
+                    {q.featureCta && q.featureCta !== "/" && (
+                      <a
+                        href={q.featureCta}
+                        onClick={(e) => e.stopPropagation()}
+                        data-testid={`link-cta-${q.id}`}
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: 5,
+                          color: "var(--gold)", fontFamily: "'DM Sans', sans-serif",
+                          fontSize: "0.82rem", fontWeight: 600, textDecoration: "none",
+                          letterSpacing: "0.03em",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+                        onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
+                      >
+                        {CTA_LABELS[q.featureCta] || "Try It Now"}
+                        <ArrowRight style={{ width: 13, height: 13 }} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {!isExpanded && (
+                  <div style={{ 
+                    marginTop: 8, 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 6,
+                    color: "var(--gold)",
+                    fontSize: "0.75rem",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 600
+                  }}>
+                    <ThumbsUp style={{ width: 12, height: 12 }} />
+                    {q.upvotes}
+                    <span style={{ color: "#EFF0F3", margin: "0 4px" }}>|</span>
+                    READ ANSWER
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {questions && questions.length === 20 && (
