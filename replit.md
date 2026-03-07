@@ -71,7 +71,8 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 - **Archive/Unarchive**: Soft-delete users by setting `archivedAt` timestamp. Archived users hidden by default in admin panel; toggle "Show archived" to view them with greyed styling + orange "Archived" badge.
 - **Permanent Delete**: `DELETE /api/admin/users/:userId` removes veteran profile + all associated data (conditions, documents, incidents, chat messages, usage logs, supporting documents, letter analyses, rating estimates). Replit Auth user row preserved. Admin account (userId 49807206) cannot be deleted.
 - **Export CSV**: `GET /api/admin/users/export` downloads CSV of all users with email, name, rank, branch, tier, status, trial dates, signup date.
-- **Endpoints**: `POST /api/admin/users/:userId/archive`, `POST /api/admin/users/:userId/unarchive`, `DELETE /api/admin/users/:userId`, `GET /api/admin/users/export` — all admin-only.
+- **Activity Log**: Click any user's name in the admin panel to open a dialog showing their full activity history (document generation, AI chat messages, C&P prep) with timestamps and metadata. Endpoint: `GET /api/admin/users/:userId/activity?limit=200`.
+- **Endpoints**: `POST /api/admin/users/:userId/archive`, `POST /api/admin/users/:userId/unarchive`, `DELETE /api/admin/users/:userId`, `GET /api/admin/users/export`, `GET /api/admin/users/:userId/activity` — all admin-only.
 
 ## Trial Engagement Emails (Drip Campaign)
 - **Trial Expiry Email**: Sent on the day a user's trial expires. Personalized with rank + last name. Branded HTML template with feature highlights and upgrade CTA. Tracked by `trialExpiryEmailSent` flag on veteran profile to prevent duplicates.

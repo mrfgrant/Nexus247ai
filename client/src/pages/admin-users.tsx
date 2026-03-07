@@ -24,7 +24,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Users, Search, Shield, CreditCard, Clock, Crown, Edit, Mail, Archive, ArchiveRestore, Trash2, Download } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Users, Search, Shield, CreditCard, Clock, Crown, Edit, Mail, Archive, ArchiveRestore, Trash2, Download, FileText, MessageSquare, ClipboardCheck, Activity } from "lucide-react";
 import type { VeteranProfile } from "@shared/schema";
 import { getRankDisplayName } from "@shared/utils";
 
@@ -247,11 +248,133 @@ function DeleteConfirmDialog({
   );
 }
 
+type ActivityEntry = {
+  id: string;
+  action: string;
+  metadata: any;
+  createdAt: string | null;
+};
+
+const ACTION_LABELS: Record<string, { label: string; icon: typeof FileText }> = {
+  generate_document: { label: "Generated Document", icon: FileText },
+  chat_message: { label: "AI Chat Message", icon: MessageSquare },
+  cnp_prep: { label: "C&P Exam Prep", icon: ClipboardCheck },
+};
+
+function formatActionMeta(action: string, metadata: any): string | null {
+  if (!metadata) return null;
+  if (action === "generate_document" && metadata.documentType) {
+    return metadata.documentType.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  }
+  if (action === "cnp_prep" && metadata.conditionName) {
+    return metadata.conditionName;
+  }
+  return null;
+}
+
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = now - then;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
+function ActivityLogDialog({
+  profile,
+  onClose,
+}: {
+  profile: AdminProfile;
+  onClose: () => void;
+}) {
+  const displayName = getDisplayName(profile);
+
+  const { data: logs = [], isLoading, isError } = useQuery<ActivityEntry[]>({
+    queryKey: ["/api/admin/users", profile.userId, "activity"],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${profile.userId}/activity?limit=200`);
+      if (!res.ok) throw new Error("Failed to fetch activity");
+      return res.json();
+    },
+  });
+
+  return (
+    <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Activity className="w-5 h-5" />
+          Activity Log
+        </DialogTitle>
+        <DialogDescription>
+          {displayName} {profile.email && `· ${profile.email}`}
+        </DialogDescription>
+      </DialogHeader>
+      {isError ? (
+        <div className="py-10 text-center text-destructive">
+          <Activity className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm font-medium">Failed to load activity log.</p>
+          <p className="text-xs text-muted-foreground mt-1">Please try again later.</p>
+        </div>
+      ) : isLoading ? (
+        <div className="space-y-3 py-4">
+          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12" />)}
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="py-10 text-center text-muted-foreground">
+          <Activity className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm" data-testid="text-no-activity">No activity recorded yet.</p>
+        </div>
+      ) : (
+        <ScrollArea className="flex-1 -mx-6 px-6" style={{ maxHeight: "60vh" }}>
+          <div className="space-y-1 py-2">
+            {logs.map(log => {
+              const config = ACTION_LABELS[log.action] || { label: log.action.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: Activity };
+              const Icon = config.icon;
+              const meta = formatActionMeta(log.action, log.metadata);
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-3 py-2 px-2 rounded-md hover:bg-muted/50 transition-colors"
+                  data-testid={`activity-entry-${log.id}`}
+                >
+                  <div className="mt-0.5 p-1.5 rounded-md bg-muted shrink-0">
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground">{config.label}</p>
+                    {meta && <p className="text-xs text-muted-foreground truncate">{meta}</p>}
+                  </div>
+                  {log.createdAt && (
+                    <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0 mt-0.5" title={new Date(log.createdAt).toLocaleString()}>
+                      {timeAgo(log.createdAt)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      )}
+      <div className="flex justify-between items-center pt-2 border-t border-border">
+        <p className="text-xs text-muted-foreground">{logs.length} {logs.length === 1 ? "entry" : "entries"}</p>
+        <Button variant="outline" size="sm" onClick={onClose} data-testid="button-close-activity">Close</Button>
+      </div>
+    </DialogContent>
+  );
+}
+
 export default function AdminUsers() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [editProfile, setEditProfile] = useState<AdminProfile | null>(null);
   const [deleteProfile, setDeleteProfile] = useState<AdminProfile | null>(null);
+  const [activityProfile, setActivityProfile] = useState<AdminProfile | null>(null);
   const [showArchived, setShowArchived] = useState(false);
 
   const { data: profiles = [], isLoading } = useQuery<AdminProfile[]>({
@@ -390,7 +513,11 @@ export default function AdminUsers() {
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium text-foreground truncate" data-testid={`text-user-name-${profile.userId}`}>{displayName}</p>
+                      <button
+                        className="text-sm font-medium text-foreground truncate hover:underline hover:text-primary cursor-pointer text-left"
+                        onClick={() => setActivityProfile(profile)}
+                        data-testid={`text-user-name-${profile.userId}`}
+                      >{displayName}</button>
                       <Badge className={`text-[10px] sm:text-xs ${tierColors[profile.subscriptionTier || "none"]}`}>
                         <CreditCard className="w-3 h-3 mr-0.5" />
                         {(profile.subscriptionTier || "none").toUpperCase()}
@@ -483,6 +610,12 @@ export default function AdminUsers() {
       <Dialog open={!!deleteProfile} onOpenChange={(o) => { if (!o) setDeleteProfile(null); }}>
         {deleteProfile && (
           <DeleteConfirmDialog profile={deleteProfile} onClose={() => setDeleteProfile(null)} />
+        )}
+      </Dialog>
+
+      <Dialog open={!!activityProfile} onOpenChange={(o) => { if (!o) setActivityProfile(null); }}>
+        {activityProfile && (
+          <ActivityLogDialog profile={activityProfile} onClose={() => setActivityProfile(null)} />
         )}
       </Dialog>
     </div>

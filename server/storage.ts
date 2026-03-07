@@ -91,6 +91,7 @@ export interface IStorage {
 
   getRecentSignups(since: Date): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
   getUsageSummary(since: Date): Promise<{ userId: string; action: string; count: number }[]>;
+  getUserActivityLog(userId: string, limit?: number): Promise<{ id: string; action: string; metadata: any; createdAt: Date | null }[]>;
   getExpiringTrials(withinHours: number): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
   getRecentlyExpiredTrials(since: Date): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
 
@@ -291,6 +292,21 @@ export class DatabaseStorage implements IStorage {
 
   async logUsage(userId: string, action: string, metadata?: any): Promise<void> {
     await db.insert(usageLogs).values({ userId, action, metadata });
+  }
+
+  async getUserActivityLog(userId: string, limit = 100): Promise<{ id: string; action: string; metadata: any; createdAt: Date | null }[]> {
+    const rows = await db
+      .select({
+        id: usageLogs.id,
+        action: usageLogs.action,
+        metadata: usageLogs.metadata,
+        createdAt: usageLogs.createdAt,
+      })
+      .from(usageLogs)
+      .where(eq(usageLogs.userId, userId))
+      .orderBy(desc(usageLogs.createdAt))
+      .limit(limit);
+    return rows;
   }
 
   async getAllProfiles(includeArchived = false): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]> {

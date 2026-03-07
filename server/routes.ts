@@ -1168,6 +1168,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/users/:userId/activity", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const logs = await storage.getUserActivityLog(req.params.userId, Math.min(limit, 500));
+      res.json(logs);
+    } catch (error) {
+      console.error("Activity log error:", error);
+      res.status(500).json({ error: "Failed to fetch activity log" });
+    }
+  });
+
   app.get("/api/admin/users/export", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const profiles = await storage.getAllProfiles(true);

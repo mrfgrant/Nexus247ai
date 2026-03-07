@@ -465,12 +465,15 @@ export default function Landing() {
           maxWidth: 1200, margin: "0 auto", width: "100%", position: "relative", zIndex: 1,
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
+            {/* ── EYEBROW ── */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "2rem", animation: "fadeUp 0.6s ease both" }}>
               <div style={{ width: 32, height: 1, background: "var(--gold)", opacity: 0.8 }} />
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.68rem", letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--gold)" }}>
-                Trusted by Veterans Nationwide
+                AI-Powered VA Claims · Built by a Veteran
               </div>
             </div>
+
+            {/* ── H1 ── */}
             <h1
               style={{
                 fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2.8rem, 5.5vw, 4.8rem)",
@@ -478,17 +481,45 @@ export default function Landing() {
               }}
               data-testid="text-hero-headline"
             >
-              Your Service<br />Deserves a <em style={{ fontStyle: "italic", color: "var(--gold)" }}>Fight<br />Worth Winning.</em>
+              We went from<br />10% to 80%.<br /><em style={{ fontStyle: "italic", color: "var(--gold)" }}>In 4 months.</em>
             </h1>
+
+            {/* ── SUBTITLE ── */}
             <p
               style={{
                 fontSize: "1.05rem", lineHeight: 1.72, color: "rgba(255,255,255,0.58)",
-                maxWidth: 480, marginBottom: "2.8rem", fontWeight: 300, animation: "fadeUp 0.6s 0.2s ease both",
+                maxWidth: 480, marginBottom: "1.6rem", fontWeight: 300, animation: "fadeUp 0.6s 0.2s ease both",
               }}
               data-testid="text-hero-subtitle"
             >
-              AI-powered nexus letters, personal statements, and NODs grounded in 38 CFR — scored for quality before you ever submit.
+              $175/month to $2,102/month. $25,000 in retro pay. No attorney fees.
+              CFR-grounded letters scored before you submit — so you know they'll hold up.
             </p>
+
+            {/* ── PROOF BAR ── */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              marginBottom: "1.8rem",
+              padding: "12px 16px",
+              background: "rgba(212,164,62,0.08)",
+              border: "1px solid rgba(212,164,62,0.2)",
+              borderRadius: 4,
+              maxWidth: 480,
+              animation: "fadeUp 0.6s 0.25s ease both",
+            }}>
+              <span style={{ fontSize: "1.1rem" }}>⚡</span>
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.72rem",
+                color: "rgba(255,255,255,0.7)",
+                letterSpacing: "0.04em",
+                lineHeight: 1.5,
+              }}>
+                Founder's actual VA records · 10% → 80% · $25k retro
+              </span>
+            </div>
+
+            {/* ── CTA BUTTONS ── */}
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", animation: "fadeUp 0.6s 0.3s ease both" }}>
               <a
                 href="/api/login"
@@ -518,12 +549,16 @@ export default function Landing() {
                 View Pricing
               </a>
             </div>
+
+            {/* ── TRIAL LINE ── */}
             <p style={{
               marginTop: "1rem", fontSize: "0.82rem", color: "var(--gold)", fontWeight: 500,
               letterSpacing: "0.04em", animation: "fadeUp 0.6s 0.35s ease both",
             }} data-testid="text-hero-trial">
-              Start with a free 3-day Pro trial. No credit card required.
+              Free 3-day Pro trial · No credit card · Cancel anytime
             </p>
+
+            {/* ── TRUST BADGES ── */}
             <div
               style={{
                 display: "flex", alignItems: "center", gap: "2rem", flexWrap: "wrap",
@@ -555,7 +590,6 @@ export default function Landing() {
 
       {/* FEATURES */}
       <section id="features" style={{ padding: "100px 5vw", background: "var(--smoke)" }}>
-        {/* Section header */}
         <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 3rem", textAlign: "center" }}>
           <div style={{
             display: "inline-block", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
@@ -572,17 +606,17 @@ export default function Landing() {
           </p>
         </div>
 
-          {/* ── ANIMATED DASHBOARD DEMO + ARROW ── */}
-          <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 64px" }}>
-            <BounceArrow />
-            <DashboardDemo />
-          </div>
+        {/* ── ANIMATED DASHBOARD DEMO + ARROW ── */}
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 64px" }}>
+          <BounceArrow />
+          <DashboardDemo />
+        </div>
 
-          <OurStory />
-          <RatingTimeline />
+        <OurStory />
+        <RatingTimeline />
 
-          {/* Feature cards */}
-          <div
+        {/* Feature cards */}
+        <div
           ref={addRevealRef}
           className="reveal"
           style={{
@@ -664,7 +698,7 @@ export default function Landing() {
 
       {/* PRICING */}
       <section id="pricing" style={{ padding: "100px 5vw", background: "var(--smoke)" }}>
-        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 5rem", textAlign: "center" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 3rem", textAlign: "center" }}>
           <div style={{
             display: "inline-block", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
             letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)",
@@ -684,6 +718,7 @@ export default function Landing() {
           </p>
         </div>
 
+        {/* Annual toggle */}
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: "3rem" }}>
           <span style={{ fontSize: "0.82rem", color: annualBilling ? "rgba(11,28,46,0.4)" : "var(--navy)", fontWeight: annualBilling ? 400 : 600, transition: "color 0.2s" }}>
             Monthly
@@ -716,6 +751,8 @@ export default function Landing() {
             Pro: save $189/yr
           </span>
         </div>
+
+        <PricingAnchor />
 
         <div
           ref={addRevealRef}
