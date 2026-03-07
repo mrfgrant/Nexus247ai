@@ -79,6 +79,18 @@ export default function Forum() {
   const [pendingStartTime, setPendingStartTime] = useState<number | null>(null);
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
 
+  const shouldPoll = !!pendingQuestionId && !pendingTimedOut;
+
+  const { data: pendingQuestion } = useQuery<ForumQuestion>({
+    queryKey: ["/api/forum/questions", pendingQuestionId],
+    queryFn: async () => {
+      const res = await fetch(`/api/forum/questions/${pendingQuestionId}`);
+      return res.json();
+    },
+    enabled: shouldPoll,
+    refetchInterval: shouldPoll ? 3000 : false,
+  });
+
   useEffect(() => {
     const defaultTitle = "VA Claims Q&A Forum | Nexus247.ai";
     const defaultDesc = "Ask any VA claims question — get expert AI answers grounded in 38 CFR. Community knowledge base for veterans.";
@@ -115,81 +127,6 @@ export default function Forum() {
       document.title = "Nexus247.ai - AI-Powered VA Claims Assistant";
     };
   }, [pendingQuestion, pendingQuestionId]);
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const questionId = urlParams.get('q');
-    if (questionId) {
-      setExpandedIds(new Set([questionId]));
-      // Scroll to question
-      setTimeout(() => {
-        const element = document.querySelector(`[data-testid="card-question-${questionId}"]`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 500);
-    }
-  }, [allQuestions]);
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setForumUser(JSON.parse(stored));
-    } catch {}
-    try {
-      const stored = localStorage.getItem("nexus247_forum_upvoted");
-      if (stored) setUpvotedIds(new Set(JSON.parse(stored)));
-    } catch {}
-  }, []);
-
-  const { data: questions, isLoading: questionsLoading } = useQuery<ForumQuestion[]>({
-    queryKey: ["/api/forum/questions", selectedCategory, offset],
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: "20", offset: String(offset) });
-      if (selectedCategory) params.set("category", selectedCategory);
-      const res = await fetch(`/api/forum/questions?${params}`);
-      return res.json();
-    },
-  });
-
-  const { data: categories } = useQuery<{ category: string; count: number }[]>({
-    queryKey: ["/api/forum/categories"],
-    queryFn: async () => {
-      const res = await fetch("/api/forum/categories");
-      return res.json();
-    },
-  });
-
-  useEffect(() => {
-    if (questions && offset === 0) {
-      setAllQuestions(questions);
-    } else if (questions && offset > 0) {
-      setAllQuestions(prev => {
-        const existingIds = new Set(prev.map(q => q.id));
-        const newOnes = questions.filter(q => !existingIds.has(q.id));
-        return [...prev, ...newOnes];
-      });
-    }
-  }, [questions, offset]);
-
-  useEffect(() => {
-    if (selectedCategory !== null || selectedCategory === null) {
-      setOffset(0);
-      setAllQuestions([]);
-    }
-  }, [selectedCategory]);
-
-  const shouldPoll = !!pendingQuestionId && !pendingTimedOut;
-
-  const { data: pendingQuestion } = useQuery<ForumQuestion>({
-    queryKey: ["/api/forum/questions", pendingQuestionId],
-    queryFn: async () => {
-      const res = await fetch(`/api/forum/questions/${pendingQuestionId}`);
-      return res.json();
-    },
-    enabled: shouldPoll,
-    refetchInterval: shouldPoll ? 3000 : false,
-  });
 
   useEffect(() => {
     if (pendingQuestion?.aiAnswer) {
@@ -803,10 +740,14 @@ export default function Forum() {
                 onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 6 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div 
+                    onClick={() => toggleExpand(q.id)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}
+                    data-testid={`card-header-${q.id}`}
+                  >
                     <ChevronDown style={{ 
                       width: 16, height: 16, color: "var(--navy)", 
-                      transition: "transform 0.2s",
+                      transition: "transform 0.3s ease-in-out",
                       transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)"
                     }} />
                     <span style={{
@@ -829,10 +770,12 @@ export default function Forum() {
                   )}
                 </div>
 
-                <p style={{
-                  fontFamily: "'DM Sans', sans-serif", fontWeight: 600, color: "var(--navy)",
-                  margin: "0 0 12px", fontSize: "0.95rem", lineHeight: 1.5,
-                }} data-testid={`text-question-${q.id}`}>
+                <p 
+                  onClick={() => toggleExpand(q.id)}
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif", fontWeight: 600, color: "var(--navy)",
+                    margin: "0 0 12px", fontSize: "0.95rem", lineHeight: 1.5, cursor: "pointer"
+                  }} data-testid={`text-question-${q.id}`}>
                   {q.question}
                 </p>
 
