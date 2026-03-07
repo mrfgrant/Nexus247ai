@@ -362,7 +362,7 @@ export default function Landing() {
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0, rootMargin: "0px 0px -40px 0px" }
     );
     revealRefs.current.forEach((el) => {
       if (el) observer.observe(el);
@@ -546,7 +546,7 @@ export default function Landing() {
                 }}
                 data-testid="button-view-pricing"
               >
-                View Pricing
+                Plans from $29/mo →
               </a>
             </div>
 
@@ -867,10 +867,10 @@ export default function Landing() {
       >
         <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at center, rgba(200,153,58,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
         <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2.2rem, 4vw, 3.4rem)", color: "#fff", marginBottom: "1.2rem", position: "relative" }}>
-          Your Benefits Are<br /><em style={{ color: "var(--gold)", fontStyle: "italic" }}>Not Optional.</em>
+          You did the work.<br /><em style={{ color: "var(--gold)", fontStyle: "italic" }}>We built the tools.</em>
         </h2>
         <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "1rem", fontWeight: 300, maxWidth: 480, margin: "0 auto 1.2rem", lineHeight: 1.65, position: "relative" }}>
-          You earned them. Let's build a claim that proves it — professional, precise, and ready to win.
+          Four years. $144 to $175. Then everything changed. Your records hold the argument — we help you make it.
         </p>
         <p style={{ color: "var(--gold)", fontSize: "0.88rem", fontWeight: 600, marginBottom: "2.2rem", position: "relative" }} data-testid="text-footer-trial">
           3-day Pro trial — free, no credit card.
@@ -903,6 +903,12 @@ export default function Landing() {
         <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", margin: 0 }}>
           2025 Nexus247.ai · Not a law firm · Not affiliated with the VA
         </p>
+        <a
+          href="mailto:support@nexus247.ai"
+          style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", textDecoration: "none" }}
+        >
+          support@nexus247.ai
+        </a>
         <nav style={{ display: "flex", alignItems: "center", gap: 0 }}>
           <a href="/faq" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-faq">FAQ</a>
           <a href="/terms" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "0.78rem", marginLeft: "1.4rem" }} data-testid="link-footer-terms">Terms</a>
