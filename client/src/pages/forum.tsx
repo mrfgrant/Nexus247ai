@@ -961,7 +961,7 @@ export default function Forum() {
           })}
         </div>
 
-        {questions && questions.length === 20 && (
+        {questionsResponse?.hasMore && (
           <div style={{ textAlign: "center", marginTop: "2rem" }}>
             <button
               onClick={() => setOffset(prev => prev + 20)}
