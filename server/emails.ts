@@ -210,3 +210,532 @@ export async function sendAdminSignupNotification(details: {
     console.error(`[email] Failed to send admin signup notification for ${details.email}:`, error);
   }
 }
+
+export function buildTrialExpiryEmailHtml(rankTitle: string, lastName: string): string {
+  const greeting = rankTitle && lastName ? `${rankTitle} ${lastName}` : lastName || "Veteran";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Nexus247 trial ends today</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f3f0;font-family:'Georgia',serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3f0;padding:40px 16px;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:#0D2137;padding:28px 40px;border-radius:8px 8px 0 0;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <span style="font-family:'Georgia',serif;font-size:22px;color:#ffffff;letter-spacing:0.02em;">
+                    Nexus<span style="color:#D4A43E;">247</span>.ai
+                  </span>
+                </td>
+                <td align="right">
+                  <span style="font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);">
+                    Trial Ending
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- GOLD BAR -->
+        <tr>
+          <td style="height:3px;background:linear-gradient(90deg,#D4A43E,#e8bc58,#D4A43E);"></td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="background:#ffffff;padding:48px 40px 36px;">
+
+            <!-- Eyebrow -->
+            <p style="margin:0 0 20px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#D4A43E;">
+              Your Free Trial &middot; Ending Today
+            </p>
+
+            <!-- Greeting -->
+            <p style="margin:0 0 16px;font-size:16px;color:#0D2137;font-family:Arial,sans-serif;font-weight:600;">
+              ${greeting},
+            </p>
+
+            <!-- Headline -->
+            <h1 style="margin:0 0 20px;font-family:'Georgia',serif;font-size:28px;color:#0D2137;line-height:1.2;font-weight:700;">
+              Your claim doesn't stop.<br />Neither should your tools.
+            </h1>
+
+            <!-- Body -->
+            <p style="margin:0 0 16px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+              Your 3-day Pro trial ends today. Everything you've built &mdash; your letters, your RPA scores, your C&amp;P prep &mdash; stays in your account.
+            </p>
+            <p style="margin:0 0 28px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+              But without an active plan, you won't be able to generate new letters, run new scores, or access your prep guides.
+            </p>
+
+            <!-- Proof block -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f7f3;border:1px solid #e8e4dc;border-left:3px solid #D4A43E;border-radius:4px;margin-bottom:32px;">
+              <tr>
+                <td style="padding:20px 24px;">
+                  <p style="margin:0 0 4px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#9a8f82;">
+                    Why it matters
+                  </p>
+                  <p style="margin:0;font-family:'Georgia',serif;font-size:15px;color:#0D2137;line-height:1.6;font-style:italic;">
+                    "I went from $175/month to $2,102/month. $25,000 in retro pay. No attorney. 
+                    Four months. These are my actual VA payment records."
+                  </p>
+                  <p style="margin:8px 0 0;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.1em;color:#9a8f82;text-transform:uppercase;">
+                    &mdash; Nexus247 Founder &middot; 10% &rarr; 80% Rating
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Stat row -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:36px;">
+              <tr>
+                <td width="33%" style="text-align:center;padding:0 8px;">
+                  <div style="font-family:'Georgia',serif;font-size:24px;color:#D4A43E;font-weight:700;line-height:1;">$25k+</div>
+                  <div style="font-family:'Courier New',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:#9a8f82;margin-top:4px;">Retro pay</div>
+                </td>
+                <td width="33%" style="text-align:center;padding:0 8px;border-left:1px solid #e8e4dc;border-right:1px solid #e8e4dc;">
+                  <div style="font-family:'Georgia',serif;font-size:24px;color:#D4A43E;font-weight:700;line-height:1;">10&rarr;80%</div>
+                  <div style="font-family:'Courier New',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:#9a8f82;margin-top:4px;">Rating jump</div>
+                </td>
+                <td width="33%" style="text-align:center;padding:0 8px;">
+                  <div style="font-family:'Georgia',serif;font-size:24px;color:#D4A43E;font-weight:700;line-height:1;">4 mo.</div>
+                  <div style="font-family:'Courier New',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:#9a8f82;margin-top:4px;">Start to win</div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <tr>
+                <td align="center">
+                  <a href="https://nexus247.ai/pricing" style="display:inline-block;background:#D4A43E;color:#0D2137;text-decoration:none;padding:16px 40px;border-radius:4px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">
+                    Keep My Access &rarr;
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 32px;text-align:center;font-family:Arial,sans-serif;font-size:12px;color:#9a8f82;">
+              Starter from $29/mo &middot; Pro from $49/mo &middot; No long-term contract
+            </p>
+
+            <!-- What you lose -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf3e3;border:1px solid rgba(212,164,62,0.25);border-radius:6px;margin-bottom:8px;">
+              <tr>
+                <td style="padding:20px 24px;">
+                  <p style="margin:0 0 12px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#D4A43E;">
+                    What stops working after today
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:3px 0;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;">&#10007; &nbsp;New nexus letter generation</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 0;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;">&#10007; &nbsp;RPA scoring on new letters</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 0;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;">&#10007; &nbsp;C&amp;P exam prep guides</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 0;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;">&#10007; &nbsp;AI claims advisor</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#f4f3f0;padding:24px 40px;border-radius:0 0 8px 8px;border-top:1px solid #e8e4dc;">
+            <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#9a8f82;text-align:center;">
+              Nexus247.ai &middot; Not a law firm &middot; Not affiliated with the VA
+            </p>
+            <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#b0a898;text-align:center;">
+              <a href="https://nexus247.ai" style="color:#b0a898;">Unsubscribe</a> &middot; <a href="https://nexus247.ai/privacy" style="color:#b0a898;">Privacy Policy</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>`;
+}
+
+export function buildDay7ReengagementEmailHtml(rankTitle: string, lastName: string): string {
+  const greeting = rankTitle && lastName ? `${rankTitle} ${lastName}` : lastName || "Veteran";
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Still fighting your claim alone?</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f3f0;font-family:'Georgia',serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3f0;padding:40px 16px;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:#0D2137;padding:28px 40px;border-radius:8px 8px 0 0;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <span style="font-family:'Georgia',serif;font-size:22px;color:#ffffff;letter-spacing:0.02em;">
+                    Nexus<span style="color:#D4A43E;">247</span>.ai
+                  </span>
+                </td>
+                <td align="right">
+                  <span style="font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);">
+                    7 Days Later
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- GOLD BAR -->
+        <tr>
+          <td style="height:3px;background:linear-gradient(90deg,#D4A43E,#e8bc58,#D4A43E);"></td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="background:#ffffff;padding:48px 40px 36px;">
+
+            <!-- Eyebrow -->
+            <p style="margin:0 0 20px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#9a8f82;">
+              Checking In
+            </p>
+
+            <!-- Greeting -->
+            <p style="margin:0 0 16px;font-size:16px;color:#0D2137;font-family:Arial,sans-serif;font-weight:600;">
+              ${greeting},
+            </p>
+
+            <!-- Headline -->
+            <h1 style="margin:0 0 20px;font-family:'Georgia',serif;font-size:28px;color:#0D2137;line-height:1.2;font-weight:700;">
+              The VA isn't waiting.<br /><em style="color:#D4A43E;">Your claim shouldn't either.</em>
+            </h1>
+
+            <!-- Intro -->
+            <p style="margin:0 0 16px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+              It's been a week since your trial ended. We're not going to pretend that's not a week your claim stood still.
+            </p>
+            <p style="margin:0 0 28px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+              Every day without a strong nexus letter is a day the VA has an easier time saying no. Effective dates are real money &mdash; and they run from when you file, not when you're ready.
+            </p>
+
+            <!-- Timeline visual -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;background:#060d18;border-radius:8px;overflow:hidden;">
+              <tr>
+                <td style="padding:28px 28px 24px;">
+                  <p style="margin:0 0 20px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#D4A43E;">
+                    Real Results &middot; Founder's VA Records
+                  </p>
+                  <!-- Timeline rows -->
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="80" style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.3);padding:4px 0;vertical-align:top;">Dec 2020</td>
+                      <td style="padding:4px 0 4px 12px;">
+                        <div style="height:20px;width:8%;background:rgba(255,255,255,0.1);border-radius:3px;display:inline-block;"></div>
+                        <span style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.3);margin-left:8px;">$144/mo &mdash; 10% rating</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.2);padding:4px 0;vertical-align:top;">2021&ndash;2024</td>
+                      <td style="padding:4px 0 4px 12px;">
+                        <span style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,0.2);font-style:italic;">4 years. COLA only. System doing the bare minimum.</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-family:'Courier New',monospace;font-size:10px;color:#D4A43E;padding:4px 0;vertical-align:top;font-weight:700;">Jan 2025</td>
+                      <td style="padding:4px 0 4px 12px;">
+                        <div style="height:20px;width:84%;background:linear-gradient(90deg,#D4A43E,#e8bc58);border-radius:3px;display:inline-block;"></div>
+                        <span style="font-family:'Courier New',monospace;font-size:10px;color:#D4A43E;margin-left:8px;font-weight:700;">$1,759/mo &mdash; Nexus247</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-family:'Courier New',monospace;font-size:10px;color:#D4A43E;padding:4px 0;vertical-align:top;font-weight:700;">Dec 2025</td>
+                      <td style="padding:4px 0 4px 12px;">
+                        <div style="height:20px;width:100%;background:linear-gradient(90deg,#D4A43E,#e8bc58);border-radius:3px;display:inline-block;"></div>
+                        <span style="font-family:'Courier New',monospace;font-size:10px;color:#D4A43E;margin-left:8px;font-weight:700;">$2,102/mo &middot; 80% &middot; $25k retro</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- The honest paragraph -->
+            <p style="margin:0 0 16px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+              For four years the VA gave the minimum. A COLA adjustment here, a denial there. It took the right letters &mdash; CFR-grounded, scored for quality, built around the actual evidence &mdash; to change that.
+            </p>
+            <p style="margin:0 0 32px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+              That's what Nexus247 does. Not magic. Just the right argument, in the right format, for how raters actually read claims.
+            </p>
+
+            <!-- Special offer block -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf3e3;border:1px solid rgba(212,164,62,0.3);border-radius:6px;margin-bottom:32px;">
+              <tr>
+                <td style="padding:24px 28px;">
+                  <p style="margin:0 0 6px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#D4A43E;">
+                    Come Back Offer
+                  </p>
+                  <p style="margin:0 0 12px;font-family:'Georgia',serif;font-size:18px;color:#0D2137;font-weight:700;">
+                    First month of Pro for $29.
+                  </p>
+                  <p style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;line-height:1.6;">
+                    Use code <strong style="font-family:'Courier New',monospace;background:#fff;padding:2px 8px;border:1px solid rgba(212,164,62,0.3);border-radius:3px;color:#0D2137;">COMEBACK</strong> at checkout. One time, for returning trial users only.
+                  </p>
+                  <a href="https://nexus247.ai/pricing?code=COMEBACK" style="display:inline-block;background:#D4A43E;color:#0D2137;text-decoration:none;padding:13px 32px;border-radius:4px;font-family:Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">
+                    Claim My Offer &rarr;
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <!-- FAQ row — objection handling -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+              <tr>
+                <td style="border-top:1px solid #e8e4dc;padding-top:24px;">
+                  <p style="margin:0 0 16px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#9a8f82;">
+                    Common Questions
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-bottom:14px;">
+                  <p style="margin:0 0 4px;font-family:'Georgia',serif;font-size:14px;color:#0D2137;font-weight:700;">
+                    "I'm not sure my condition qualifies."
+                  </p>
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;line-height:1.6;font-weight:300;">
+                    That's exactly what our AI analyzes. Upload your records and let the system tell you what's serviceable &mdash; including secondary conditions you may not have thought to claim.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-bottom:14px;border-top:1px solid #f0ede8;padding-top:14px;">
+                  <p style="margin:0 0 4px;font-family:'Georgia',serif;font-size:14px;color:#0D2137;font-weight:700;">
+                    "I already have an attorney."
+                  </p>
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;line-height:1.6;font-weight:300;">
+                    Good. Use Nexus247 to score their letters before they go out. If they're not hitting 80+ on RPA, they're leaving money on the table &mdash; your money.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="border-top:1px solid #f0ede8;padding-top:14px;">
+                  <p style="margin:0 0 4px;font-family:'Georgia',serif;font-size:14px;color:#0D2137;font-weight:700;">
+                    "I can't afford it right now."
+                  </p>
+                  <p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#4a4a4a;line-height:1.6;font-weight:300;">
+                    $29 is less than one hour of an attorney's time. And unlike the attorney, we don't take 20% of your retro when you win.
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Final CTA -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="https://nexus247.ai/pricing?code=COMEBACK" style="display:inline-block;background:#0D2137;color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:4px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">
+                    Get Back to Work on My Claim &rarr;
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding-top:12px;">
+                  <span style="font-family:Arial,sans-serif;font-size:11px;color:#9a8f82;">
+                    Code COMEBACK &middot; First month $29 &middot; Cancel anytime
+                  </span>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#f4f3f0;padding:24px 40px;border-radius:0 0 8px 8px;border-top:1px solid #e8e4dc;">
+            <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#9a8f82;text-align:center;">
+              Nexus247.ai &middot; Not a law firm &middot; Not affiliated with the VA
+            </p>
+            <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#b0a898;text-align:center;">
+              <a href="https://nexus247.ai" style="color:#b0a898;">Unsubscribe</a> &middot; <a href="https://nexus247.ai/privacy" style="color:#b0a898;">Privacy Policy</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>`;
+}
+
+export async function sendTrialExpiryEmail(toEmail: string, rankTitle: string, lastName: string): Promise<boolean> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const html = buildTrialExpiryEmailHtml(rankTitle, lastName);
+
+    const result = await client.emails.send({
+      from: FALLBACK_FROM,
+      to: toEmail,
+      subject: "Your Nexus247 trial ends today — keep your progress",
+      html,
+    });
+
+    console.log(`[email] Trial expiry email sent to ${toEmail}:`, result);
+    return true;
+  } catch (error) {
+    console.error(`[email] Failed to send trial expiry email to ${toEmail}:`, error);
+    return false;
+  }
+}
+
+export async function sendDay7ReengagementEmail(toEmail: string, rankTitle: string, lastName: string): Promise<boolean> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const html = buildDay7ReengagementEmailHtml(rankTitle, lastName);
+
+    const result = await client.emails.send({
+      from: FALLBACK_FROM,
+      to: toEmail,
+      subject: "Still fighting your claim alone?",
+      html,
+    });
+
+    console.log(`[email] Day 7 re-engagement email sent to ${toEmail}:`, result);
+    return true;
+  } catch (error) {
+    console.error(`[email] Failed to send day 7 re-engagement email to ${toEmail}:`, error);
+    return false;
+  }
+}
+
+export async function sendDailyActivityReport(data: {
+  newSignups: { name: string; email: string; rank: string; branch: string }[];
+  usageSummary: { userId: string; name: string; actions: { action: string; count: number }[] }[];
+  expiringTrials: { name: string; email: string; hoursLeft: number }[];
+  expiredTrials: { name: string; email: string }[];
+}): Promise<void> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const now = new Date().toLocaleDateString("en-US", { timeZone: "America/New_York", weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
+    const signupRows = data.newSignups.length > 0
+      ? data.newSignups.map(s => `<tr><td style="padding:4px 8px;font-size:13px;color:#333;">${s.name}</td><td style="padding:4px 8px;font-size:13px;color:#333;">${s.email}</td><td style="padding:4px 8px;font-size:13px;color:#333;">${s.rank}</td><td style="padding:4px 8px;font-size:13px;color:#333;">${s.branch}</td></tr>`).join("")
+      : `<tr><td colspan="4" style="padding:8px;font-size:13px;color:#888;font-style:italic;">No new signups</td></tr>`;
+
+    const usageRows = data.usageSummary.length > 0
+      ? data.usageSummary.map(u => {
+          const actionList = u.actions.map(a => `${a.action.replace(/_/g, " ")}: ${a.count}`).join(", ");
+          return `<tr><td style="padding:4px 8px;font-size:13px;color:#333;">${u.name}</td><td style="padding:4px 8px;font-size:13px;color:#333;">${actionList}</td></tr>`;
+        }).join("")
+      : `<tr><td colspan="2" style="padding:8px;font-size:13px;color:#888;font-style:italic;">No activity</td></tr>`;
+
+    const expiringRows = data.expiringTrials.length > 0
+      ? data.expiringTrials.map(e => `<tr><td style="padding:4px 8px;font-size:13px;color:#333;">${e.name}</td><td style="padding:4px 8px;font-size:13px;color:#333;">${e.email}</td><td style="padding:4px 8px;font-size:13px;color:#D4A43E;font-weight:bold;">${Math.round(e.hoursLeft)}h left</td></tr>`).join("")
+      : `<tr><td colspan="3" style="padding:8px;font-size:13px;color:#888;font-style:italic;">No trials expiring soon</td></tr>`;
+
+    const expiredRows = data.expiredTrials.length > 0
+      ? data.expiredTrials.map(e => `<tr><td style="padding:4px 8px;font-size:13px;color:#333;">${e.name}</td><td style="padding:4px 8px;font-size:13px;color:#333;">${e.email}</td></tr>`).join("")
+      : `<tr><td colspan="2" style="padding:8px;font-size:13px;color:#888;font-style:italic;">No recently expired trials</td></tr>`;
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f3f0;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3f0;padding:32px 16px;">
+<tr><td align="center">
+<table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%;">
+
+<tr><td style="background:#0D2137;padding:24px 32px;border-radius:8px 8px 0 0;">
+  <span style="font-family:Georgia,serif;font-size:20px;color:#fff;">Nexus<span style="color:#D4A43E;">247</span>.ai</span>
+  <span style="float:right;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.35);line-height:28px;">Daily Report</span>
+</td></tr>
+<tr><td style="height:3px;background:linear-gradient(90deg,#D4A43E,#e8bc58,#D4A43E);"></td></tr>
+
+<tr><td style="background:#fff;padding:32px;">
+
+  <h1 style="margin:0 0 4px;font-family:Georgia,serif;font-size:22px;color:#0D2137;">Daily Activity Report</h1>
+  <p style="margin:0 0 24px;font-size:13px;color:#9a8f82;">${now}</p>
+
+  <!-- New Signups -->
+  <h2 style="margin:0 0 8px;font-size:14px;color:#0D2137;font-family:'Courier New',monospace;letter-spacing:0.1em;text-transform:uppercase;border-bottom:2px solid #D4A43E;padding-bottom:6px;">New Signups (24h)</h2>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr style="background:#f4f3f0;"><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Name</td><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Email</td><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Rank</td><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Branch</td></tr>
+    ${signupRows}
+  </table>
+
+  <!-- Feature Usage -->
+  <h2 style="margin:0 0 8px;font-size:14px;color:#0D2137;font-family:'Courier New',monospace;letter-spacing:0.1em;text-transform:uppercase;border-bottom:2px solid #D4A43E;padding-bottom:6px;">Feature Usage (24h)</h2>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr style="background:#f4f3f0;"><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">User</td><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Actions</td></tr>
+    ${usageRows}
+  </table>
+
+  <!-- Expiring Trials -->
+  <h2 style="margin:0 0 8px;font-size:14px;color:#0D2137;font-family:'Courier New',monospace;letter-spacing:0.1em;text-transform:uppercase;border-bottom:2px solid #D4A43E;padding-bottom:6px;">Trials Expiring (48h)</h2>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr style="background:#f4f3f0;"><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Name</td><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Email</td><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Time Left</td></tr>
+    ${expiringRows}
+  </table>
+
+  <!-- Recently Expired -->
+  <h2 style="margin:0 0 8px;font-size:14px;color:#0D2137;font-family:'Courier New',monospace;letter-spacing:0.1em;text-transform:uppercase;border-bottom:2px solid #D4A43E;padding-bottom:6px;">Expired Trials (24h) &mdash; Not Subscribed</h2>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+    <tr style="background:#f4f3f0;"><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Name</td><td style="padding:4px 8px;font-size:11px;font-weight:bold;color:#666;">Email</td></tr>
+    ${expiredRows}
+  </table>
+
+</td></tr>
+
+<tr><td style="background:#f4f3f0;padding:16px 32px;border-radius:0 0 8px 8px;border-top:1px solid #e8e4dc;">
+  <p style="margin:0;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#9a8f82;text-align:center;">
+    Nexus247.ai &middot; Admin Daily Report
+  </p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
+    const result = await client.emails.send({
+      from: FALLBACK_FROM,
+      to: "support@nexus247.ai",
+      subject: `Nexus247 Daily Report — ${now}`,
+      html,
+    });
+
+    console.log(`[email] Daily activity report sent:`, result);
+  } catch (error) {
+    console.error(`[email] Failed to send daily activity report:`, error);
+  }
+}

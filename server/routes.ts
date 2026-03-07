@@ -1124,10 +1124,79 @@ export async function registerRoutes(
 
   app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const profiles = await storage.getAllProfiles();
+      const includeArchived = req.query.includeArchived === "true";
+      const profiles = await storage.getAllProfiles(includeArchived);
       res.json(profiles);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users/:userId/archive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const profile = await storage.archiveProfile(req.params.userId);
+      if (!profile) return res.status(404).json({ error: "User not found" });
+      res.json(profile);
+    } catch (error) {
+      console.error("Archive error:", error);
+      res.status(500).json({ error: "Failed to archive user" });
+    }
+  });
+
+  app.post("/api/admin/users/:userId/unarchive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const profile = await storage.unarchiveProfile(req.params.userId);
+      if (!profile) return res.status(404).json({ error: "User not found" });
+      res.json(profile);
+    } catch (error) {
+      console.error("Unarchive error:", error);
+      res.status(500).json({ error: "Failed to unarchive user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const targetUserId = req.params.userId;
+      if (targetUserId === "49807206") {
+        return res.status(400).json({ error: "Cannot delete the admin account" });
+      }
+      await storage.deleteAllUserData(targetUserId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Failed to delete user data" });
+    }
+  });
+
+  app.get("/api/admin/users/export", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const profiles = await storage.getAllProfiles(true);
+      const csvHeader = "email,firstName,lastName,rank,branch,tier,status,trialEndsAt,signupDate,archived\n";
+      const csvRows = profiles.map(p => {
+        const fields = [
+          p.email || "",
+          p.firstName || "",
+          p.lastName || "",
+          p.rank || "",
+          p.branch || "",
+          p.subscriptionTier || "none",
+          p.subscriptionStatus || "inactive",
+          p.trialEndsAt ? new Date(p.trialEndsAt).toISOString() : "",
+          p.createdAt ? new Date(p.createdAt).toISOString() : "",
+          p.archivedAt ? "yes" : "no",
+        ].map(f => {
+          let val = String(f).replace(/"/g, '""');
+          if (/^[=+\-@\t\r]/.test(val)) val = "'" + val;
+          return `"${val}"`;
+        });
+        return fields.join(",");
+      }).join("\n");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", "attachment; filename=nexus247-users.csv");
+      res.send(csvHeader + csvRows);
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ error: "Failed to export users" });
     }
   });
 

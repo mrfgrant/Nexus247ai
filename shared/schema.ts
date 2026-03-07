@@ -47,6 +47,9 @@ export const veteranProfiles = pgTable("veteran_profiles", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   role: text("role").default("user"),
+  archivedAt: timestamp("archived_at"),
+  trialExpiryEmailSent: boolean("trial_expiry_email_sent").default(false),
+  day7ReengagementSent: boolean("day7_reengagement_sent").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

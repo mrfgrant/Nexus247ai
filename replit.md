@@ -67,6 +67,24 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 - **Admin signup notification**: Separate email sent TO `support@nexus247.ai` whenever a new user signs up. Contains name, email, rank, branch, and signup date.
 - **Admin test endpoint**: `POST /api/test-welcome-email` (userId 49807206 only) — accepts `email`, `rankTitle`, `lastName` in body to send to any address
 
+## Admin User Management
+- **Archive/Unarchive**: Soft-delete users by setting `archivedAt` timestamp. Archived users hidden by default in admin panel; toggle "Show archived" to view them with greyed styling + orange "Archived" badge.
+- **Permanent Delete**: `DELETE /api/admin/users/:userId` removes veteran profile + all associated data (conditions, documents, incidents, chat messages, usage logs, supporting documents, letter analyses, rating estimates). Replit Auth user row preserved. Admin account (userId 49807206) cannot be deleted.
+- **Export CSV**: `GET /api/admin/users/export` downloads CSV of all users with email, name, rank, branch, tier, status, trial dates, signup date.
+- **Endpoints**: `POST /api/admin/users/:userId/archive`, `POST /api/admin/users/:userId/unarchive`, `DELETE /api/admin/users/:userId`, `GET /api/admin/users/export` — all admin-only.
+
+## Trial Engagement Emails (Drip Campaign)
+- **Trial Expiry Email**: Sent on the day a user's trial expires. Personalized with rank + last name. Branded HTML template with feature highlights and upgrade CTA. Tracked by `trialExpiryEmailSent` flag on veteran profile to prevent duplicates.
+- **Day 7 Re-engagement Email**: Sent 7 days after trial expiry if user hasn't subscribed. Includes COMEBACK promo code. Personalized with rank + last name. Tracked by `day7ReengagementSent` flag.
+- **From address**: `Nexus247 <noreply@mailer.nexus247.ai>` (same verified domain as welcome email).
+- **Functions**: `sendTrialExpiryEmail()`, `sendDay7ReengagementEmail()` in `server/emails.ts`.
+
+## Scheduled Jobs (node-cron)
+- **Module**: `server/scheduler.ts` — started from `server/index.ts` on server boot.
+- **Hourly job** (`:00` every hour): Checks for trial expiry emails (trial ending today, not yet sent) and day 7 re-engagement emails (trial expired 7+ days ago, not yet sent, user hasn't subscribed).
+- **Daily report** (12:00 UTC / 7 AM ET): Sends activity summary to `support@nexus247.ai` via `sendDailyActivityReport()`. Includes new signups (last 24h), feature usage summary, trials expiring in next 48h, and recently expired trials.
+- **Package**: `node-cron` (bundled via build allowlist in `script/build.ts`).
+
 ## Standalone Pages
 - **MyScore** (`/myscore`): Public, standalone page for scoring nexus letters via AI. No auth, no database, no connection to main app. Uses Claude API via `POST /api/score-letter`. IP-based rate limiting (5 requests per 10 minutes per IP). PDF upload uses client-side pdf.js from CDN. Results show score (0-100), rating, summary, strengths, and improvements with CTA to sign up.
 

@@ -33,7 +33,7 @@ import {
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
-import { eq, desc, and, sql, gte } from "drizzle-orm";
+import { eq, desc, and, sql, gte, isNull, isNotNull, lte, lt } from "drizzle-orm";
 
 export interface IStorage {
   getVeteranProfile(userId: string): Promise<VeteranProfile | undefined>;
@@ -77,8 +77,22 @@ export interface IStorage {
 
   logUsage(userId: string, action: string, metadata?: any): Promise<void>;
 
-  getAllProfiles(): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
+  getAllProfiles(includeArchived?: boolean): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
   adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined>;
+
+  archiveProfile(userId: string): Promise<VeteranProfile | undefined>;
+  unarchiveProfile(userId: string): Promise<VeteranProfile | undefined>;
+  deleteAllUserData(userId: string): Promise<void>;
+
+  getTrialExpiringProfiles(): Promise<(VeteranProfile & { email?: string | null })[]>;
+  getDay7ReengagementProfiles(): Promise<(VeteranProfile & { email?: string | null })[]>;
+  markTrialExpiryEmailSent(userId: string): Promise<void>;
+  markDay7ReengagementSent(userId: string): Promise<void>;
+
+  getRecentSignups(since: Date): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
+  getUsageSummary(since: Date): Promise<{ userId: string; action: string; count: number }[]>;
+  getExpiringTrials(withinHours: number): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
+  getRecentlyExpiredTrials(since: Date): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
 
   createSupportingDocument(data: InsertSupportingDocument): Promise<SupportingDocument>;
   getSupportingDocuments(userId: string): Promise<SupportingDocument[]>;
@@ -279,8 +293,8 @@ export class DatabaseStorage implements IStorage {
     await db.insert(usageLogs).values({ userId, action, metadata });
   }
 
-  async getAllProfiles(): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]> {
-    const rows = await db
+  async getAllProfiles(includeArchived = false): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]> {
+    let query = db
       .select({
         profile: veteranProfiles,
         firstName: users.firstName,
@@ -288,8 +302,12 @@ export class DatabaseStorage implements IStorage {
         email: users.email,
       })
       .from(veteranProfiles)
-      .leftJoin(users, eq(veteranProfiles.userId, users.id))
-      .orderBy(desc(veteranProfiles.createdAt));
+      .leftJoin(users, eq(veteranProfiles.userId, users.id));
+
+    const rows = includeArchived
+      ? await query.orderBy(desc(veteranProfiles.createdAt))
+      : await query.where(isNull(veteranProfiles.archivedAt)).orderBy(desc(veteranProfiles.createdAt));
+
     return rows.map(r => ({ ...r.profile, firstName: r.firstName, lastName: r.lastName, email: r.email }));
   }
 
@@ -351,6 +369,167 @@ export class DatabaseStorage implements IStorage {
       .from(letterAnalyses)
       .where(and(eq(letterAnalyses.userId, userId), gte(letterAnalyses.createdAt, startOfMonth)));
     return Number(result[0]?.count || 0);
+  }
+
+  async archiveProfile(userId: string): Promise<VeteranProfile | undefined> {
+    const [profile] = await db
+      .update(veteranProfiles)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(eq(veteranProfiles.userId, userId))
+      .returning();
+    return profile;
+  }
+
+  async unarchiveProfile(userId: string): Promise<VeteranProfile | undefined> {
+    const [profile] = await db
+      .update(veteranProfiles)
+      .set({ archivedAt: null, updatedAt: new Date() })
+      .where(eq(veteranProfiles.userId, userId))
+      .returning();
+    return profile;
+  }
+
+  async deleteAllUserData(userId: string): Promise<void> {
+    await db.delete(chatMessages).where(eq(chatMessages.userId, userId));
+    await db.delete(usageLogs).where(eq(usageLogs.userId, userId));
+    await db.delete(ratingEstimates).where(eq(ratingEstimates.userId, userId));
+    await db.delete(supportRequests).where(eq(supportRequests.userId, userId));
+    await db.delete(letterAnalyses).where(eq(letterAnalyses.userId, userId));
+    await db.delete(supportingDocuments).where(eq(supportingDocuments.userId, userId));
+    await db.delete(documents).where(eq(documents.userId, userId));
+    await db.delete(serviceIncidents).where(eq(serviceIncidents.userId, userId));
+    await db.delete(conditions).where(eq(conditions.userId, userId));
+    await db.delete(veteranProfiles).where(eq(veteranProfiles.userId, userId));
+  }
+
+  async getTrialExpiringProfiles(): Promise<(VeteranProfile & { email?: string | null })[]> {
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    const rows = await db
+      .select({ profile: veteranProfiles, email: users.email })
+      .from(veteranProfiles)
+      .leftJoin(users, eq(veteranProfiles.userId, users.id))
+      .where(and(
+        isNotNull(veteranProfiles.trialEndsAt),
+        gte(veteranProfiles.trialEndsAt, startOfDay),
+        lte(veteranProfiles.trialEndsAt, endOfDay),
+        eq(veteranProfiles.trialExpiryEmailSent, false),
+        isNull(veteranProfiles.archivedAt),
+        sql`(${veteranProfiles.subscriptionStatus} IS NULL OR ${veteranProfiles.subscriptionStatus} != 'active')`,
+      ));
+    return rows.map(r => ({ ...r.profile, email: r.email }));
+  }
+
+  async getDay7ReengagementProfiles(): Promise<(VeteranProfile & { email?: string | null })[]> {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const eightDaysAgo = new Date(now);
+    eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
+    const rows = await db
+      .select({ profile: veteranProfiles, email: users.email })
+      .from(veteranProfiles)
+      .leftJoin(users, eq(veteranProfiles.userId, users.id))
+      .where(and(
+        isNotNull(veteranProfiles.trialEndsAt),
+        lte(veteranProfiles.trialEndsAt, sevenDaysAgo),
+        gte(veteranProfiles.trialEndsAt, eightDaysAgo),
+        eq(veteranProfiles.day7ReengagementSent, false),
+        isNull(veteranProfiles.archivedAt),
+        sql`(${veteranProfiles.subscriptionStatus} IS NULL OR ${veteranProfiles.subscriptionStatus} != 'active')`,
+      ));
+    return rows.map(r => ({ ...r.profile, email: r.email }));
+  }
+
+  async markTrialExpiryEmailSent(userId: string): Promise<void> {
+    await db.update(veteranProfiles)
+      .set({ trialExpiryEmailSent: true, updatedAt: new Date() })
+      .where(eq(veteranProfiles.userId, userId));
+  }
+
+  async markDay7ReengagementSent(userId: string): Promise<void> {
+    await db.update(veteranProfiles)
+      .set({ day7ReengagementSent: true, updatedAt: new Date() })
+      .where(eq(veteranProfiles.userId, userId));
+  }
+
+  async getRecentSignups(since: Date): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]> {
+    const rows = await db
+      .select({
+        profile: veteranProfiles,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(veteranProfiles)
+      .leftJoin(users, eq(veteranProfiles.userId, users.id))
+      .where(and(
+        gte(veteranProfiles.createdAt, since),
+        isNull(veteranProfiles.archivedAt),
+      ))
+      .orderBy(desc(veteranProfiles.createdAt));
+    return rows.map(r => ({ ...r.profile, firstName: r.firstName, lastName: r.lastName, email: r.email }));
+  }
+
+  async getUsageSummary(since: Date): Promise<{ userId: string; action: string; count: number }[]> {
+    const rows = await db
+      .select({
+        userId: usageLogs.userId,
+        action: usageLogs.action,
+        count: sql<number>`count(*)`,
+      })
+      .from(usageLogs)
+      .where(gte(usageLogs.createdAt, since))
+      .groupBy(usageLogs.userId, usageLogs.action);
+    return rows.map(r => ({ userId: r.userId, action: r.action, count: Number(r.count) }));
+  }
+
+  async getExpiringTrials(withinHours: number): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]> {
+    const now = new Date();
+    const future = new Date(now.getTime() + withinHours * 60 * 60 * 1000);
+    const rows = await db
+      .select({
+        profile: veteranProfiles,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(veteranProfiles)
+      .leftJoin(users, eq(veteranProfiles.userId, users.id))
+      .where(and(
+        isNotNull(veteranProfiles.trialEndsAt),
+        gte(veteranProfiles.trialEndsAt, now),
+        lte(veteranProfiles.trialEndsAt, future),
+        isNull(veteranProfiles.archivedAt),
+        sql`(${veteranProfiles.subscriptionStatus} IS NULL OR ${veteranProfiles.subscriptionStatus} != 'active')`,
+      ))
+      .orderBy(veteranProfiles.trialEndsAt);
+    return rows.map(r => ({ ...r.profile, firstName: r.firstName, lastName: r.lastName, email: r.email }));
+  }
+
+  async getRecentlyExpiredTrials(since: Date): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]> {
+    const now = new Date();
+    const rows = await db
+      .select({
+        profile: veteranProfiles,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(veteranProfiles)
+      .leftJoin(users, eq(veteranProfiles.userId, users.id))
+      .where(and(
+        isNotNull(veteranProfiles.trialEndsAt),
+        lte(veteranProfiles.trialEndsAt, now),
+        gte(veteranProfiles.trialEndsAt, since),
+        isNull(veteranProfiles.archivedAt),
+        sql`(${veteranProfiles.subscriptionStatus} IS NULL OR ${veteranProfiles.subscriptionStatus} != 'active')`,
+      ))
+      .orderBy(desc(veteranProfiles.trialEndsAt));
+    return rows.map(r => ({ ...r.profile, firstName: r.firstName, lastName: r.lastName, email: r.email }));
   }
 
   async updateStripeCustomerId(userId: string, stripeCustomerId: string): Promise<void> {
