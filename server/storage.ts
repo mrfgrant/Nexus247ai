@@ -31,6 +31,7 @@ import {
   type LetterAnalysis,
   type InsertLetterAnalysis,
 } from "@shared/schema";
+import { users } from "@shared/models/auth";
 import { db } from "./db";
 import { eq, desc, and, sql, gte } from "drizzle-orm";
 
@@ -76,7 +77,7 @@ export interface IStorage {
 
   logUsage(userId: string, action: string, metadata?: any): Promise<void>;
 
-  getAllProfiles(): Promise<VeteranProfile[]>;
+  getAllProfiles(): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
   adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined>;
 
   createSupportingDocument(data: InsertSupportingDocument): Promise<SupportingDocument>;
@@ -278,8 +279,18 @@ export class DatabaseStorage implements IStorage {
     await db.insert(usageLogs).values({ userId, action, metadata });
   }
 
-  async getAllProfiles(): Promise<VeteranProfile[]> {
-    return db.select().from(veteranProfiles).orderBy(desc(veteranProfiles.createdAt));
+  async getAllProfiles(): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]> {
+    const rows = await db
+      .select({
+        profile: veteranProfiles,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(veteranProfiles)
+      .leftJoin(users, eq(veteranProfiles.userId, users.id))
+      .orderBy(desc(veteranProfiles.createdAt));
+    return rows.map(r => ({ ...r.profile, firstName: r.firstName, lastName: r.lastName, email: r.email }));
   }
 
   async adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined> {

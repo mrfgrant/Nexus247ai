@@ -9,7 +9,7 @@ import multer from "multer";
 import { createRequire } from "module";
 import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from "./stripe";
 import { getRankDisplayName } from "@shared/utils";
-import { sendWelcomeEmail } from "./emails";
+import { sendWelcomeEmail, sendAdminSignupNotification } from "./emails";
 import { extractRelevantContext, searchContentForTopic } from "./extract";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { sitemapRouter } from './sitemap';
@@ -192,9 +192,16 @@ export async function registerRoutes(
       if (isNewProfile) {
         const email = req.user?.claims?.email;
         const rankTitle = safeData.rank ? getRankDisplayName(safeData.rank) : "";
-        const lastName = safeData.lastName || "";
+        const lastName = req.user?.claims?.last_name || req.user?.claims?.lastName || "";
         if (email) {
-          sendWelcomeEmail(email, rankTitle, lastName).catch(() => {});
+          sendWelcomeEmail(email, rankTitle, lastName).catch(err => console.error("[email] Welcome email failed:", err));
+          sendAdminSignupNotification({
+            email,
+            rank: rankTitle || safeData.rank,
+            branch: safeData.branch,
+            firstName: req.user?.claims?.first_name || req.user?.claims?.firstName || "",
+            lastName,
+          }).catch(err => console.error("[email] Admin notification failed:", err));
         }
       }
 
@@ -236,7 +243,7 @@ export async function registerRoutes(
       if (userId !== "49807206") {
         return res.status(403).json({ error: "Admin only" });
       }
-      const email = req.user.claims.email || "jamie@mrfgrant.com";
+      const email = req.body.email || req.user.claims.email || "jamie@mrfgrant.com";
       const rankTitle = req.body.rankTitle || "";
       const lastName = req.body.lastName || "";
       await sendWelcomeEmail(email, rankTitle, lastName);

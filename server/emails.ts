@@ -154,13 +154,15 @@ ${buildFeature("06", "Human Expert Support", "When you need a real person in you
 </html>`;
 }
 
+const FALLBACK_FROM = "Nexus247 <noreply@mailer.nexus247.ai>";
+
 export async function sendWelcomeEmail(toEmail: string, rankTitle: string, lastName: string): Promise<void> {
   try {
-    const { client, fromEmail } = await getUncachableResendClient();
+    const { client } = await getUncachableResendClient();
     const html = buildWelcomeEmailHtml(rankTitle, lastName);
 
     const result = await client.emails.send({
-      from: fromEmail || "Nexus247 <noreply@nexus247.ai>",
+      from: FALLBACK_FROM,
       to: toEmail,
       cc: "support@nexus247.ai",
       subject: "Welcome to Nexus247 — Your Mission Starts Now",
@@ -170,5 +172,41 @@ export async function sendWelcomeEmail(toEmail: string, rankTitle: string, lastN
     console.log(`[email] Welcome email sent to ${toEmail}:`, result);
   } catch (error) {
     console.error(`[email] Failed to send welcome email to ${toEmail}:`, error);
+  }
+}
+
+export async function sendAdminSignupNotification(details: {
+  email: string;
+  rank?: string;
+  branch?: string;
+  firstName?: string;
+  lastName?: string;
+}): Promise<void> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const name = [details.rank, details.firstName, details.lastName].filter(Boolean).join(" ") || "Unknown";
+
+    const html = `<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+  <h2 style="color:#0D2137;margin:0 0 16px;border-bottom:2px solid #D4A43E;padding-bottom:8px;">New Nexus247 Signup</h2>
+  <table style="width:100%;font-size:14px;color:#333;">
+    <tr><td style="padding:6px 0;font-weight:bold;width:100px;">Name:</td><td>${name}</td></tr>
+    <tr><td style="padding:6px 0;font-weight:bold;">Email:</td><td>${details.email}</td></tr>
+    <tr><td style="padding:6px 0;font-weight:bold;">Rank:</td><td>${details.rank || "Not provided"}</td></tr>
+    <tr><td style="padding:6px 0;font-weight:bold;">Branch:</td><td>${details.branch || "Not provided"}</td></tr>
+    <tr><td style="padding:6px 0;font-weight:bold;">Date:</td><td>${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })}</td></tr>
+  </table>
+  <p style="margin:20px 0 0;font-size:12px;color:#888;">Nexus247.ai — Admin Notification</p>
+</div>`;
+
+    const result = await client.emails.send({
+      from: FALLBACK_FROM,
+      to: "support@nexus247.ai",
+      subject: `New Signup: ${name} (${details.email})`,
+      html,
+    });
+
+    console.log(`[email] Admin signup notification sent for ${details.email}:`, result);
+  } catch (error) {
+    console.error(`[email] Failed to send admin signup notification for ${details.email}:`, error);
   }
 }

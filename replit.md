@@ -53,20 +53,19 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 - **Stripe:** Integrated for payment processing, subscription management, and customer portals. Utilizes `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLISHABLE_KEY`, and `STRIPE_WEBHOOK_SECRET`.
 - **PostgreSQL:** The primary database for storing all application data, accessed via Drizzle ORM. Requires `DATABASE_URL`.
 - **Replit Auth (OIDC):** Provides user authentication and session management. Requires `SESSION_SECRET`.
-- **Resend:** Email service for sending branded welcome emails to new signups. Connected via Replit integration (connector). Domain verification required at resend.com/domains for production sending.
+- **Resend:** Email service for sending branded welcome emails and admin notifications. Connected via Replit integration (connector). Verified sending domain: `mailer.nexus247.ai`. From address: `noreply@mailer.nexus247.ai`. Note: the connector's `fromEmail` returns `support@nexus247.ai` which is NOT a verified sending domain — always use `noreply@mailer.nexus247.ai` as the from address.
 
 ## Engagement Features (Unauthenticated Visitors)
 - **Welcome Overlay** (`client/src/components/welcome-overlay.tsx`): Full-screen overlay on first visit thanking the veteran for their service. Auto-dismisses after 8s. Tracked via localStorage key `nexus247_welcome_shown`. z-index 70.
 - **Cookie Consent Banner** (`client/src/components/cookie-consent.tsx`): Fixed bottom banner with Accept/Decline. Tracked via localStorage key `nexus247_cookies_accepted`. z-index 60. Shows after 1.5s delay.
 - **Exit Intent Popup** (`client/src/components/exit-intent.tsx`): Triggers on desktop mouseleave (cursor exits viewport upward) after 10s on page. Shows "nothing to lose, 3-day free trial" message with CTA. Tracked via sessionStorage key `nexus247_exit_shown`. z-index 80.
 
-## Welcome Email
-- **Server modules**: `server/resend.ts` (Resend client via Replit connector), `server/emails.ts` (HTML template + send function)
-- Triggered on first profile creation (`POST /api/profile` when no existing profile)
-- Addresses veteran by rank + last name (e.g., "Dear SFC Grant")
-- Navy/gold branded HTML email with 6 feature sections, "Where to Start" steps, gold CTA
-- CC: `support@nexus247.ai` on every welcome email
-- Admin test endpoint: `POST /api/test-welcome-email` (userId 49807206 only)
+## Welcome Email & Admin Notifications
+- **Server modules**: `server/resend.ts` (Resend client via Replit connector), `server/emails.ts` (HTML templates + send functions)
+- **From address**: `Nexus247 <noreply@mailer.nexus247.ai>` (hardcoded — do NOT use connector's fromEmail)
+- **Welcome email**: Triggered on first profile creation (`POST /api/profile` when no existing profile). Addresses veteran by rank + last name from Replit Auth claims. Navy/gold branded HTML with 6 feature sections, "Where to Start" steps, gold CTA. CC: `support@nexus247.ai`.
+- **Admin signup notification**: Separate email sent TO `support@nexus247.ai` whenever a new user signs up. Contains name, email, rank, branch, and signup date.
+- **Admin test endpoint**: `POST /api/test-welcome-email` (userId 49807206 only) — accepts `email`, `rankTitle`, `lastName` in body to send to any address
 
 ## Standalone Pages
 - **MyScore** (`/myscore`): Public, standalone page for scoring nexus letters via AI. No auth, no database, no connection to main app. Uses Claude API via `POST /api/score-letter`. IP-based rate limiting (5 requests per 10 minutes per IP). PDF upload uses client-side pdf.js from CDN. Results show score (0-100), rating, summary, strengths, and improvements with CTA to sign up.

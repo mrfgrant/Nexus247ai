@@ -21,8 +21,27 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Users, Search, Shield, CreditCard, Clock, Crown, Edit } from "lucide-react";
+import { Users, Search, Shield, CreditCard, Clock, Crown, Edit, Mail } from "lucide-react";
 import type { VeteranProfile } from "@shared/schema";
+import { getRankDisplayName } from "@shared/utils";
+
+type AdminProfile = VeteranProfile & {
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+};
+
+function getDisplayName(profile: AdminProfile): string {
+  const rankDisplay = profile.rank ? getRankDisplayName(profile.rank) : "";
+  const first = profile.firstName || "";
+  const last = profile.lastName || "";
+  if (rankDisplay && last) return `${rankDisplay} ${last}`;
+  if (first && last) return `${first} ${last}`;
+  if (last) return last;
+  if (first) return first;
+  if (profile.email) return profile.email;
+  return profile.userId;
+}
 
 const tierColors: Record<string, string> = {
   none: "bg-muted text-muted-foreground",
@@ -40,7 +59,7 @@ function EditUserDialog({
   profile,
   onClose,
 }: {
-  profile: VeteranProfile;
+  profile: AdminProfile;
   onClose: () => void;
 }) {
   const { toast } = useToast();
@@ -73,6 +92,7 @@ function EditUserDialog({
 
   const trialActive = profile.trialEndsAt && new Date(profile.trialEndsAt) > new Date();
   const trialExpired = profile.trialEndsAt && new Date(profile.trialEndsAt) <= new Date();
+  const displayName = getDisplayName(profile);
 
   return (
     <DialogContent className="max-w-md">
@@ -81,9 +101,14 @@ function EditUserDialog({
       </DialogHeader>
       <div className="space-y-4">
         <div className="p-3 rounded-md bg-muted/50 border border-border">
-          <p className="text-sm font-medium text-foreground">{profile.userId}</p>
+          <p className="text-sm font-medium text-foreground" data-testid="text-edit-user-name">{displayName}</p>
+          {profile.email && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              <Mail className="w-3 h-3" /> {profile.email}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground mt-0.5">
-            {profile.branch || "No branch"} · Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "Unknown"}
+            {profile.branch || "No branch"} · {profile.rank || "No rank"} · Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "Unknown"}
           </p>
           {trialActive && (
             <Badge className="mt-1.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs">
@@ -175,20 +200,25 @@ function EditUserDialog({
 export default function AdminUsers() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [editProfile, setEditProfile] = useState<VeteranProfile | null>(null);
+  const [editProfile, setEditProfile] = useState<AdminProfile | null>(null);
 
-  const { data: profiles = [], isLoading } = useQuery<VeteranProfile[]>({
+  const { data: profiles = [], isLoading } = useQuery<AdminProfile[]>({
     queryKey: ["/api/admin/users"],
   });
 
   const filtered = search.trim()
-    ? profiles.filter(
-        (p) =>
-          p.userId.toLowerCase().includes(search.toLowerCase()) ||
-          (p.branch || "").toLowerCase().includes(search.toLowerCase()) ||
-          (p.role || "").toLowerCase().includes(search.toLowerCase()) ||
-          (p.subscriptionTier || "").toLowerCase().includes(search.toLowerCase()),
-      )
+    ? profiles.filter((p) => {
+        const s = search.toLowerCase();
+        const name = getDisplayName(p).toLowerCase();
+        return (
+          name.includes(s) ||
+          p.userId.toLowerCase().includes(s) ||
+          (p.email || "").toLowerCase().includes(s) ||
+          (p.branch || "").toLowerCase().includes(s) ||
+          (p.role || "").toLowerCase().includes(s) ||
+          (p.subscriptionTier || "").toLowerCase().includes(s)
+        );
+      })
     : profiles;
 
   if (isLoading) {
@@ -246,7 +276,7 @@ export default function AdminUsers() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by user ID, branch, role, or tier..."
+          placeholder="Search by name, email, branch, role, or tier..."
           className="pl-9"
           data-testid="input-search-users"
         />
@@ -255,13 +285,14 @@ export default function AdminUsers() {
       <div className="space-y-2">
         {filtered.map((profile) => {
           const trialActive = profile.trialEndsAt && new Date(profile.trialEndsAt) > new Date();
+          const displayName = getDisplayName(profile);
           return (
             <Card key={profile.id} data-testid={`card-user-${profile.userId}`}>
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium text-foreground truncate">{profile.userId}</p>
+                      <p className="text-sm font-medium text-foreground truncate" data-testid={`text-user-name-${profile.userId}`}>{displayName}</p>
                       <Badge className={`text-[10px] sm:text-xs ${tierColors[profile.subscriptionTier || "none"]}`}>
                         <CreditCard className="w-3 h-3 mr-0.5" />
                         {(profile.subscriptionTier || "none").toUpperCase()}
@@ -278,6 +309,7 @@ export default function AdminUsers() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
+                      {profile.email && <span className="mr-1">{profile.email} ·</span>}
                       {profile.branch || "No branch"} · Rating: {profile.currentRating ?? 0}%
                       {trialActive && ` · Trial ends ${new Date(profile.trialEndsAt!).toLocaleDateString()}`}
                     </p>
