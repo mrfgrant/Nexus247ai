@@ -37,7 +37,7 @@ export default function Settings() {
               try {
                 const trackKey = `nexus247_purchase_${sessionId}`;
                 if (!sessionStorage.getItem(trackKey)) {
-                  const prices: Record<string, number> = { basic: 19, pro: 49, concierge: 149 };
+                  const prices: Record<string, number> = { basic: 29, pro: 49, concierge: 149 };
                   trackPurchase(data.tier, prices[data.tier] || 0, sessionId || undefined);
                   sessionStorage.setItem(trackKey, "true");
                 }
@@ -109,8 +109,8 @@ export default function Settings() {
 
   const tierLabels: Record<string, string> = {
     none: "No Active Plan",
-    basic: "Basic - $19/mo",
-    pro: "Pro - $49/mo",
+    basic: "Starter - $29/mo",
+    pro: "Pro - $49/mo or $399/yr",
     concierge: "Concierge - $149/mo",
   };
 

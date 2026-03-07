@@ -65,10 +65,10 @@ const features = [
 
 const tiers = [
   {
-    name: "Basic",
-    price: "$19",
+    name: "Starter",
+    price: "$29",
     period: "/month",
-    description: "Get started with essential claim tools",
+    description: "For veterans exploring their options",
     features: [
       { text: "5 AI-generated letters per month", detail: "Nexus letters, personal statements, buddy letters, NODs, secondary condition letters, and increase claims — all CFR-grounded and scored for quality." },
       { text: "Nexus, personal statements, buddy letters", detail: "Each letter is tailored to your specific condition, service history, and medical records. Nexus letters are concise and ready for a medical professional to sign." },
@@ -80,6 +80,8 @@ const tiers = [
     ],
     cta: "START MY FREE TRIAL",
     popular: false,
+    annualPrice: null,
+    annualSavings: null,
   },
   {
     name: "Pro",
@@ -87,8 +89,8 @@ const tiers = [
     period: "/month",
     description: "For veterans serious about winning claims",
     features: [
-      { text: "50 AI-generated letters per month", detail: "Ten times the Basic limit. Generate letters for multiple conditions and iterations without worrying about running out." },
-      { text: "All Basic features", detail: "Every document type, rating estimator, AI chat, and RPA quality scoring included." },
+      { text: "50 AI-generated letters per month", detail: "Ten times the Starter limit. Generate letters for multiple conditions and iterations without worrying about running out." },
+      { text: "All Starter features", detail: "Every document type, rating estimator, AI chat, and RPA quality scoring included." },
       { text: "C&P Exam Prep with printable cheat sheet", detail: "A personalized 8-section prep guide covering examiner questions, DBQ scoring criteria, worst-day symptom descriptions, and a printable one-pager to bring to your exam." },
       { text: "10 decision letter analyses per month", detail: "Analyze multiple decision letters, track patterns across denials, and build a comprehensive appeal strategy." },
       { text: "Cross-reference evidence analysis", detail: "Compares your medical records against decision letter findings to identify evidence gaps and calculate win probabilities." },
@@ -96,6 +98,8 @@ const tiers = [
     ],
     cta: "START MY FREE TRIAL",
     popular: true,
+    annualPrice: "$399",
+    annualSavings: "Save $189 — 3 months free",
   },
   {
     name: "Concierge",
@@ -112,6 +116,8 @@ const tiers = [
     ],
     cta: "START MY FREE TRIAL",
     popular: false,
+    annualPrice: null,
+    annualSavings: null,
   },
 ];
 
@@ -343,6 +349,7 @@ function BounceArrow() {
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rpaModalOpen, setRpaModalOpen] = useState(false);
+  const [annualBilling, setAnnualBilling] = useState(false);
   const revealRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
@@ -666,11 +673,48 @@ export default function Landing() {
             Pricing
           </div>
           <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "var(--navy)", lineHeight: 1.15, marginBottom: "1rem" }}>
-            Simple, Transparent Pricing
+            Less than one hour of an attorney's time.
           </h2>
           <p style={{ color: "var(--landing-muted)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300 }}>
-            Start with a <span style={{ color: "var(--gold)", fontWeight: 600 }}>free 3-day Pro trial</span> — no credit card required. Then choose the plan that fits your claims needs.
+            The average VA attorney charges $300–$500/hr and takes{" "}
+            <strong style={{ color: "var(--navy)" }}>20% of your retro pay</strong>. We charge a flat monthly
+            rate — and show you the score before you submit.
+            <br /><br />
+            Start with a <span style={{ color: "var(--gold)", fontWeight: 600 }}>free 3-day Pro trial</span> — no credit card required.
           </p>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: "3rem" }}>
+          <span style={{ fontSize: "0.82rem", color: annualBilling ? "rgba(11,28,46,0.4)" : "var(--navy)", fontWeight: annualBilling ? 400 : 600, transition: "color 0.2s" }}>
+            Monthly
+          </span>
+          <button
+            type="button"
+            onClick={() => setAnnualBilling(!annualBilling)}
+            data-testid="button-annual-toggle"
+            style={{
+              width: 44, height: 24, borderRadius: 12,
+              background: annualBilling ? "var(--gold)" : "rgba(11,28,46,0.15)",
+              border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s",
+            }}
+          >
+            <div style={{
+              position: "absolute", top: 3, left: annualBilling ? 23 : 3,
+              width: 18, height: 18, borderRadius: "50%", background: "#fff",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.2)", transition: "left 0.2s",
+            }} />
+          </button>
+          <span style={{ fontSize: "0.82rem", color: annualBilling ? "var(--navy)" : "rgba(11,28,46,0.4)", fontWeight: annualBilling ? 600 : 400, transition: "color 0.2s" }}>
+            Annual
+          </span>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
+            letterSpacing: "0.1em", color: "#1a9e6b",
+            background: "rgba(26,158,107,0.1)", border: "1px solid rgba(26,158,107,0.25)",
+            padding: "3px 10px", borderRadius: 20,
+          }}>
+            Pro: save $189/yr
+          </span>
         </div>
 
         <div
@@ -715,8 +759,19 @@ export default function Landing() {
                 fontFamily: "'DM Serif Display', serif", fontSize: "3rem",
                 color: "#fff", lineHeight: 1, marginBottom: "0.3rem",
               }}>
-                {tier.price}<span style={{ fontSize: "1rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 300, color: "rgba(255,255,255,0.5)" }}>/month</span>
+                {annualBilling && tier.annualPrice ? tier.annualPrice : tier.price}
+                <span style={{ fontSize: "1rem", fontFamily: "'DM Sans', sans-serif", fontWeight: 300, color: "rgba(255,255,255,0.5)" }}>
+                  {annualBilling && tier.annualPrice ? "/year" : "/month"}
+                </span>
               </div>
+              {annualBilling && tier.annualSavings && (
+                <div data-testid={`text-savings-${tier.name.toLowerCase()}`} style={{
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
+                  color: "#1a9e6b", letterSpacing: "0.08em", marginBottom: "0.4rem",
+                }}>
+                  {tier.annualSavings}
+                </div>
+              )}
               <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", marginBottom: "2rem", lineHeight: 1.5 }}>
                 {tier.description}
               </div>

@@ -2,6 +2,11 @@ declare global {
   interface Window {
     dataLayer?: any[];
     gtag?: (...args: any[]) => void;
+    ttq?: {
+      track: (event: string, params?: Record<string, any>) => void;
+      page: () => void;
+      identify: (params: Record<string, any>) => void;
+    };
   }
 }
 
@@ -12,8 +17,17 @@ function gtag(...args: any[]) {
   }
 }
 
+function ttqTrack(event: string, params?: Record<string, any>) {
+  if (typeof window !== "undefined" && window.ttq) {
+    try {
+      window.ttq.track(event, params);
+    } catch {}
+  }
+}
+
 export function trackSignUp() {
   gtag("event", "sign_up", { method: "replit_auth" });
+  ttqTrack("CompleteRegistration");
 }
 
 export function trackTrialStarted() {
@@ -21,6 +35,7 @@ export function trackTrialStarted() {
     trial_length: 3,
     tier: "pro",
   });
+  ttqTrack("Subscribe", { value: 0, currency: "USD" });
 }
 
 export function trackBeginCheckout(tier: string, value: number) {
@@ -29,6 +44,7 @@ export function trackBeginCheckout(tier: string, value: number) {
     value,
     items: [{ item_name: `${tier}_plan`, quantity: 1, price: value }],
   });
+  ttqTrack("InitiateCheckout", { value, currency: "USD", content_type: "product", content_id: `${tier}_plan` });
 }
 
 export function trackPurchase(tier: string, value: number, transactionId?: string) {
@@ -38,4 +54,5 @@ export function trackPurchase(tier: string, value: number, transactionId?: strin
     transaction_id: transactionId || "",
     items: [{ item_name: `${tier}_plan`, quantity: 1, price: value }],
   });
+  ttqTrack("CompletePayment", { value, currency: "USD", content_type: "product", content_id: `${tier}_plan` });
 }

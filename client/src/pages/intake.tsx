@@ -16,9 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle, ArrowLeft, ExternalLink, Stethoscope, Info } from "lucide-react";
 import { Link } from "wouter";
-import type { SupportingDocument } from "@shared/schema";
+import type { SupportingDocument, Condition } from "@shared/schema";
 import { trackTrialStarted } from "@/lib/analytics";
 
 const BRANCHES = ["Army", "Navy", "Air Force", "Marines", "Coast Guard", "Space Force"];
@@ -58,6 +58,12 @@ export default function Intake() {
   const { data: supportingDocs = [], isLoading: docsLoading } = useQuery<SupportingDocument[]>({
     queryKey: ["/api/supporting-documents"],
   });
+
+  const { data: conditions = [] } = useQuery<Condition[]>({
+    queryKey: ["/api/conditions"],
+  });
+
+  const [uploadFeedback, setUploadFeedback] = useState<{ fileName: string; conditionsFound: string[] } | null>(null);
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -99,8 +105,22 @@ export default function Intake() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/supporting-documents"] });
+      if (uploadCategory === "medical_records" && conditions.length > 0 && data?.extractedContext) {
+        const found = conditions
+          .filter((c) => {
+            const name = c.conditionName.toLowerCase();
+            const ctx = (data.extractedContext || "").toLowerCase();
+            return ctx.includes(name) ||
+              (c.icd10Code && ctx.includes(c.icd10Code.toLowerCase())) ||
+              (c.diagnosticCode && ctx.includes(c.diagnosticCode.toLowerCase()));
+          })
+          .map((c) => c.conditionName);
+        setUploadFeedback({ fileName: data.fileName, conditionsFound: found });
+      } else {
+        setUploadFeedback(null);
+      }
       toast({ title: "Document uploaded", description: "Your file has been saved." });
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
@@ -311,12 +331,61 @@ export default function Intake() {
 
           {step === 3 && (
             <>
-              <div className="p-3 rounded-md bg-muted/50 border border-border">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    Documents are optional but significantly improve the accuracy and strength of your generated letters. Medical records must be exported to plain text (.txt) format. Decision letters and denial letters accept both PDF and text files.
-                  </p>
+              <div className="space-y-3">
+                <div className="p-3 rounded-md bg-muted/50 border border-border">
+                  <div className="flex items-start gap-2">
+                    <Stethoscope className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p className="font-medium text-foreground" data-testid="text-conditions-guidance">Enter every condition you have or plan to claim — even ones you're exploring.</p>
+                      <p>
+                        The more conditions you add on the{" "}
+                        <Link href="/conditions" className="text-primary underline underline-offset-2" data-testid="link-conditions-page">
+                          Conditions page
+                        </Link>
+                        , the better our AI can extract relevant information from your medical records and generate stronger documents.
+                      </p>
+                      {conditions.length === 0 && (
+                        <p className="text-xs text-destructive/80 mt-1" data-testid="text-no-conditions-warning">
+                          You haven't added any conditions yet. Add your conditions first for the best results.
+                        </p>
+                      )}
+                      {conditions.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {conditions.map((c) => (
+                            <Badge key={c.id} variant="outline" className="text-xs" data-testid={`badge-condition-${c.id}`}>
+                              {c.conditionName}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-md bg-muted/50 border border-border">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>
+                        Documents are optional but significantly improve the accuracy and strength of your generated letters. Decision letters and denial letters accept both PDF and text files.
+                      </p>
+                      <p className="font-medium text-foreground" data-testid="text-medical-records-instructions">Medical records must be uploaded as plain text (.txt) files.</p>
+                      <div className="mt-2 p-2 rounded-md bg-background border border-border text-xs space-y-1" data-testid="text-va-download-instructions">
+                        <p className="font-medium text-foreground flex items-center gap-1.5">
+                          <Info className="w-3.5 h-3.5 text-primary shrink-0" />
+                          How to download your records from VA.gov:
+                        </p>
+                        <ol className="list-decimal pl-5 space-y-0.5 text-muted-foreground">
+                          <li>Go to <a href="https://www.va.gov/my-health/medical-records" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2" data-testid="link-va-records">VA.gov Medical Records <ExternalLink className="w-3 h-3 inline" /></a></li>
+                          <li>Sign in with your VA account (Login.gov or ID.me)</li>
+                          <li>Navigate to <strong>Blue Button Report</strong> or <strong>Health Records</strong></li>
+                          <li>Select the date range (include your full service period)</li>
+                          <li>Choose <strong>Text File (.txt)</strong> as the download format</li>
+                          <li>Upload the downloaded .txt file here</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -353,6 +422,39 @@ export default function Intake() {
                   </div>
                 )}
               </div>
+
+              {uploadFeedback && (
+                <div className="p-3 rounded-md border border-border bg-muted/20 space-y-2" data-testid="upload-feedback">
+                  <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                    <Stethoscope className="w-4 h-4 text-primary shrink-0" />
+                    Medical Records Analysis: {uploadFeedback.fileName}
+                  </p>
+                  {uploadFeedback.conditionsFound.length > 0 ? (
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">
+                        Found references to {uploadFeedback.conditionsFound.length} of your {conditions.length} condition{conditions.length !== 1 ? "s" : ""}:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {uploadFeedback.conditionsFound.map((name) => (
+                          <Badge key={name} variant="outline" className="text-xs" data-testid={`badge-found-${name}`}>
+                            <CheckCircle className="w-3 h-3 mr-1 text-green-600 dark:text-green-400" />
+                            {name}
+                          </Badge>
+                        ))}
+                      </div>
+                      {uploadFeedback.conditionsFound.length < conditions.length && (
+                        <p className="text-xs text-muted-foreground">
+                          Some conditions were not found in this document. This is normal — they may appear in other records or may not yet be documented.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground" data-testid="text-no-conditions-found">
+                      No specific condition references were detected in this upload. The records will still be available for document generation. Consider checking that your conditions are entered on the Conditions page.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {docsLoading ? (
                 <Skeleton className="h-20" />

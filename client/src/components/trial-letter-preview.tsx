@@ -22,7 +22,7 @@ const SCORE_DIMENSIONS = [
 ] as const;
 
 const PRICING_CHIPS = [
-  { name: "Basic", price: "$19", period: "/mo" },
+  { name: "Starter", price: "$29", period: "/mo" },
   { name: "Pro", price: "$49", period: "/mo" },
   { name: "Concierge", price: "$149", period: "/mo" },
 ];

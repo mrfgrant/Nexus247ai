@@ -13,7 +13,7 @@ The Nexus247 application is built with a modern web stack, featuring a React + T
 The application adopts a military/veteran aesthetic with a color scheme of navy, gold, smoke, and fog. A dark sidebar provides consistent navigation. Key components like the RPA Scoring Modal and Landing Page Hero are designed for intuitive user interaction, with the hero featuring an animated Score Card for immediate engagement. Print-ready layouts are provided for documents.
 
 **Technical Implementations:**
-- **Database Schema:** Centralized schema (`shared/schema.ts`) includes tables for users, veteran profiles, conditions, service incidents, generated documents, knowledge base entries, chat messages, support requests, rating estimates, usage logs, supporting documents, and letter analyses.
+- **Database Schema:** Centralized schema (`shared/schema.ts`) includes tables for users, veteran profiles, conditions, service incidents, generated documents, knowledge base entries, chat messages, support requests, rating estimates, usage logs, supporting documents (with `extracted_context` column for smart medical records extraction), and letter analyses.
 - **Backend Structure:** An Express.js server (`server/index.ts`) handles API routes for all core functionalities, including profile management, document generation, chat, support, knowledge base, and Stripe integrations. Prompts for AI interactions are centralized in `server/prompts.ts`.
 - **Frontend Structure:** A React application (`client/src/`) manages routes and authentication-gated layouts. Key pages include a dashboard, multi-step veteran profile intake, conditions management, document generation and viewing, an AI claims advisor chat, a rating estimator, and a decision letter analysis tool.
 - **Shared Modules:** Common utilities like VA compensation rates (`shared/va-rates.ts`) and a `getRankDisplayName` utility for veteran addressing (`shared/utils.ts`) are centralized.
@@ -21,13 +21,32 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 **Feature Specifications:**
 - **Document Types:** Supports 8 types of VA claims documents, with some specific to higher subscription tiers.
 - **C&P Exam Prep:** A Pro+ feature providing AI-generated preparation guides and cheat sheets for C&P exams, with smart alerts and one-click generation buttons.
-- **Subscription Tiers:** Differentiated access based on Basic, Pro, and Concierge tiers, impacting document generation limits, analysis capabilities, and feature access. A 3-day Pro trial is automatically granted.
+- **Subscription Tiers:** Differentiated access based on Starter ($29/mo), Pro ($49/mo or $399/yr), and Concierge ($149/mo) tiers, impacting document generation limits, analysis capabilities, and feature access. A 3-day Pro trial is automatically granted.
 - **Decision Letter Analysis:** AI-powered analysis of VA decision letters, identifying conditions, errors, and recommendations. Includes a cross-reference feature to compare medical records against decision findings and highlight evidence gaps.
 - **Document Generation Enhancements:** Incorporates RPA scoring, conciseness for nexus letters, and context injection from decision letter analyses.
 - **Trial System:** Provides gated access to features during a trial period, offering previews of generated content with upgrade CTAs. Chat and C&P prep are also trial-gated, offering general guidance without personalized data.
 - **Profile Completion Gate:** Enforces profile completion for full app access, directing users to the intake wizard.
 - **Tier-Based Record Limits:** AI context limits for medical records and documents are scaled according to subscription tiers to ensure optimal AI analysis for paying users.
 - **Veteran Addressing:** Standardized addressing convention using rank and last name throughout the application for a personalized experience.
+
+## Stripe Configuration
+- **Stripe Price IDs:**
+  - Starter (basic): `price_1T887HEBRMFySHqpXnPtAymW` ($29/mo)
+  - Pro: `price_1T777GEBRMFySHqpCBvns2rX` ($49/mo)
+  - Pro Annual: `price_1T88AkEBRMFySHqp8lsI3H9Q` ($399/yr)
+  - Concierge: `price_1T778MEBRMFySHqpeyk2TGS4` ($149/mo)
+- **Payment Method Configuration**: `pmc_1SAh8XEBRMFySHqpizrLyWiZ` (Card, Amazon Pay, Apple Pay, Afterpay, Klarna, Zip)
+- **Annual billing**: Pro tier only; checkout route accepts `billing: "annual"` param to select annual price
+- **Admin account**: jamie@mrfgrant.com (userId 49807206) — tier=concierge, status=active
+
+## Smart Medical Records Extraction
+- **Module**: `server/extract.ts` — keyword-based extraction, no AI calls
+- **How it works**: When medical records are uploaded, the system scans the full text for sections relevant to the veteran's claimed conditions using condition names, ICD-10 codes, diagnostic codes, and synonym matching
+- **Storage**: Extracted text stored in `extracted_context` column on `supporting_documents` table
+- **Triggers**: Runs automatically on medical records upload and when conditions are added/updated
+- **AI usage**: All AI endpoints (chat, document generation, analysis, cross-reference, C&P prep) use `extracted_context` when available, falling back to full `content`
+- **Admin endpoint**: `POST /api/re-extract-records` (userId 49807206 only) — triggers re-extraction for any user
+- **Benefit**: Instead of truncating a 2M char file to 50K chars (losing older records), extracts condition-relevant sections from ALL years
 
 ## External Dependencies
 - **Anthropic Claude Sonnet:** Used for all AI functionalities, including document generation, claims advisor chat, decision letter analysis, and C&P exam prep. Requires `ANTHROPIC_API_KEY`.
@@ -56,9 +75,14 @@ The application adopts a military/veteran aesthetic with a color scheme of navy,
 - **GTM Container**: GTM-M43343V2 (in `client/index.html` and `/myscore` page — head script + noscript after body)
 - **GA Property**: G-0ZBRWF6PP6 (configured inside GTM, no longer inline)
 - **TikTok Pixel**: D6L6N5RC77U5VG9U3900 (in `client/index.html` and `/myscore` page — fires page view on all pages)
-- **Analytics utility**: `client/src/lib/analytics.ts` — pushes events to `window.dataLayer` for GTM
-- **Conversion events**:
+- **Analytics utility**: `client/src/lib/analytics.ts` — pushes GA events to `window.dataLayer` and TikTok events via `window.ttq.track()`
+- **GA Conversion events**:
   - `sign_up` — fires once per device when a new user logs in without a profile (localStorage flag `nexus247_signup_tracked`)
   - `trial_started` — fires when a new user saves their profile for the first time (triggers 3-day Pro trial)
   - `begin_checkout` — fires when user clicks subscribe on the pricing page (includes tier name and price value)
   - `purchase` — fires on successful Stripe checkout verification (includes tier, value, transaction_id; guarded by sessionStorage to prevent double-fire)
+- **TikTok Conversion events** (fire alongside GA events from same trigger points):
+  - `CompleteRegistration` — alongside sign_up
+  - `Subscribe` — alongside trial_started
+  - `InitiateCheckout` — alongside begin_checkout
+  - `CompletePayment` — alongside purchase

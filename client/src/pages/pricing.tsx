@@ -10,8 +10,8 @@ import { trackBeginCheckout } from "@/lib/analytics";
 
 const tiers = [
   {
-    name: "Basic",
-    price: "$19",
+    name: "Starter",
+    price: "$29",
     tier: "basic",
     description: "Get started with essential claim tools",
     features: [
@@ -56,6 +56,8 @@ const tiers = [
   {
     name: "Pro",
     price: "$49",
+    annualPrice: "$399",
+    annualSavings: "Save $189 — 3 months free",
     tier: "pro",
     description: "For veterans serious about winning claims",
     features: [
@@ -64,7 +66,7 @@ const tiers = [
         included: true,
       },
       {
-        text: "All Basic document types",
+        text: "All Starter document types",
         included: true,
       },
       {
@@ -179,16 +181,19 @@ export default function Pricing() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [rpaModalOpen, setRpaModalOpen] = useState(false);
+  const [annualBilling, setAnnualBilling] = useState(false);
   const { data: profile } = useQuery<any>({
     queryKey: ["/api/profile"],
     enabled: isAuthenticated,
   });
 
-  const tierPrices: Record<string, number> = { basic: 19, pro: 49, concierge: 149 };
+  const tierPrices: Record<string, number> = { basic: 29, pro: 49, concierge: 149 };
   const checkoutMutation = useMutation({
     mutationFn: async (tier: string) => {
-      trackBeginCheckout(tier, tierPrices[tier] || 0);
-      const res = await apiRequest("POST", "/api/create-checkout-session", { tier });
+      const billing = annualBilling && tier === "pro" ? "annual" : "monthly";
+      const value = billing === "annual" ? 399 : (tierPrices[tier] || 0);
+      trackBeginCheckout(tier, value);
+      const res = await apiRequest("POST", "/api/create-checkout-session", { tier, billing });
       return res.json();
     },
     onSuccess: (data: { url: string }) => {
@@ -243,6 +248,59 @@ export default function Pricing() {
         >
           Start with a free 3-day Pro trial — no credit card required.
         </p>
+
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 12,
+            marginTop: 24,
+            padding: "6px 8px",
+            borderRadius: 8,
+            background: "rgba(13,33,55,0.06)",
+            border: "1px solid rgba(13,33,55,0.08)",
+          }}
+          data-testid="toggle-billing-period"
+        >
+          <button
+            onClick={() => setAnnualBilling(false)}
+            style={{
+              padding: "8px 20px",
+              borderRadius: 6,
+              border: "none",
+              background: !annualBilling ? "#0D2137" : "transparent",
+              color: !annualBilling ? "#fff" : "var(--muted-foreground)",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            data-testid="button-monthly-billing"
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setAnnualBilling(true)}
+            style={{
+              padding: "8px 20px",
+              borderRadius: 6,
+              border: "none",
+              background: annualBilling ? "#0D2137" : "transparent",
+              color: annualBilling ? "#fff" : "var(--muted-foreground)",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            data-testid="button-annual-billing"
+          >
+            Annual
+          </button>
+        </div>
       </div>
 
       <div className="pricing-grid" style={{ display: "grid", gap: 24, alignItems: "start" }}>
@@ -317,10 +375,30 @@ export default function Pricing() {
                       color: "#fff",
                       lineHeight: 1,
                     }}>
-                      {tier.price}
+                      {annualBilling && tier.annualPrice ? tier.annualPrice : tier.price}
                     </span>
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem" }}>/month</span>
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem" }}>
+                      {annualBilling && tier.annualPrice ? "/year" : "/month"}
+                    </span>
                   </div>
+                  {annualBilling && tier.annualSavings && (
+                    <span
+                      style={{
+                        display: "inline-block",
+                        background: "rgba(212,164,62,0.15)",
+                        color: "#D4A43E",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        padding: "4px 10px",
+                        borderRadius: 4,
+                        marginBottom: 6,
+                        letterSpacing: "0.02em",
+                      }}
+                      data-testid={`badge-annual-savings-${tier.tier}`}
+                    >
+                      {tier.annualSavings}
+                    </span>
+                  )}
                   <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.88rem", lineHeight: 1.5 }}>
                     {tier.description}
                   </p>

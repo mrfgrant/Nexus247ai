@@ -105,7 +105,7 @@ function EditUserDialog({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">None (Free)</SelectItem>
-              <SelectItem value="basic">Basic ($19/mo)</SelectItem>
+              <SelectItem value="basic">Starter ($29/mo)</SelectItem>
               <SelectItem value="pro">Pro ($49/mo)</SelectItem>
               <SelectItem value="concierge">Concierge ($149/mo)</SelectItem>
             </SelectContent>
@@ -157,7 +157,7 @@ function EditUserDialog({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Sets a time-limited trial. If tier is "None", it will be set to Basic automatically.
+            Sets a time-limited trial. If tier is "None", it will be set to Starter automatically.
           </p>
         </div>
 
@@ -224,7 +224,7 @@ export default function AdminUsers() {
         <Card>
           <CardContent className="p-3 text-center">
             <p className="text-xl sm:text-2xl font-bold text-blue-600">{profiles.filter((p) => p.subscriptionTier === "basic").length}</p>
-            <p className="text-xs text-muted-foreground">Basic</p>
+            <p className="text-xs text-muted-foreground">Starter</p>
           </CardContent>
         </Card>
         <Card>

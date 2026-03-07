@@ -81,6 +81,7 @@ export interface IStorage {
 
   createSupportingDocument(data: InsertSupportingDocument): Promise<SupportingDocument>;
   getSupportingDocuments(userId: string): Promise<SupportingDocument[]>;
+  updateSupportingDocumentContext(id: string, extractedContext: string): Promise<void>;
   deleteSupportingDocument(id: string, userId: string): Promise<void>;
 
   createLetterAnalysis(data: InsertLetterAnalysis): Promise<LetterAnalysis>;
@@ -297,6 +298,10 @@ export class DatabaseStorage implements IStorage {
 
   async getSupportingDocuments(userId: string): Promise<SupportingDocument[]> {
     return db.select().from(supportingDocuments).where(eq(supportingDocuments.userId, userId)).orderBy(desc(supportingDocuments.createdAt));
+  }
+
+  async updateSupportingDocumentContext(id: string, extractedContext: string): Promise<void> {
+    await db.update(supportingDocuments).set({ extractedContext }).where(eq(supportingDocuments.id, id));
   }
 
   async deleteSupportingDocument(id: string, userId: string): Promise<void> {

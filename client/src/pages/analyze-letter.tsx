@@ -225,7 +225,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 
 const TIER_LABELS: Record<string, string> = {
   none: "Free",
-  basic: "Basic",
+  basic: "Starter",
   pro: "Pro",
   concierge: "Concierge",
 };
@@ -1091,7 +1091,7 @@ export default function AnalyzeLetter() {
               <Lock className="w-8 h-8 mx-auto text-muted-foreground mb-3" />
               <p className="text-sm font-medium text-foreground mb-1">Subscription Required</p>
               <p className="text-xs text-muted-foreground mb-4">
-                Decision letter analysis requires an active subscription. Basic plan includes 2 analyses per month.
+                Decision letter analysis requires an active subscription. Starter plan includes 2 analyses per month.
               </p>
               <Button onClick={() => navigate("/pricing")} data-testid="button-upgrade-analyze">
                 <Crown className="w-4 h-4 mr-2" /> View Plans

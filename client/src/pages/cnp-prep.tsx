@@ -575,7 +575,7 @@ export default function CnpPrep() {
                       </Button>
                       <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
                         {[
-                          { name: "Basic", price: "$19", period: "/mo" },
+                          { name: "Starter", price: "$29", period: "/mo" },
                           { name: "Pro", price: "$49", period: "/mo" },
                           { name: "Concierge", price: "$149", period: "/mo" },
                         ].map((chip) => (

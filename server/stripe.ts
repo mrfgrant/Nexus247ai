@@ -8,14 +8,16 @@ if (!process.env.STRIPE_SECRET_KEY) {
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
 export const PRICE_TO_TIER: Record<string, string> = {
-  "price_1T776nEBRMFySHqpEY8vdmE9": "basic",
+  "price_1T887HEBRMFySHqpXnPtAymW": "basic",
   "price_1T777GEBRMFySHqpCBvns2rX": "pro",
+  "price_1T88AkEBRMFySHqp8lsI3H9Q": "pro",
   "price_1T778MEBRMFySHqpeyk2TGS4": "concierge",
 };
 
 export const TIER_TO_PRICE: Record<string, string> = {
-  basic: "price_1T776nEBRMFySHqpEY8vdmE9",
+  basic: "price_1T887HEBRMFySHqpXnPtAymW",
   pro: "price_1T777GEBRMFySHqpCBvns2rX",
+  pro_annual: "price_1T88AkEBRMFySHqp8lsI3H9Q",
   concierge: "price_1T778MEBRMFySHqpeyk2TGS4",
 };
 

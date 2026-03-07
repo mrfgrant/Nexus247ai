@@ -226,6 +226,7 @@ export const supportingDocuments = pgTable("supporting_documents", {
   fileName: text("file_name").notNull(),
   fileType: text("file_type").notNull(),
   content: text("content"),
+  extractedContext: text("extracted_context"),
   fileSize: integer("file_size"),
   createdAt: timestamp("created_at").defaultNow(),
 });
