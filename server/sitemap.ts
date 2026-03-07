@@ -30,11 +30,21 @@ const STATIC_PAGES: SitemapPage[] = [
     priority: '0.9',
     changefreq: 'monthly',
   },
-  // ── Add new pages below this line ──
-  // { path: '/blog/what-is-a-c-and-p-exam', priority: '0.8', changefreq: 'monthly' },
-  // { path: '/blog/secondary-service-connection', priority: '0.8', changefreq: 'monthly' },
-  // { path: '/blog/tdiu-benefits-explained', priority: '0.8', changefreq: 'monthly' },
-  // { path: '/pricing', priority: '0.7', changefreq: 'monthly' },
+  {
+    path: '/forum',
+    priority: '0.9',
+    changefreq: 'daily',
+  },
+  {
+    path: '/faq',
+    priority: '0.8',
+    changefreq: 'monthly',
+  },
+  {
+    path: '/pricing',
+    priority: '0.8',
+    changefreq: 'monthly',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
