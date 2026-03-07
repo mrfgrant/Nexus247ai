@@ -44,32 +44,6 @@ export default function PricingAnchor() {
         transition: "opacity 0.7s ease, transform 0.7s ease",
       }}
     >
-      {/* Header callout */}
-      <div style={{
-        textAlign: "center",
-        marginBottom: "1.8rem",
-      }}>
-        <p style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: "0.72rem",
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--gold)",
-          marginBottom: "0.6rem",
-        }}>
-          Before you look at the price
-        </p>
-        <p style={{
-          fontFamily: "'DM Serif Display', serif",
-          fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)",
-          color: "var(--navy)",
-          lineHeight: 1.2,
-          margin: 0,
-        }}>
-          Less than one hour of an attorney's time.
-        </p>
-      </div>
-
       {/* Comparison bars */}
       <div style={{
         display: "grid",

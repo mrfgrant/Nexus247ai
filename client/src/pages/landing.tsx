@@ -325,7 +325,7 @@ function ScoreCard() {
 // ── Animated bounce arrow ──────────────────────────────────────────
 function BounceArrow() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, margin: "0 auto 48px", userSelect: "none" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, margin: "16px auto 0", userSelect: "none" }}>
       <div style={{
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: "0.68rem",
@@ -609,7 +609,7 @@ export default function Landing() {
         </div>
 
         {/* ── ANIMATED DASHBOARD DEMO + ARROW ── */}
-        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 64px" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 960, margin: "0 auto 0" }}>
           <BounceArrow />
           <DashboardDemo />
         </div>
@@ -700,28 +700,29 @@ export default function Landing() {
 
       {/* PRICING */}
       <section id="pricing" style={{ padding: "100px 5vw", background: "var(--smoke)" }}>
-        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 3rem", textAlign: "center" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 580, margin: "0 auto 20px", textAlign: "center" }}>
           <div style={{
             display: "inline-block", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.7rem",
             letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--gold)",
-            border: "1px solid rgba(200,153,58,0.35)", padding: "5px 14px", borderRadius: 2, marginBottom: "1.2rem",
+            border: "1px solid rgba(200,153,58,0.35)", padding: "5px 14px", borderRadius: 2, marginBottom: "12px",
           }}>
             Pricing
           </div>
-          <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "var(--navy)", lineHeight: 1.15, marginBottom: "1rem" }}>
+          <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: "clamp(2rem, 3.5vw, 3rem)", color: "var(--navy)", lineHeight: 1.15, marginBottom: "12px" }}>
             Less than one hour of an attorney's time.
           </h2>
-          <p style={{ color: "var(--landing-muted)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300 }}>
+          <p style={{ color: "var(--landing-muted)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300, margin: 0 }}>
             The average VA attorney charges $300–$500/hr and takes{" "}
             <strong style={{ color: "var(--navy)" }}>20% of your retro pay</strong>. We charge a flat monthly
             rate — and show you the score before you submit.
-            <br /><br />
+          </p>
+          <p style={{ color: "var(--landing-muted)", fontSize: "1rem", lineHeight: 1.7, fontWeight: 300, marginTop: "16px" }}>
             Start with a <span style={{ color: "var(--gold)", fontWeight: 600 }}>free 3-day Pro trial</span> — no credit card required.
           </p>
         </div>
 
         {/* Annual toggle */}
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: "3rem" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 14, marginBottom: "20px" }}>
           <span style={{ fontSize: "0.82rem", color: annualBilling ? "rgba(11,28,46,0.4)" : "var(--navy)", fontWeight: annualBilling ? 400 : 600, transition: "color 0.2s" }}>
             Monthly
           </span>
@@ -748,7 +749,7 @@ export default function Landing() {
             fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem",
             letterSpacing: "0.1em", color: "#1a9e6b",
             background: "rgba(26,158,107,0.1)", border: "1px solid rgba(26,158,107,0.25)",
-            padding: "3px 10px", borderRadius: 20,
+            padding: "3px 8px", borderRadius: 20,
           }}>
             Pro: save $189/yr
           </span>
