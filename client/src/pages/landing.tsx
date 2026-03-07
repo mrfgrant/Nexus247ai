@@ -22,6 +22,7 @@ import TikTokBanner from "@/components/TikTokBanner";
 import OurStory from "@/components/OurStory";
 import RatingTimeline from "@/components/RatingTimeline";
 import DashboardDemo from "@/components/DashboardDemo";
+import PricingAnchor from "@/components/PricingAnchor";
 
 const features = [
   {
