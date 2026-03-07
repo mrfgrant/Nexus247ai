@@ -189,7 +189,16 @@ export default function Forum() {
       setQuestionError("");
     },
     onError: (err: any) => {
-      setQuestionError(err.message || "Failed to submit question");
+      let message = err.message || "Failed to submit question";
+      if (message.includes('{"error":')) {
+        try {
+          const parsed = JSON.parse(message.split(': ').slice(1).join(': '));
+          message = parsed.error;
+        } catch (e) {
+          message = message.replace(/429: \{"error":"(.*)"\}/, "$1");
+        }
+      }
+      setQuestionError(message);
     },
   });
 
