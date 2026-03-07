@@ -391,6 +391,7 @@ export default function Landing() {
           <li><a href="#how" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-how-it-works">How It Works</a></li>
           <li><a href="#pricing" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-pricing">Pricing</a></li>
           <li><a href="/faq" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-faq">FAQ</a></li>
+          <li><a href="/forum" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="link-forum">Forum</a></li>
         </ul>
         <div className="hidden md:flex" style={{ alignItems: "center", gap: "12px" }}>
           <a href="/api/login" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }} data-testid="button-login">Log In</a>
@@ -432,6 +433,7 @@ export default function Landing() {
           <a href="#how" onClick={() => setMobileMenuOpen(false)} style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-how-mobile">How It Works</a>
           <a href="#pricing" onClick={() => setMobileMenuOpen(false)} style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-pricing-mobile">Pricing</a>
           <a href="/faq" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-faq-mobile">FAQ</a>
+          <a href="/forum" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="link-forum-mobile">Forum</a>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12, display: "flex", flexDirection: "column", gap: 12 }}>
             <a href="/api/login" style={{ color: "rgba(255,255,255,0.72)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", padding: "8px 0" }} data-testid="button-login-mobile">Log In</a>
             <a href="/api/login" data-testid="button-get-started-mobile">

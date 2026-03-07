@@ -28,6 +28,7 @@ import {
   ClipboardCheck,
   AlertTriangle,
   Lightbulb,
+  MessageSquareText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
@@ -51,6 +52,7 @@ const mainItems = [
 ];
 
 const bottomItems = [
+  { title: "Q&A Forum", url: "/forum", icon: MessageSquareText },
   { title: "Pricing", url: "/pricing", icon: CreditCard },
   { title: "Get Help", url: "/support", icon: HeadphonesIcon },
   { title: "Report a Problem", url: "/support?type=bug", icon: AlertTriangle },

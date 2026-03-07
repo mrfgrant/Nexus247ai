@@ -25,6 +25,7 @@ import AdminUsers from "@/pages/admin-users";
 import AnalyzeLetter from "@/pages/analyze-letter";
 import CnpPrep from "@/pages/cnp-prep";
 import DocumentPrint from "@/pages/document-print";
+import Forum from "@/pages/forum";
 import NotFound from "@/pages/not-found";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
@@ -42,7 +43,7 @@ function AuthenticatedLayout() {
   });
 
   const hasProfile = !!profile && profile !== null && typeof profile === "object" && profile.id;
-  const allowedWithoutProfile = ["/intake", "/pricing", "/settings", "/support", "/chat"];
+  const allowedWithoutProfile = ["/intake", "/pricing", "/settings", "/support", "/chat", "/forum"];
   const needsRedirect = !profileLoading && !hasProfile && !allowedWithoutProfile.includes(location);
   useEffect(() => {
     if (!profileLoading && !hasProfile) {
@@ -142,6 +143,7 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/faq" component={Faq} />
           <Route path="/terms" component={Terms} />
+          <Route path="/forum" component={Forum} />
           <Route component={Landing} />
         </Switch>
         <WelcomeOverlay />
@@ -155,6 +157,7 @@ function Router() {
     <Switch>
       <Route path="/faq" component={Faq} />
       <Route path="/terms" component={Terms} />
+      <Route path="/forum" component={Forum} />
       <Route path="/documents/:id/print" component={DocumentPrint} />
       <Route><AuthenticatedLayout /></Route>
     </Switch>

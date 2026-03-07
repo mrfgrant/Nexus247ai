@@ -2,7 +2,7 @@ import type { Express, RequestHandler } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
-import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT, DECISION_LETTER_ANALYSIS_PROMPT, CROSS_REFERENCE_PROMPT, CNP_EXAM_PREP_PROMPT, CNP_EXAM_CHEATSHEET_PROMPT } from "./prompts";
+import { DOCUMENT_PROMPTS, RPA_SCORING_PROMPT, CHAT_SYSTEM_PROMPT, DECISION_LETTER_ANALYSIS_PROMPT, CROSS_REFERENCE_PROMPT, CNP_EXAM_PREP_PROMPT, CNP_EXAM_CHEATSHEET_PROMPT, FORUM_ANSWER_PROMPT } from "./prompts";
 import { MONTHLY_RATES, SMC_RATES, SMC_INFO } from "@shared/va-rates";
 import Anthropic from "@anthropic-ai/sdk";
 import multer from "multer";
@@ -1958,6 +1958,148 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
     } catch (error: any) {
       console.error("Score letter error:", error);
       res.status(500).json({ error: "Failed to score letter. Please try again." });
+    }
+  });
+
+  const forumIpLimit = new Map<string, { count: number; resetAt: number }>();
+
+  app.post("/api/forum/register", async (req, res) => {
+    try {
+      const { email, firstName, lastName, rank, branch } = req.body;
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: "Valid email is required" });
+      }
+      const existing = await storage.getForumUserByEmail(email.toLowerCase());
+      if (existing) return res.json(existing);
+      const user = await storage.createForumUser({
+        email: email.toLowerCase(),
+        firstName: firstName || null,
+        lastName: lastName || null,
+        rank: rank || null,
+        branch: branch || null,
+      });
+      res.json(user);
+    } catch (error) {
+      console.error("Forum register error:", error);
+      res.status(500).json({ error: "Failed to register" });
+    }
+  });
+
+  app.get("/api/forum/questions", async (req, res) => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const offset = parseInt(req.query.offset as string) || 0;
+      const category = (req.query.category as string) || undefined;
+      const questions = await storage.getForumQuestions(limit, offset, category);
+      res.json(questions);
+    } catch (error) {
+      console.error("Forum questions error:", error);
+      res.status(500).json({ error: "Failed to fetch questions" });
+    }
+  });
+
+  app.get("/api/forum/categories", async (req, res) => {
+    try {
+      const categories = await storage.getForumCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.get("/api/forum/questions/:id", async (req, res) => {
+    try {
+      const question = await storage.getForumQuestion(req.params.id);
+      if (!question) return res.status(404).json({ error: "Question not found" });
+      res.json(question);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch question" });
+    }
+  });
+
+  app.post("/api/forum/questions", async (req, res) => {
+    try {
+      const { forumUserId, question } = req.body;
+      if (!forumUserId || !question || question.trim().length < 10) {
+        return res.status(400).json({ error: "Question must be at least 10 characters" });
+      }
+      if (question.length > 2000) {
+        return res.status(400).json({ error: "Question must be under 2000 characters" });
+      }
+
+      const ip = req.ip || req.socket.remoteAddress || "unknown";
+      const now = Date.now();
+      const ipEntry = forumIpLimit.get(ip);
+      if (ipEntry && ipEntry.resetAt > now) {
+        if (ipEntry.count >= 5) {
+          return res.status(429).json({ error: "Too many questions. Please wait before asking another." });
+        }
+        ipEntry.count++;
+      } else {
+        forumIpLimit.set(ip, { count: 1, resetAt: now + 3600000 });
+      }
+
+      const forumUser = await storage.getForumUser(forumUserId);
+      if (!forumUser) return res.status(400).json({ error: "Invalid forum user" });
+
+      const recentCount = await storage.getForumQuestionCountByUser(forumUserId, 1);
+      if (recentCount >= 3) {
+        return res.status(429).json({ error: "You can ask up to 3 questions per hour. Please wait." });
+      }
+
+      const newQuestion = await storage.createForumQuestion({
+        forumUserId,
+        question: question.trim(),
+      });
+
+      res.json(newQuestion);
+
+      const rankTitle = forumUser.rank || "";
+      const lastName = forumUser.lastName || "";
+      try {
+        const anthropic = getAnthropicClient();
+        const response = await anthropic.messages.create({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1500,
+          system: FORUM_ANSWER_PROMPT.system,
+          messages: [{ role: "user", content: FORUM_ANSWER_PROMPT.getUserPrompt(question.trim(), rankTitle, lastName) }],
+        });
+        const text = (response.content[0] as any).text;
+        const parsed = JSON.parse(text);
+        await storage.updateForumQuestionAnswer(
+          newQuestion.id,
+          parsed.answer || text,
+          parsed.category || "General",
+          parsed.featureCta || "/",
+        );
+      } catch (aiError) {
+        console.error("Forum AI answer error:", aiError);
+        try {
+          const anthropic = getAnthropicClient();
+          const fallback = await anthropic.messages.create({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1500,
+            messages: [{ role: "user", content: `Answer this VA claims question briefly and helpfully. Cite 38 CFR sections where relevant. End with a disclaimer that this is general guidance, not legal advice.\n\nQuestion: ${question.trim()}` }],
+          });
+          const fallbackText = (fallback.content[0] as any).text;
+          await storage.updateForumQuestionAnswer(newQuestion.id, fallbackText, "General", "/");
+        } catch (fallbackError) {
+          console.error("Forum fallback AI error:", fallbackError);
+        }
+      }
+    } catch (error) {
+      console.error("Forum question error:", error);
+      res.status(500).json({ error: "Failed to submit question" });
+    }
+  });
+
+  app.post("/api/forum/questions/:id/upvote", async (req, res) => {
+    try {
+      await storage.upvoteForumQuestion(req.params.id);
+      const question = await storage.getForumQuestion(req.params.id);
+      res.json({ upvotes: question?.upvotes || 0 });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to upvote" });
     }
   });
 

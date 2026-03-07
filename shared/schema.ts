@@ -259,3 +259,46 @@ export const insertLetterAnalysisSchema = createInsertSchema(letterAnalyses).omi
 });
 export type LetterAnalysis = typeof letterAnalyses.$inferSelect;
 export type InsertLetterAnalysis = z.infer<typeof insertLetterAnalysisSchema>;
+
+export const forumUsers = pgTable("forum_users", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  rank: text("rank"),
+  branch: text("branch"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertForumUserSchema = createInsertSchema(forumUsers).omit({
+  id: true,
+  createdAt: true,
+});
+export type ForumUser = typeof forumUsers.$inferSelect;
+export type InsertForumUser = z.infer<typeof insertForumUserSchema>;
+
+export const forumQuestions = pgTable("forum_questions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  forumUserId: uuid("forum_user_id")
+    .notNull()
+    .references(() => forumUsers.id, { onDelete: "cascade" }),
+  question: text("question").notNull(),
+  aiAnswer: text("ai_answer"),
+  category: text("category"),
+  featureCta: text("feature_cta"),
+  upvotes: integer("upvotes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  answeredAt: timestamp("answered_at"),
+});
+
+export const insertForumQuestionSchema = createInsertSchema(forumQuestions).omit({
+  id: true,
+  aiAnswer: true,
+  category: true,
+  featureCta: true,
+  upvotes: true,
+  createdAt: true,
+  answeredAt: true,
+});
+export type ForumQuestion = typeof forumQuestions.$inferSelect;
+export type InsertForumQuestion = z.infer<typeof insertForumQuestionSchema>;

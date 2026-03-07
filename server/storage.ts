@@ -30,6 +30,12 @@ import {
   letterAnalyses,
   type LetterAnalysis,
   type InsertLetterAnalysis,
+  forumUsers,
+  forumQuestions,
+  type ForumUser,
+  type InsertForumUser,
+  type ForumQuestion,
+  type InsertForumQuestion,
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
@@ -99,6 +105,17 @@ export interface IStorage {
   getSupportingDocuments(userId: string): Promise<SupportingDocument[]>;
   updateSupportingDocumentContext(id: string, extractedContext: string): Promise<void>;
   deleteSupportingDocument(id: string, userId: string): Promise<void>;
+
+  createForumUser(data: InsertForumUser): Promise<ForumUser>;
+  getForumUserByEmail(email: string): Promise<ForumUser | undefined>;
+  getForumUser(id: string): Promise<ForumUser | undefined>;
+  createForumQuestion(data: InsertForumQuestion): Promise<ForumQuestion>;
+  getForumQuestions(limit: number, offset: number, category?: string): Promise<(ForumQuestion & { firstName?: string | null; lastName?: string | null; rank?: string | null; branch?: string | null })[]>;
+  getForumQuestion(id: string): Promise<(ForumQuestion & { firstName?: string | null; lastName?: string | null; rank?: string | null; branch?: string | null }) | undefined>;
+  updateForumQuestionAnswer(id: string, answer: string, category: string, featureCta: string): Promise<void>;
+  upvoteForumQuestion(id: string): Promise<void>;
+  getForumCategories(): Promise<{ category: string; count: number }[]>;
+  getForumQuestionCountByUser(forumUserId: string, sinceHoursAgo: number): Promise<number>;
 
   createLetterAnalysis(data: InsertLetterAnalysis): Promise<LetterAnalysis>;
   getLetterAnalyses(userId: string): Promise<LetterAnalysis[]>;
@@ -587,6 +604,91 @@ export class DatabaseStorage implements IStorage {
       .where(eq(veteranProfiles.stripeCustomerId, stripeCustomerId))
       .returning();
     return profile;
+  }
+  async createForumUser(data: InsertForumUser): Promise<ForumUser> {
+    const [user] = await db.insert(forumUsers).values(data).returning();
+    return user;
+  }
+
+  async getForumUserByEmail(email: string): Promise<ForumUser | undefined> {
+    const [user] = await db.select().from(forumUsers).where(eq(forumUsers.email, email.toLowerCase()));
+    return user;
+  }
+
+  async getForumUser(id: string): Promise<ForumUser | undefined> {
+    const [user] = await db.select().from(forumUsers).where(eq(forumUsers.id, id));
+    return user;
+  }
+
+  async createForumQuestion(data: InsertForumQuestion): Promise<ForumQuestion> {
+    const [question] = await db.insert(forumQuestions).values(data).returning();
+    return question;
+  }
+
+  async getForumQuestions(limit: number, offset: number, category?: string): Promise<(ForumQuestion & { firstName?: string | null; lastName?: string | null; rank?: string | null; branch?: string | null })[]> {
+    const conditions_list = [isNotNull(forumQuestions.aiAnswer)];
+    if (category) {
+      conditions_list.push(eq(forumQuestions.category, category) as any);
+    }
+    const rows = await db
+      .select({
+        question: forumQuestions,
+        firstName: forumUsers.firstName,
+        lastName: forumUsers.lastName,
+        rank: forumUsers.rank,
+        branch: forumUsers.branch,
+      })
+      .from(forumQuestions)
+      .leftJoin(forumUsers, eq(forumQuestions.forumUserId, forumUsers.id))
+      .where(and(...conditions_list))
+      .orderBy(desc(forumQuestions.createdAt))
+      .limit(limit)
+      .offset(offset);
+    return rows.map(r => ({ ...r.question, firstName: r.firstName, lastName: r.lastName, rank: r.rank, branch: r.branch }));
+  }
+
+  async getForumQuestion(id: string): Promise<(ForumQuestion & { firstName?: string | null; lastName?: string | null; rank?: string | null; branch?: string | null }) | undefined> {
+    const [row] = await db
+      .select({
+        question: forumQuestions,
+        firstName: forumUsers.firstName,
+        lastName: forumUsers.lastName,
+        rank: forumUsers.rank,
+        branch: forumUsers.branch,
+      })
+      .from(forumQuestions)
+      .leftJoin(forumUsers, eq(forumQuestions.forumUserId, forumUsers.id))
+      .where(eq(forumQuestions.id, id));
+    if (!row) return undefined;
+    return { ...row.question, firstName: row.firstName, lastName: row.lastName, rank: row.rank, branch: row.branch };
+  }
+
+  async updateForumQuestionAnswer(id: string, answer: string, category: string, featureCta: string): Promise<void> {
+    await db.update(forumQuestions).set({ aiAnswer: answer, category, featureCta, answeredAt: new Date() }).where(eq(forumQuestions.id, id));
+  }
+
+  async upvoteForumQuestion(id: string): Promise<void> {
+    await db.update(forumQuestions).set({ upvotes: sql`${forumQuestions.upvotes} + 1` }).where(eq(forumQuestions.id, id));
+  }
+
+  async getForumCategories(): Promise<{ category: string; count: number }[]> {
+    const rows = await db
+      .select({ category: forumQuestions.category, count: sql<number>`count(*)::int` })
+      .from(forumQuestions)
+      .where(and(isNotNull(forumQuestions.aiAnswer), isNotNull(forumQuestions.category)))
+      .groupBy(forumQuestions.category)
+      .orderBy(sql`count(*) desc`);
+    return rows.filter(r => r.category !== null) as { category: string; count: number }[];
+  }
+
+  async getForumQuestionCountByUser(forumUserId: string, sinceHoursAgo: number): Promise<number> {
+    const since = new Date();
+    since.setHours(since.getHours() - sinceHoursAgo);
+    const [row] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(forumQuestions)
+      .where(and(eq(forumQuestions.forumUserId, forumUserId), gte(forumQuestions.createdAt, since)));
+    return row?.count || 0;
   }
 }
 
