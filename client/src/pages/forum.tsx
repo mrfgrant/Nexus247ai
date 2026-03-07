@@ -91,12 +91,30 @@ export default function Forum() {
     refetchInterval: shouldPoll ? 3000 : false,
   });
 
-  const { data: categories = [] } = useQuery<string[]>({
+  const { data: categories = [] } = useQuery<{ category: string, count: number }[]>({
     queryKey: ["/api/forum/categories"],
+    queryFn: async () => {
+      const res = await fetch("/api/forum/categories");
+      if (!res.ok) throw new Error("Failed to fetch categories");
+      return res.json();
+    },
   });
 
   const { data: questionsResponse, isLoading: questionsLoading } = useQuery<{ questions: ForumQuestion[], hasMore: boolean }>({
     queryKey: ["/api/forum/questions", selectedCategory, offset],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append("category", selectedCategory);
+      params.append("offset", offset.toString());
+      const res = await fetch(`/api/forum/questions?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch questions");
+      const data = await res.json();
+      // Ensure we return the expected structure even if the API returns a raw array
+      if (Array.isArray(data)) {
+        return { questions: data, hasMore: data.length === 20 };
+      }
+      return data;
+    },
     placeholderData: (previousData) => previousData,
   });
 
@@ -739,7 +757,7 @@ export default function Forum() {
                 {cat.category}
                 <span style={{
                   background: selectedCategory === cat.category ? "var(--gold)" : "rgba(13,33,55,0.1)",
-                  color: selectedCategory === cat.category ? "var(--navy)" : "var(--navy)",
+                  color: "var(--navy)",
                   padding: "1px 6px", borderRadius: 2, fontSize: "0.65rem",
                 }}>
                   {cat.count}
