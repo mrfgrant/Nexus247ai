@@ -79,6 +79,43 @@ export default function Forum() {
   const [pendingTimedOut, setPendingTimedOut] = useState(false);
 
   useEffect(() => {
+    const defaultTitle = "VA Claims Q&A Forum | Nexus247.ai";
+    const defaultDesc = "Ask any VA claims question — get expert AI answers grounded in 38 CFR. Community knowledge base for veterans.";
+
+    // Helper to update or create meta tags
+    const updateMeta = (name: string, content: string, isProperty = false) => {
+      const attr = isProperty ? "property" : "name";
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
+
+    if (pendingQuestionId && pendingQuestion) {
+      const qText = pendingQuestion.question.substring(0, 60) + (pendingQuestion.question.length > 60 ? "..." : "");
+      document.title = `${qText} | VA Claims Q&A`;
+      const desc = pendingQuestion.aiAnswer?.substring(0, 160).replace(/\n/g, " ") || defaultDesc;
+      updateMeta("description", desc);
+      updateMeta("og:title", qText, true);
+      updateMeta("og:description", desc, true);
+      updateMeta("og:url", window.location.href, true);
+    } else {
+      document.title = defaultTitle;
+      updateMeta("description", defaultDesc);
+      updateMeta("og:title", defaultTitle, true);
+      updateMeta("og:description", defaultDesc, true);
+      updateMeta("og:url", window.location.href, true);
+    }
+
+    return () => {
+      document.title = "Nexus247.ai - AI-Powered VA Claims Assistant";
+    };
+  }, [pendingQuestion, pendingQuestionId]);
+
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const questionId = urlParams.get('q');
     if (questionId) {
