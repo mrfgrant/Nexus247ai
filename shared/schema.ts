@@ -48,6 +48,14 @@ export const veteranProfiles = pgTable("veteran_profiles", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   role: text("role").default("user"),
   archivedAt: timestamp("archived_at"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  hearAboutUs: text("hear_about_us"),
+  firstLetterGeneratedAt: timestamp("first_letter_generated_at"),
+  firstLetterConditionName: text("first_letter_condition_name"),
+  firstLetterScore: integer("first_letter_score"),
+  firstLetterPreview: text("first_letter_preview"),
+  trialLetterEmailSent: boolean("trial_letter_email_sent").default(false),
   trialExpiryEmailSent: boolean("trial_expiry_email_sent").default(false),
   day7ReengagementSent: boolean("day7_reengagement_sent").default(false),
   createdAt: timestamp("created_at").defaultNow(),
@@ -302,3 +310,40 @@ export const insertForumQuestionSchema = createInsertSchema(forumQuestions).omit
 });
 export type ForumQuestion = typeof forumQuestions.$inferSelect;
 export type InsertForumQuestion = z.infer<typeof insertForumQuestionSchema>;
+
+export const referrals = pgTable("referrals", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  referrerUserId: varchar("referrer_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  referrerName: text("referrer_name"),
+  refereeEmail: text("referee_email").notNull(),
+  message: text("message"),
+  status: text("status").default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertReferralSchema = createInsertSchema(referrals).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+});
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
+
+export const deviceFingerprints = pgTable("device_fingerprints", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  deviceId: text("device_id").notNull(),
+  userId: varchar("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  email: text("email"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDeviceFingerprintSchema = createInsertSchema(deviceFingerprints).omit({
+  id: true,
+  createdAt: true,
+});
+export type DeviceFingerprint = typeof deviceFingerprints.$inferSelect;
+export type InsertDeviceFingerprint = z.infer<typeof insertDeviceFingerprintSchema>;

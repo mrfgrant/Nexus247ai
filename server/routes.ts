@@ -9,7 +9,8 @@ import multer from "multer";
 import { createRequire } from "module";
 import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from "./stripe";
 import { getRankDisplayName } from "@shared/utils";
-import { sendWelcomeEmail, sendAdminSignupNotification } from "./emails";
+import { sendWelcomeEmail, sendAdminSignupNotification, sendReferralEmail } from "./emails";
+import { randomUUID } from "crypto";
 import { extractRelevantContext, searchContentForTopic } from "./extract";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { sitemapRouter } from './sitemap';
@@ -60,7 +61,13 @@ function isTrialUser(profile: any): boolean {
 
 function getPreviewContent(content: string): string {
   const paragraphs = content.split(/\n\n+/);
-  return paragraphs.slice(0, 3).join("\n\n");
+  let preview = "";
+  for (const p of paragraphs) {
+    if (preview.length + p.length > 800 && preview.length > 200) break;
+    preview += (preview ? "\n\n" : "") + p;
+    if (paragraphs.indexOf(p) >= 7) break;
+  }
+  return preview || paragraphs.slice(0, 3).join("\n\n");
 }
 
 function getRecordLimit(tier: string): number {
@@ -80,6 +87,7 @@ function getDocLimit(tier: string): number {
 }
 
 const PROFILE_ALLOWED_FIELDS = [
+  "firstName", "lastName", "hearAboutUs",
   "branch", "rank", "mosRate", "serviceStartDate", "serviceEndDate",
   "dischargeType", "deploymentLocations", "vaFileNumber", "currentRating",
   "dateOfBirth", "ssnLast4", "address", "city", "state", "zip",
@@ -141,6 +149,21 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  app.use((req: any, _res, next) => {
+    let deviceId = req.cookies?.nexus247_device;
+    if (!deviceId) {
+      deviceId = randomUUID();
+      _res.cookie("nexus247_device", deviceId, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        maxAge: 2 * 365 * 24 * 60 * 60 * 1000,
+      });
+    }
+    req.deviceId = deviceId;
+    next();
+  });
+
   try {
     const existing = await storage.getVeteranProfile("49807206");
     if (existing && (existing.role !== "admin" || existing.subscriptionTier !== "concierge" || existing.subscriptionStatus !== "active")) {
@@ -191,16 +214,33 @@ export async function registerRoutes(
 
       if (isNewProfile) {
         const email = req.user?.claims?.email;
-        const rankTitle = safeData.rank ? getRankDisplayName(safeData.rank) : "";
-        const lastName = req.user?.claims?.last_name || req.user?.claims?.lastName || "";
+        const profileLastName = safeData.lastName || req.user?.claims?.last_name || req.user?.claims?.lastName || "";
+        const profileFirstName = safeData.firstName || req.user?.claims?.first_name || req.user?.claims?.firstName || "";
+        const rankTitle = safeData.rank ? getRankDisplayName(safeData.rank, safeData.branch, null, null) : "";
+
+        const deviceId = (req as any).deviceId;
+        if (deviceId) {
+          await storage.recordDeviceFingerprint(deviceId, profileData.userId, email || null);
+          const existingDevices = await storage.getDeviceFingerprints(deviceId);
+          if (existingDevices.length > 1) {
+            await storage.upsertVeteranProfile({
+              ...profileData,
+              userId: profileData.userId,
+              subscriptionTier: "none",
+              trialEndsAt: null,
+            } as any);
+            console.log(`[anti-abuse] Trial denied for device ${deviceId} — existing account(s) found`);
+          }
+        }
+
         if (email) {
-          sendWelcomeEmail(email, rankTitle, lastName).catch(err => console.error("[email] Welcome email failed:", err));
+          sendWelcomeEmail(email, rankTitle, profileLastName).catch(err => console.error("[email] Welcome email failed:", err));
           sendAdminSignupNotification({
             email,
             rank: rankTitle || safeData.rank,
             branch: safeData.branch,
-            firstName: req.user?.claims?.first_name || req.user?.claims?.firstName || "",
-            lastName,
+            firstName: profileFirstName,
+            lastName: profileLastName,
           }).catch(err => console.error("[email] Admin notification failed:", err));
         }
       }
@@ -507,6 +547,9 @@ export async function registerRoutes(
       }
 
       const monthCount = await storage.getDocumentCountThisMonth(userId);
+      if (isTrialUser(profile) && monthCount >= 1) {
+        return res.status(403).json({ error: "Trial accounts are limited to 1 document. Subscribe to unlock full access.", trialLimited: true });
+      }
       const limit = TIER_LIMITS[tier] || 0;
       if (monthCount >= limit) {
         return res.status(403).json({ error: `Monthly limit reached (${limit} documents)` });
@@ -699,6 +742,14 @@ export async function registerRoutes(
       });
 
       if (isTrialUser(profile)) {
+        if (profile && !profile.firstLetterGeneratedAt) {
+          const previewParagraphs = content.split(/\n\n+/).slice(0, 2).join("\n\n");
+          storage.updateFirstLetterData(userId, {
+            conditionName: condition?.conditionName || documentType.replace(/_/g, " "),
+            score: scores.overallScore || 0,
+            preview: previewParagraphs,
+          }).catch(err => console.error("[trial] Failed to record first letter data:", err));
+        }
         res.json({
           document: doc,
           content: null,
@@ -1318,6 +1369,9 @@ export async function registerRoutes(
       }
 
       const analysisCount = await storage.getAnalysisCountThisMonth(userId);
+      if (isTrialUser(profile) && analysisCount >= 1) {
+        return res.status(403).json({ error: "Trial accounts are limited to 1 analysis. Subscribe to unlock full access.", trialLimited: true });
+      }
       const analysisLimit = ANALYSIS_LIMITS[tier] || 0;
       if (analysisCount >= analysisLimit) {
         return res.status(403).json({ error: `Monthly analysis limit reached (${analysisLimit} analyses). Upgrade your plan for more analyses.`, limitReached: true });
@@ -1549,6 +1603,9 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
           gte(usageLogsTable.createdAt, startOfMonth)
         ));
       const prepCount = Number(prepCountResult[0]?.count || 0);
+      if (isTrialUser(profile) && prepCount >= 1) {
+        return res.status(403).json({ error: "Trial accounts are limited to 1 C&P prep. Subscribe to unlock full access.", trialLimited: true });
+      }
       const prepLimit = CNP_PREP_LIMITS[tier] || 0;
       if (prepCount >= prepLimit) {
         return res.status(403).json({ error: `Monthly C&P prep limit reached (${prepLimit}). Upgrade your plan for more.` });
@@ -2100,6 +2157,38 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
       res.json({ upvotes: question?.upvotes || 0 });
     } catch (error) {
       res.status(500).json({ error: "Failed to upvote" });
+    }
+  });
+
+  app.post("/api/referrals", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { refereeEmail, message } = req.body;
+      if (!refereeEmail || typeof refereeEmail !== "string" || !refereeEmail.includes("@")) {
+        return res.status(400).json({ error: "Valid email address required" });
+      }
+      const profile = await storage.getVeteranProfile(userId);
+      const rankAbbrev = profile?.rank ? getRankDisplayName(profile.rank, profile.branch, null, null) : "";
+      const referrerName = rankAbbrev && profile?.lastName
+        ? `${rankAbbrev} ${profile.lastName}`
+        : profile?.firstName && profile?.lastName
+          ? `${profile.firstName} ${profile.lastName}`
+          : "A fellow veteran";
+
+      const referral = await storage.createReferral({
+        referrerUserId: userId,
+        referrerName: referrerName,
+        refereeEmail: refereeEmail.trim().toLowerCase(),
+        message: message || null,
+      });
+
+      sendReferralEmail(refereeEmail.trim().toLowerCase(), referrerName, message || null)
+        .catch(err => console.error("[email] Referral email failed:", err));
+
+      res.json({ success: true, referral });
+    } catch (error) {
+      console.error("Referral error:", error);
+      res.status(500).json({ error: "Failed to send referral" });
     }
   });
 

@@ -68,6 +68,15 @@ export function buildWelcomeEmailHtml(rankTitle: string, lastName: string): stri
   </p>
 </td></tr>
 
+<tr><td style="padding:24px 40px 0;">
+  <table cellpadding="0" cellspacing="0" width="100%" style="background:#f9f7f3;border:1px solid #D4A43E;border-left:3px solid #D4A43E;border-radius:4px;">
+    <tr><td style="padding:16px 20px;">
+      <p style="margin:0 0 6px;font-size:15px;font-weight:bold;color:#0D2137;">Have a VA claims question?</p>
+      <p style="margin:0;font-size:14px;color:#555;line-height:1.55;">Visit our <a href="https://nexus247.ai/forum" style="color:#D4A43E;font-weight:bold;text-decoration:none;">Q&amp;A Forum</a> &mdash; ask anything and get AI-powered answers grounded in 38 CFR, 24/7.</p>
+    </td></tr>
+  </table>
+</td></tr>
+
 <tr><td style="padding:32px 40px 0;">
   <h2 style="margin:0;font-size:20px;color:#0D2137;font-family:Georgia,'Times New Roman',serif;border-bottom:2px solid #D4A43E;padding-bottom:10px;">
     Here's What You're Now Armed With
@@ -737,5 +746,221 @@ export async function sendDailyActivityReport(data: {
     console.log(`[email] Daily activity report sent:`, result);
   } catch (error) {
     console.error(`[email] Failed to send daily activity report:`, error);
+  }
+}
+
+export function buildTrialLetterFollowupHtml(firstName: string, conditionName: string, score: number, letterPreview: string): string {
+  const name = firstName || "Veteran";
+  const scoreContext = score >= 85
+    ? "This is an excellent score — your letter is strong enough to submit as-is."
+    : score >= 65
+      ? "This is a solid score, but there are areas that could be strengthened before submission."
+      : "This score suggests your letter needs significant improvement before submission.";
+
+  const escapedPreview = letterPreview.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Your nexus letter is ready</title></head>
+<body style="margin:0;padding:0;background:#f4f3f0;font-family:'Georgia',serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3f0;padding:40px 16px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+<tr><td style="background:#0D2137;padding:28px 40px;border-radius:8px 8px 0 0;">
+  <span style="font-family:'Georgia',serif;font-size:22px;color:#ffffff;letter-spacing:0.02em;">
+    Nexus<span style="color:#D4A43E;">247</span>.ai
+  </span>
+</td></tr>
+
+<tr><td style="height:3px;background:linear-gradient(90deg,#D4A43E,#e8bc58,#D4A43E);"></td></tr>
+
+<tr><td style="background:#ffffff;padding:48px 40px 36px;">
+
+  <p style="margin:0 0 16px;font-size:16px;color:#0D2137;font-family:Arial,sans-serif;font-weight:600;">
+    ${name},
+  </p>
+
+  <h1 style="margin:0 0 20px;font-family:'Georgia',serif;font-size:26px;color:#0D2137;line-height:1.2;font-weight:700;">
+    Your nexus letter for<br /><em style="color:#D4A43E;">${conditionName}</em> is ready.
+  </h1>
+
+  <p style="margin:0 0 28px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+    Yesterday you generated a nexus letter through Nexus247. Here's how it scored:
+  </p>
+
+  <!-- Score Display -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr><td align="center">
+      <div style="display:inline-block;width:120px;height:120px;border-radius:50%;background:#0D2137;text-align:center;line-height:120px;">
+        <span style="font-family:'Georgia',serif;font-size:42px;font-weight:bold;color:#D4A43E;">${score}</span>
+        <span style="font-family:Arial,sans-serif;font-size:14px;color:rgba(255,255,255,0.5);">/100</span>
+      </div>
+    </td></tr>
+  </table>
+
+  <p style="margin:0 0 8px;text-align:center;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#D4A43E;">
+    RPA Quality Score
+  </p>
+  <p style="margin:0 0 32px;text-align:center;font-size:14px;color:#666;font-family:Arial,sans-serif;">
+    ${scoreContext}
+  </p>
+
+  <!-- Letter Preview -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f7f3;border:1px solid #e8e4dc;border-left:3px solid #D4A43E;border-radius:4px;margin-bottom:24px;">
+    <tr><td style="padding:20px 24px;">
+      <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#9a8f82;">
+        Letter Preview
+      </p>
+      <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#444;line-height:1.65;">
+        ${escapedPreview}
+      </p>
+    </td></tr>
+  </table>
+
+  <p style="margin:0 0 28px;text-align:center;font-size:15px;color:#0D2137;font-weight:600;font-family:Arial,sans-serif;">
+    The rest of your letter is ready and waiting.
+  </p>
+
+  <!-- CTA -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+    <tr><td align="center">
+      <a href="https://nexus247.ai/pricing" style="display:inline-block;background:#D4A43E;color:#0D2137;text-decoration:none;padding:16px 40px;border-radius:4px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">
+        Unlock My Full Letter &rarr;
+      </a>
+    </td></tr>
+  </table>
+
+  <p style="margin:0;text-align:center;font-family:Arial,sans-serif;font-size:12px;color:#9a8f82;">
+    Starter from $29/mo &middot; Pro from $49/mo &middot; Cancel anytime
+  </p>
+
+</td></tr>
+
+<tr><td style="background:#f4f3f0;padding:24px 40px;border-radius:0 0 8px 8px;border-top:1px solid #e8e4dc;">
+  <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#9a8f82;text-align:center;">
+    Nexus247.ai &middot; Not a law firm &middot; Not affiliated with the VA
+  </p>
+  <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#b0a898;text-align:center;">
+    You received this email because you generated a letter on Nexus247.ai.
+  </p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+export async function sendTrialLetterFollowupEmail(toEmail: string, firstName: string, conditionName: string, score: number, letterPreview: string): Promise<boolean> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const html = buildTrialLetterFollowupHtml(firstName, conditionName, score, letterPreview);
+
+    const result = await client.emails.send({
+      from: FALLBACK_FROM,
+      to: toEmail,
+      subject: `Your nexus letter for ${conditionName} is ready`,
+      html,
+    });
+
+    console.log(`[email] Trial letter followup email sent to ${toEmail}:`, result);
+    return true;
+  } catch (error) {
+    console.error(`[email] Failed to send trial letter followup email to ${toEmail}:`, error);
+    return false;
+  }
+}
+
+export function buildReferralEmailHtml(referrerName: string, message: string | null): string {
+  const personalMessage = message
+    ? `<tr><td style="padding:0 40px 20px;">
+        <table cellpadding="0" cellspacing="0" width="100%" style="background:#f9f7f3;border-left:3px solid #D4A43E;border-radius:4px;">
+          <tr><td style="padding:16px 20px;">
+            <p style="margin:0 0 4px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#9a8f82;">Personal Note</p>
+            <p style="margin:0;font-size:14px;color:#444;line-height:1.55;font-style:italic;">&ldquo;${message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}&rdquo;</p>
+          </td></tr>
+        </table>
+      </td></tr>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>You've been invited to Nexus247</title></head>
+<body style="margin:0;padding:0;background:#f4f3f0;font-family:'Georgia',serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f3f0;padding:40px 16px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+<tr><td style="background:#0D2137;padding:28px 40px;border-radius:8px 8px 0 0;">
+  <span style="font-family:'Georgia',serif;font-size:22px;color:#ffffff;letter-spacing:0.02em;">
+    Nexus<span style="color:#D4A43E;">247</span>.ai
+  </span>
+</td></tr>
+
+<tr><td style="height:3px;background:linear-gradient(90deg,#D4A43E,#e8bc58,#D4A43E);"></td></tr>
+
+<tr><td style="background:#ffffff;padding:48px 40px 24px;">
+  <h1 style="margin:0 0 20px;font-family:'Georgia',serif;font-size:26px;color:#0D2137;line-height:1.2;font-weight:700;">
+    ${referrerName} thinks you<br />should check out Nexus247.
+  </h1>
+
+  <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+    A fellow veteran is using Nexus247 to build CFR-compliant nexus letters, analyze VA decisions, and prepare for C&amp;P exams &mdash; all powered by AI. They wanted you to have the same advantage.
+  </p>
+</td></tr>
+
+${personalMessage}
+
+<tr><td style="padding:0 40px 32px;">
+  <p style="margin:0 0 20px;font-size:16px;color:#4a4a4a;line-height:1.7;font-family:Arial,sans-serif;font-weight:300;">
+    Sign up and get a free 3-day Pro trial &mdash; no credit card required. Full access to every tool from day one.
+  </p>
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+    <tr><td align="center">
+      <a href="https://nexus247.ai" style="display:inline-block;background:#D4A43E;color:#0D2137;text-decoration:none;padding:16px 40px;border-radius:4px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">
+        Start My Free Trial &rarr;
+      </a>
+    </td></tr>
+  </table>
+
+  <p style="margin:0;text-align:center;font-family:Arial,sans-serif;font-size:12px;color:#9a8f82;">
+    3-Day Free Trial &middot; No Credit Card &middot; Cancel Anytime
+  </p>
+</td></tr>
+
+<tr><td style="background:#f4f3f0;padding:24px 40px;border-radius:0 0 8px 8px;border-top:1px solid #e8e4dc;">
+  <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#9a8f82;text-align:center;">
+    Nexus247.ai &middot; Not a law firm &middot; Not affiliated with the VA
+  </p>
+  <p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#b0a898;text-align:center;">
+    You received this email because a fellow veteran referred you.
+  </p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+export async function sendReferralEmail(toEmail: string, referrerName: string, message: string | null): Promise<void> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const html = buildReferralEmailHtml(referrerName, message);
+
+    const result = await client.emails.send({
+      from: FALLBACK_FROM,
+      to: toEmail,
+      subject: `${referrerName} thinks you should check out Nexus247.ai`,
+      html,
+    });
+
+    console.log(`[email] Referral email sent to ${toEmail}:`, result);
+  } catch (error) {
+    console.error(`[email] Failed to send referral email to ${toEmail}:`, error);
   }
 }

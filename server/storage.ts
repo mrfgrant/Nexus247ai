@@ -36,6 +36,11 @@ import {
   type InsertForumUser,
   type ForumQuestion,
   type InsertForumQuestion,
+  referrals,
+  type Referral,
+  type InsertReferral,
+  deviceFingerprints,
+  type DeviceFingerprint,
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
@@ -116,6 +121,16 @@ export interface IStorage {
   upvoteForumQuestion(id: string): Promise<void>;
   getForumCategories(): Promise<{ category: string; count: number }[]>;
   getForumQuestionCountByUser(forumUserId: string, sinceHoursAgo: number): Promise<number>;
+
+  createReferral(data: InsertReferral): Promise<Referral>;
+  getReferralsByUser(userId: string): Promise<Referral[]>;
+
+  recordDeviceFingerprint(deviceId: string, userId: string, email: string | null): Promise<void>;
+  getDeviceFingerprints(deviceId: string): Promise<DeviceFingerprint[]>;
+
+  getTrialLetterFollowupProfiles(): Promise<(VeteranProfile & { email?: string | null })[]>;
+  markTrialLetterEmailSent(userId: string): Promise<void>;
+  updateFirstLetterData(userId: string, data: { conditionName: string; score: number; preview: string }): Promise<void>;
 
   createLetterAnalysis(data: InsertLetterAnalysis): Promise<LetterAnalysis>;
   getLetterAnalyses(userId: string): Promise<LetterAnalysis[]>;
@@ -689,6 +704,58 @@ export class DatabaseStorage implements IStorage {
       .from(forumQuestions)
       .where(and(eq(forumQuestions.forumUserId, forumUserId), gte(forumQuestions.createdAt, since)));
     return row?.count || 0;
+  }
+
+  async createReferral(data: InsertReferral): Promise<Referral> {
+    const [referral] = await db.insert(referrals).values(data).returning();
+    return referral;
+  }
+
+  async getReferralsByUser(userId: string): Promise<Referral[]> {
+    return db.select().from(referrals).where(eq(referrals.referrerUserId, userId)).orderBy(desc(referrals.createdAt));
+  }
+
+  async recordDeviceFingerprint(deviceId: string, userId: string, email: string | null): Promise<void> {
+    await db.insert(deviceFingerprints).values({ deviceId, userId, email });
+  }
+
+  async getDeviceFingerprints(deviceId: string): Promise<DeviceFingerprint[]> {
+    return db.select().from(deviceFingerprints).where(eq(deviceFingerprints.deviceId, deviceId));
+  }
+
+  async getTrialLetterFollowupProfiles(): Promise<(VeteranProfile & { email?: string | null })[]> {
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    const rows = await db
+      .select({ profile: veteranProfiles, email: users.email })
+      .from(veteranProfiles)
+      .leftJoin(users, eq(veteranProfiles.userId, users.id))
+      .where(and(
+        isNotNull(veteranProfiles.firstLetterGeneratedAt),
+        lte(veteranProfiles.firstLetterGeneratedAt, twentyFourHoursAgo),
+        eq(veteranProfiles.trialLetterEmailSent, false),
+        isNull(veteranProfiles.archivedAt),
+        sql`(${veteranProfiles.subscriptionStatus} IS NULL OR ${veteranProfiles.subscriptionStatus} != 'active')`,
+      ));
+    return rows.map(r => ({ ...r.profile, email: r.email }));
+  }
+
+  async markTrialLetterEmailSent(userId: string): Promise<void> {
+    await db.update(veteranProfiles)
+      .set({ trialLetterEmailSent: true, updatedAt: new Date() })
+      .where(eq(veteranProfiles.userId, userId));
+  }
+
+  async updateFirstLetterData(userId: string, data: { conditionName: string; score: number; preview: string }): Promise<void> {
+    await db.update(veteranProfiles)
+      .set({
+        firstLetterGeneratedAt: new Date(),
+        firstLetterConditionName: data.conditionName,
+        firstLetterScore: data.score,
+        firstLetterPreview: data.preview,
+        updatedAt: new Date(),
+      })
+      .where(eq(veteranProfiles.userId, userId));
   }
 }
 

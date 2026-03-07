@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle, ArrowLeft, ExternalLink, Stethoscope, Info } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { CheckCircle, ChevronRight, ChevronLeft, Save, Upload, FileText, Trash2, Loader2, AlertCircle, ArrowLeft, ExternalLink, Stethoscope, Info, Send } from "lucide-react";
 import { Link } from "wouter";
 import type { SupportingDocument, Condition } from "@shared/schema";
 import { trackTrialStarted } from "@/lib/analytics";
@@ -24,6 +25,7 @@ import { trackTrialStarted } from "@/lib/analytics";
 const BRANCHES = ["Army", "Navy", "Air Force", "Marines", "Coast Guard", "Space Force"];
 const DISCHARGE_TYPES = ["Honorable", "General (Under Honorable)", "Other Than Honorable", "Bad Conduct", "Dishonorable"];
 const STEPS = ["Military Service", "Deployments & Exposures", "VA Info", "Supporting Documents", "Review & Save"];
+const HEAR_ABOUT_OPTIONS = ["Google Search", "Social Media", "Word of Mouth", "Reddit/Forum", "VA Office/VSO", "YouTube", "Other"];
 
 const DOC_CATEGORIES = [
   { value: "decision_letter", label: "VA Decision Letter", accept: ".pdf,.txt", description: "Upload your VA rating decision letter (PDF or text file)" },
@@ -37,8 +39,10 @@ export default function Intake() {
   const fromSettings = urlParams.get("from") === "settings";
   const initialStep = parseInt(urlParams.get("step") || "0", 10);
   const [step, setStep] = useState(isNaN(initialStep) ? 0 : Math.min(Math.max(initialStep, 0), 4));
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>({ hearAboutUs: "" });
   const [uploadCategory, setUploadCategory] = useState("decision_letter");
+  const [referralEmail, setReferralEmail] = useState("");
+  const [referralMessage, setReferralMessage] = useState("");
   const [deploymentLocationsText, setDeploymentLocationsText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -139,6 +143,21 @@ export default function Intake() {
     },
   });
 
+  const referralMutation = useMutation({
+    mutationFn: async ({ refereeEmail, message }: { refereeEmail: string; message: string }) => {
+      const res = await apiRequest("POST", "/api/referrals", { refereeEmail, message });
+      return res.json();
+    },
+    onSuccess: () => {
+      setReferralEmail("");
+      setReferralMessage("");
+      toast({ title: "Referral sent", description: "Your battle buddy will receive an email about Nexus247." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to send referral.", variant: "destructive" });
+    },
+  });
+
   const update = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
@@ -219,6 +238,16 @@ export default function Intake() {
         <CardContent className="space-y-4">
           {step === 0 && (
             <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input value={formData.firstName || ""} onChange={(e) => update("firstName", e.target.value)} placeholder="e.g., John" data-testid="input-first-name" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input value={formData.lastName || ""} onChange={(e) => update("lastName", e.target.value)} placeholder="e.g., Smith" data-testid="input-last-name" />
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Branch of Service</Label>
@@ -497,6 +526,7 @@ export default function Intake() {
               <p className="text-sm text-muted-foreground">Review your information before saving.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 {[
+                  ["Name", [formData.firstName, formData.lastName].filter(Boolean).join(" ") || null],
                   ["Branch", formData.branch],
                   ["Rank", formData.rank],
                   ["MOS/Rate", formData.mosRate],
@@ -531,6 +561,57 @@ export default function Intake() {
                   </div>
                 </div>
               )}
+
+              <div className="space-y-2 pt-4 border-t border-border">
+                <Label>How did you hear about Nexus247?</Label>
+                <Select value={formData.hearAboutUs || ""} onValueChange={(v) => update("hearAboutUs", v)}>
+                  <SelectTrigger data-testid="select-hear-about-us"><SelectValue placeholder="Select an option" /></SelectTrigger>
+                  <SelectContent>
+                    {HEAR_ABOUT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-border">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Share Nexus247 with a Battle Buddy</p>
+                  <p className="text-xs text-muted-foreground mt-1">Know a fellow veteran who could benefit? Send them an invite.</p>
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    type="email"
+                    value={referralEmail}
+                    onChange={(e) => setReferralEmail(e.target.value)}
+                    placeholder="Battle buddy's email"
+                    data-testid="input-referral-email"
+                  />
+                  <Textarea
+                    value={referralMessage}
+                    onChange={(e) => setReferralMessage(e.target.value)}
+                    placeholder="Add a personal message (optional)"
+                    className="resize-none"
+                    rows={2}
+                    data-testid="input-referral-message"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!referralEmail.trim()) {
+                        toast({ title: "Email required", description: "Enter your battle buddy's email address.", variant: "destructive" });
+                        return;
+                      }
+                      referralMutation.mutate({ refereeEmail: referralEmail.trim(), message: referralMessage.trim() });
+                    }}
+                    disabled={referralMutation.isPending}
+                    data-testid="button-send-referral"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    {referralMutation.isPending ? "Sending..." : "Send Referral"}
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

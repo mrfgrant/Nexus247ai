@@ -1,10 +1,10 @@
 import cron from "node-cron";
 import { storage } from "./storage";
-import { sendTrialExpiryEmail, sendDay7ReengagementEmail, sendDailyActivityReport } from "./emails";
+import { sendTrialExpiryEmail, sendDay7ReengagementEmail, sendDailyActivityReport, sendTrialLetterFollowupEmail } from "./emails";
 import { getRankDisplayName } from "@shared/utils";
 
 function getDisplayName(profile: any): string {
-  const rankDisplay = profile.rank ? getRankDisplayName(profile.rank) : "";
+  const rankDisplay = profile.rank ? getRankDisplayName(profile.rank, profile.branch, profile.lastName, profile.firstName) : "";
   const last = profile.lastName || "";
   if (rankDisplay && last) return `${rankDisplay} ${last}`;
   if (profile.firstName && last) return `${profile.firstName} ${last}`;
@@ -19,7 +19,7 @@ async function checkTrialExpiryEmails(): Promise<void> {
     const profiles = await storage.getTrialExpiringProfiles();
     for (const profile of profiles) {
       if (!profile.email) continue;
-      const rankTitle = profile.rank ? getRankDisplayName(profile.rank) : "";
+      const rankTitle = profile.rank ? getRankDisplayName(profile.rank, profile.branch, null, null) : "";
       const lastName = profile.lastName || "";
       const sent = await sendTrialExpiryEmail(profile.email, rankTitle, lastName);
       if (sent) {
@@ -42,7 +42,7 @@ async function checkDay7ReengagementEmails(): Promise<void> {
     const profiles = await storage.getDay7ReengagementProfiles();
     for (const profile of profiles) {
       if (!profile.email) continue;
-      const rankTitle = profile.rank ? getRankDisplayName(profile.rank) : "";
+      const rankTitle = profile.rank ? getRankDisplayName(profile.rank, profile.branch, null, null) : "";
       const lastName = profile.lastName || "";
       const sent = await sendDay7ReengagementEmail(profile.email, rankTitle, lastName);
       if (sent) {
@@ -81,7 +81,7 @@ async function sendDailyReport(): Promise<void> {
     const signupData = newSignups.map(p => ({
       name: getDisplayName(p),
       email: p.email || "unknown",
-      rank: p.rank ? getRankDisplayName(p.rank) : "N/A",
+      rank: p.rank ? getRankDisplayName(p.rank, p.branch, p.lastName, p.firstName) : "N/A",
       branch: p.branch || "N/A",
     }));
 
@@ -123,11 +123,37 @@ async function sendDailyReport(): Promise<void> {
   }
 }
 
+async function checkTrialLetterFollowupEmails(): Promise<void> {
+  try {
+    const profiles = await storage.getTrialLetterFollowupProfiles();
+    for (const profile of profiles) {
+      if (!profile.email) continue;
+      const firstName = profile.firstName || "";
+      const conditionName = profile.firstLetterConditionName || "your condition";
+      const score = profile.firstLetterScore || 0;
+      const preview = profile.firstLetterPreview || "";
+      const sent = await sendTrialLetterFollowupEmail(profile.email, firstName, conditionName, score, preview);
+      if (sent) {
+        await storage.markTrialLetterEmailSent(profile.userId);
+        console.log(`[scheduler] Trial letter followup email sent to ${profile.email}`);
+      } else {
+        console.warn(`[scheduler] Trial letter followup email failed for ${profile.email} — will retry next cycle`);
+      }
+    }
+    if (profiles.length > 0) {
+      console.log(`[scheduler] Processed ${profiles.length} trial letter followup candidates`);
+    }
+  } catch (error) {
+    console.error("[scheduler] Error checking trial letter followup emails:", error);
+  }
+}
+
 export function startScheduler(): void {
   cron.schedule("0 * * * *", async () => {
     console.log("[scheduler] Hourly check starting...");
     await checkTrialExpiryEmails();
     await checkDay7ReengagementEmails();
+    await checkTrialLetterFollowupEmails();
   });
 
   cron.schedule("0 7 * * *", async () => {

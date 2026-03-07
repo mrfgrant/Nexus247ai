@@ -32,6 +32,7 @@ import { Loader2 } from "lucide-react";
 import { CookieConsent } from "@/components/cookie-consent";
 import { WelcomeOverlay } from "@/components/welcome-overlay";
 import { ExitIntent } from "@/components/exit-intent";
+import { FloatingForumButton } from "@/components/FloatingForumButton";
 import { trackSignUp } from "@/lib/analytics";
 
 function AuthenticatedLayout() {
@@ -117,6 +118,7 @@ function AuthenticatedLayout() {
             <Route component={Dashboard} />
           </Switch>
         </main>
+        <FloatingForumButton />
       </div>
     </SidebarProvider>
   );
