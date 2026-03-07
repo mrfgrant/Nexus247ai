@@ -91,6 +91,50 @@ export default function Forum() {
     refetchInterval: shouldPoll ? 3000 : false,
   });
 
+  const { data: categories = [] } = useQuery<string[]>({
+    queryKey: ["/api/forum/categories"],
+  });
+
+  const { data: questionsResponse, isLoading: questionsLoading } = useQuery<{ questions: ForumQuestion[], hasMore: boolean }>({
+    queryKey: ["/api/forum/questions", selectedCategory, offset],
+    placeholderData: (previousData) => previousData,
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setForumUser(JSON.parse(saved));
+      } catch (e) {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+    const upvoted = localStorage.getItem("nexus247_forum_upvoted");
+    if (upvoted) {
+      try {
+        setUpvotedIds(new Set(JSON.parse(upvoted)));
+      } catch (e) {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (questionsResponse?.questions) {
+      setAllQuestions(prev => {
+        const existingIds = new Set(prev.map(q => q.id));
+        const newQuestions = questionsResponse.questions.filter(q => !existingIds.has(q.id));
+        return [...prev, ...newQuestions];
+      });
+    }
+  }, [questionsResponse]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const qId = params.get("q");
+    if (qId) {
+      setExpandedIds(prev => new Set(prev).add(qId));
+    }
+  }, []);
+
   useEffect(() => {
     const defaultTitle = "VA Claims Q&A Forum | Nexus247.ai";
     const defaultDesc = "Ask any VA claims question — get expert AI answers grounded in 38 CFR. Community knowledge base for veterans.";
