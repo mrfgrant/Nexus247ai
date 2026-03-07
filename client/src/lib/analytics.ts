@@ -56,3 +56,18 @@ export function trackPurchase(tier: string, value: number, transactionId?: strin
   });
   ttqTrack("CompletePayment", { value, currency: "USD", content_type: "product", content_id: `${tier}_plan` });
 }
+
+export function trackForumRegistration() {
+  gtag("event", "forum_registration");
+}
+
+export function trackForumQuestion(category: string) {
+  gtag("event", "forum_question_asked", {
+    event_category: "engagement",
+    event_label: category
+  });
+}
+
+export function trackForumUpvote() {
+  gtag("event", "forum_upvote");
+}

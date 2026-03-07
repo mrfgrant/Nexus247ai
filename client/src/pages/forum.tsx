@@ -5,6 +5,7 @@ import { ArrowRight, ThumbsUp, Send, Menu, X, Loader2, MessageSquareText, Clock,
 import { SiTiktok } from "react-icons/si";
 import { getRankDisplayName } from "@shared/utils";
 import { useToast } from "@/hooks/use-toast";
+import { trackForumRegistration, trackForumQuestion, trackForumUpvote } from "@/lib/analytics";
 
 interface ForumUser {
   id: string;
@@ -197,6 +198,9 @@ export default function Forum() {
       setPendingTimedOut(false);
       queryClient.invalidateQueries({ queryKey: ["/api/forum/questions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/forum/categories"] });
+      if (pendingQuestion?.category) {
+        trackForumQuestion(pendingQuestion.category);
+      }
     }
   }, [pendingQuestion]);
 
@@ -221,6 +225,7 @@ export default function Forum() {
       setForumUser(user);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
       setRegError("");
+      trackForumRegistration();
     },
     onError: (err: any) => {
       setRegError(err.message || "Registration failed");
@@ -267,6 +272,7 @@ export default function Forum() {
       newSet.add(id);
       setUpvotedIds(newSet);
       localStorage.setItem("nexus247_forum_upvoted", JSON.stringify([...newSet]));
+      trackForumUpvote();
     },
   });
 
