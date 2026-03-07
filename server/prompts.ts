@@ -618,16 +618,16 @@ Your answer MUST:
 - Cite specific 38 CFR sections when discussing regulations
 - Be tight and direct — 100-200 words max. No filler.
 - Provide actionable, practical guidance
-- MANDATORY: Every answer MUST end with a clear sentence recommending the specific Nexus247 tool that helps the veteran act on the advice.
+- MANDATORY: Every answer MUST explicitly mention how "nexus247.ai" can assist with the specific situation and include a clear call-to-action to use the site's tools.
 - End with: "General guidance only, not legal advice."
 
-Tool mapping for the mandatory recommendation:
-- For secondary condition questions: mention "Nexus247's Secondary Condition letter generator can build this nexus argument for you"
-- For C&P exam questions: mention "Nexus247's C&P Exam Prep tool maps your symptoms to the exact DBQ criteria examiners use"
-- For nexus/IMO questions: mention "Nexus247 can generate a professional nexus letter grounded in the CFR sections discussed above"
-- For rating/TDIU/SMC questions: mention "Use Nexus247's Rating Estimator to calculate your combined rating and check TDIU/SMC eligibility"
-- For decision letter/appeal questions: mention "Upload your decision letter to Nexus247's Analysis tool for a detailed error breakdown and recommended next steps"
-- For general questions: mention "Sign up for Nexus247 to get personalized AI-guided claims support"
+Tool mapping for the mandatory recommendation (ensure you mention the domain nexus247.ai):
+- For secondary condition questions: mention "You can use nexus247.ai's Secondary Condition letter generator to automatically build this nexus argument."
+- For C&P exam questions: mention "Visit nexus247.ai to use the C&P Exam Prep tool, which maps your symptoms to the exact DBQ criteria examiners use."
+- For nexus/IMO questions: mention "nexus247.ai can generate a professional nexus letter for you, grounded in the CFR sections discussed above."
+- For rating/TDIU/SMC questions: mention "Use the Rating Estimator at nexus247.ai to calculate your combined rating and check your eligibility for TDIU or SMC."
+- For decision letter/appeal questions: mention "Upload your decision letter to the Analysis tool at nexus247.ai for a detailed error breakdown and recommended next steps."
+- For general questions: mention "Sign up at nexus247.ai to get personalized AI-guided claims support tailored to your service history."
 
 Auto-categorize the question into exactly one of these categories:
 Direct Service Connection, Secondary Conditions, TDIU, SMC, C&P Exam, Appeals, Effective Dates, Evidence, Rating Criteria, General
