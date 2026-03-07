@@ -792,10 +792,12 @@ export function buildTrialLetterFollowupHtml(firstName: string, conditionName: s
   <!-- Score Display -->
   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
     <tr><td align="center">
-      <div style="display:inline-block;width:120px;height:120px;border-radius:50%;background:#0D2137;text-align:center;line-height:120px;">
-        <span style="font-family:'Georgia',serif;font-size:42px;font-weight:bold;color:#D4A43E;">${score}</span>
-        <span style="font-family:Arial,sans-serif;font-size:14px;color:rgba(255,255,255,0.5);">/100</span>
-      </div>
+      <table cellpadding="0" cellspacing="0" width="120" height="120" style="width:120px;height:120px;border-radius:50%;background:#0D2137;text-align:center;">
+        <tr><td valign="middle" align="center" style="vertical-align:middle;">
+          <span style="font-family:'Georgia',serif;font-size:42px;font-weight:bold;color:#D4A43E;">${score}</span>
+          <span style="font-family:Arial,sans-serif;font-size:14px;color:rgba(255,255,255,0.5);">/100</span>
+        </td></tr>
+      </table>
     </td></tr>
   </table>
 
