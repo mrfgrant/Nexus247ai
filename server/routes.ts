@@ -547,9 +547,6 @@ export async function registerRoutes(
       }
 
       const monthCount = await storage.getDocumentCountThisMonth(userId);
-      if (isTrialUser(profile) && monthCount >= 1) {
-        return res.status(403).json({ error: "Trial accounts are limited to 1 document. Subscribe to unlock full access.", trialLimited: true });
-      }
       const limit = TIER_LIMITS[tier] || 0;
       if (monthCount >= limit) {
         return res.status(403).json({ error: `Monthly limit reached (${limit} documents)` });
@@ -1369,9 +1366,6 @@ export async function registerRoutes(
       }
 
       const analysisCount = await storage.getAnalysisCountThisMonth(userId);
-      if (isTrialUser(profile) && analysisCount >= 1) {
-        return res.status(403).json({ error: "Trial accounts are limited to 1 analysis. Subscribe to unlock full access.", trialLimited: true });
-      }
       const analysisLimit = ANALYSIS_LIMITS[tier] || 0;
       if (analysisCount >= analysisLimit) {
         return res.status(403).json({ error: `Monthly analysis limit reached (${analysisLimit} analyses). Upgrade your plan for more analyses.`, limitReached: true });
@@ -1603,9 +1597,6 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
           gte(usageLogsTable.createdAt, startOfMonth)
         ));
       const prepCount = Number(prepCountResult[0]?.count || 0);
-      if (isTrialUser(profile) && prepCount >= 1) {
-        return res.status(403).json({ error: "Trial accounts are limited to 1 C&P prep. Subscribe to unlock full access.", trialLimited: true });
-      }
       const prepLimit = CNP_PREP_LIMITS[tier] || 0;
       if (prepCount >= prepLimit) {
         return res.status(403).json({ error: `Monthly C&P prep limit reached (${prepLimit}). Upgrade your plan for more.` });

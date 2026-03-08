@@ -908,11 +908,6 @@ export default function AnalyzeLetter() {
 
       if (!res.ok) {
         const err = await res.json();
-        if (err.trialLimited) {
-          toast({ title: "Trial Limit Reached", description: "Your free trial includes 1 analysis. Subscribe to unlock full access." });
-          setIsAnalyzing(false);
-          return;
-        }
         if (err.requiresUpgrade) {
           toast({ title: "Subscription required", description: err.error, variant: "destructive" });
           setIsAnalyzing(false);

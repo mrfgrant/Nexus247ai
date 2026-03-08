@@ -78,29 +78,9 @@ export default function CnpPrep() {
       toast({ title: "Prep guide generated", description: "Your C&P exam preparation is ready." });
     },
     onError: (error: any) => {
-      const msg = error.message || "";
-      const jsonMatch = msg.match(/\{.*\}/);
-      if (jsonMatch) {
-        try {
-          const parsed = JSON.parse(jsonMatch[0]);
-          if (parsed.trialLimited) {
-            toast({
-              title: "Trial Limit Reached",
-              description: "Your free trial includes 1 C&P prep. Subscribe to unlock full access.",
-            });
-            return;
-          }
-          toast({
-            title: "Generation failed",
-            description: parsed.error || "Please try again.",
-            variant: "destructive",
-          });
-          return;
-        } catch {}
-      }
       toast({
         title: "Generation failed",
-        description: msg || "Please try again.",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
     },
