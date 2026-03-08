@@ -15,6 +15,7 @@ import {
   Activity,
   Menu,
   X,
+  Link2,
 } from "lucide-react";
 import { SiTiktok } from "react-icons/si";
 import { RpaScoringModal } from "@/components/rpa-scoring-modal";
@@ -584,6 +585,93 @@ export default function Landing() {
           </div>
 
           <ScoreCard />
+        </div>
+      </section>
+
+      {/* Gold divider */}
+      <div style={{ height: 4, background: "linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-lt) 50%, var(--gold) 70%, transparent)", opacity: 0.45 }} />
+
+      {/* WHAT IS A NEXUS */}
+      <section data-testid="section-what-is-nexus" style={{ padding: "72px 5vw", background: "var(--navy)" }}>
+        <div ref={addRevealRef} className="reveal" style={{ maxWidth: 880, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: "2rem" }}>
+            <Link2 style={{ width: 28, height: 28, color: "var(--gold)" }} />
+            <h2
+              style={{
+                fontFamily: "'DM Serif Display', serif", fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
+                color: "#fff", margin: 0,
+              }}
+              data-testid="text-nexus-headline"
+            >
+              "Nexus" just means <em style={{ color: "var(--gold)", fontStyle: "italic" }}>link</em>.
+            </h2>
+          </div>
+          <p style={{
+            textAlign: "center", fontSize: "1.05rem", lineHeight: 1.75, color: "rgba(255,255,255,0.6)",
+            maxWidth: 640, margin: "0 auto 2.5rem", fontWeight: 300,
+          }} data-testid="text-nexus-intro">
+            A Nexus Letter establishes the link between your condition and your military service. That's it.
+            Your own written account — called a <strong style={{ color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>lay statement</strong> — is legally recognized evidence the VA must consider.
+          </p>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 20,
+          }}>
+            <div style={{
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(212,164,62,0.18)",
+              borderRadius: 6, padding: "28px 24px",
+            }} data-testid="card-nexus-means">
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: "0.68rem",
+                letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--gold)",
+                marginBottom: 10,
+              }}>
+                What it means
+              </div>
+              <p style={{ fontSize: "0.95rem", lineHeight: 1.7, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+                A nexus is the <strong style={{ color: "#fff", fontWeight: 500 }}>link</strong> between
+                your current condition and something that happened during service — an injury, exposure, or event.
+                The VA needs this connection to approve your claim.
+              </p>
+            </div>
+
+            <div style={{
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(212,164,62,0.18)",
+              borderRadius: 6, padding: "28px 24px",
+            }} data-testid="card-no-signature">
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: "0.68rem",
+                letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--gold)",
+                marginBottom: 10,
+              }}>
+                No doctor signature needed
+              </div>
+              <p style={{ fontSize: "0.95rem", lineHeight: 1.7, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+                Under <strong style={{ color: "#fff", fontWeight: 500 }}>38 CFR § 3.303(a)</strong>, your own
+                written account — a lay statement — is competent evidence the VA must consider.
+                For many claims, your firsthand description of symptoms and service events carries real weight.
+              </p>
+            </div>
+
+            <div style={{
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(212,164,62,0.18)",
+              borderRadius: 6, padding: "28px 24px",
+            }} data-testid="card-we-help">
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: "0.68rem",
+                letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--gold)",
+                marginBottom: 10,
+              }}>
+                We write it for you
+              </div>
+              <p style={{ fontSize: "0.95rem", lineHeight: 1.7, color: "rgba(255,255,255,0.7)", margin: 0 }}>
+                Nexus247 generates lay statements, personal statements, and supporting letters with the <strong style={{ color: "#fff", fontWeight: 500 }}>CFR citations</strong> and
+                language that VA raters look for — then scores each one before you submit.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
