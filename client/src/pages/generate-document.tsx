@@ -129,9 +129,29 @@ export default function GenerateDocument() {
       toast({ title: "Document generated", description: "Your letter has been scored and saved." });
     },
     onError: (error: any) => {
+      const msg = error.message || "";
+      const jsonMatch = msg.match(/\{.*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (parsed.trialLimited) {
+            toast({
+              title: "Trial Limit Reached",
+              description: "Your free trial includes 1 document. Subscribe to generate unlimited letters.",
+            });
+            return;
+          }
+          toast({
+            title: "Generation failed",
+            description: parsed.error || "Please try again.",
+            variant: "destructive",
+          });
+          return;
+        } catch {}
+      }
       toast({
         title: "Generation failed",
-        description: error.message || "Please try again.",
+        description: msg || "Please try again.",
         variant: "destructive",
       });
     },
