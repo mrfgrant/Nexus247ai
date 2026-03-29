@@ -1018,6 +1018,31 @@ export default function Landing() {
         </nav>
       </footer>
 
+      {/* Credit banner */}
+      <div
+        data-testid="banner-credit"
+        style={{
+          background: "#0a0f1a",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          padding: "8px 5vw",
+          textAlign: "center",
+          fontSize: "0.72rem",
+          color: "rgba(255,255,255,0.28)",
+          letterSpacing: "0.05em",
+        }}
+      >
+        Designed and powered by{" "}
+        <a
+          href="https://soracle.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "rgba(212,164,62,0.55)", textDecoration: "none" }}
+          data-testid="link-soracle"
+        >
+          soracle.dev
+        </a>
+      </div>
+
       <RpaScoringModal open={rpaModalOpen} onOpenChange={setRpaModalOpen} />
 
       <style>{`
