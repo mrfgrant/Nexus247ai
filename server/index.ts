@@ -4,20 +4,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startScheduler } from "./scheduler";
-import { sendErrorAlertEmail } from "./emails";
-
-const isProd = process.env.NODE_ENV === "production";
-const alertRateMap = new Map<string, number>();
-const ALERT_COOLDOWN_MS = 10 * 60 * 1000;
-
-async function maybeSendAlert(opts: Parameters<typeof sendErrorAlertEmail>[0]) {
-  if (!isProd) return;
-  const key = `${opts.errorType}:${opts.route}`;
-  const last = alertRateMap.get(key) || 0;
-  if (Date.now() - last < ALERT_COOLDOWN_MS) return;
-  alertRateMap.set(key, Date.now());
-  await sendErrorAlertEmail(opts).catch(() => {});
-}
+import { maybeSendAlert } from "./alert";
 
 const app = express();
 const httpServer = createServer(app);

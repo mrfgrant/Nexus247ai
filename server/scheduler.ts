@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { storage } from "./storage";
-import { sendTrialExpiryEmail, sendDay7ReengagementEmail, sendDailyActivityReport, sendTrialLetterFollowupEmail, sendErrorAlertEmail } from "./emails";
+import { sendTrialExpiryEmail, sendDay7ReengagementEmail, sendDailyActivityReport, sendTrialLetterFollowupEmail } from "./emails";
+import { maybeSendAlert } from "./alert";
 import { getRankDisplayName } from "@shared/utils";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -158,20 +159,19 @@ async function checkAIHealth(): Promise<void> {
       max_tokens: 5,
       messages: [{ role: "user", content: "Say OK" }],
     });
-    const text = (response.content[0] as any)?.text || "";
+    const block = response.content[0];
+    const text = block.type === "text" ? block.text : "";
     if (!text) throw new Error("Empty response from Claude");
     console.log(`[scheduler] AI health check passed — Claude responded: "${text}"`);
   } catch (error: any) {
     const message = error?.message || String(error);
     console.error("[scheduler] AI health check FAILED:", message);
-    if (process.env.NODE_ENV === "production") {
-      await sendErrorAlertEmail({
-        errorType: "AI Health Check Failed",
-        message,
-        stack: error?.stack,
-        route: "scheduler/checkAIHealth",
-      }).catch(() => {});
-    }
+    await maybeSendAlert({
+      errorType: "AI Health Check Failed",
+      message,
+      stack: error?.stack,
+      route: "scheduler/checkAIHealth",
+    });
   }
 }
 
