@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Shield,
   FileText,
@@ -347,10 +348,24 @@ function BounceArrow() {
   );
 }
 
+function formatUptime(seconds: number): string {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h uptime`;
+  if (h > 0) return `${h}h ${m}m uptime`;
+  return `${m}m uptime`;
+}
+
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rpaModalOpen, setRpaModalOpen] = useState(false);
   const [annualBilling, setAnnualBilling] = useState(false);
+
+  const { data: health } = useQuery<{ status: string; uptime: number }>({
+    queryKey: ["/api/health"],
+    refetchInterval: 60_000,
+  });
   const revealRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
@@ -1025,22 +1040,42 @@ export default function Landing() {
           background: "#0a0f1a",
           borderTop: "1px solid rgba(255,255,255,0.06)",
           padding: "8px 5vw",
-          textAlign: "center",
           fontSize: "0.72rem",
           color: "rgba(255,255,255,0.28)",
           letterSpacing: "0.05em",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 8,
         }}
       >
-        Designed and powered by{" "}
-        <a
-          href="https://soracle.dev"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "rgba(212,164,62,0.55)", textDecoration: "none" }}
-          data-testid="link-soracle"
-        >
-          soracle.dev
-        </a>
+        <div data-testid="status-uptime" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{
+            display: "inline-block", width: 7, height: 7, borderRadius: "50%",
+            background: health?.status === "ok" ? "#22c55e" : "#ef4444",
+            boxShadow: health?.status === "ok" ? "0 0 6px #22c55e" : "0 0 6px #ef4444",
+          }} />
+          <span>
+            {health?.status === "ok"
+              ? `System online · ${formatUptime(health.uptime)}`
+              : health
+              ? "System degraded"
+              : "Checking status…"}
+          </span>
+        </div>
+        <div>
+          Designed and powered by{" "}
+          <a
+            href="https://soracle.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "rgba(212,164,62,0.55)", textDecoration: "none" }}
+            data-testid="link-soracle"
+          >
+            soracle.dev
+          </a>
+        </div>
       </div>
 
       <RpaScoringModal open={rpaModalOpen} onOpenChange={setRpaModalOpen} />
