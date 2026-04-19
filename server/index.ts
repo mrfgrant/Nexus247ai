@@ -4,6 +4,20 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startScheduler } from "./scheduler";
+import { sendErrorAlertEmail } from "./emails";
+
+const isProd = process.env.NODE_ENV === "production";
+const alertRateMap = new Map<string, number>();
+const ALERT_COOLDOWN_MS = 10 * 60 * 1000;
+
+async function maybeSendAlert(opts: Parameters<typeof sendErrorAlertEmail>[0]) {
+  if (!isProd) return;
+  const key = `${opts.errorType}:${opts.route}`;
+  const last = alertRateMap.get(key) || 0;
+  if (Date.now() - last < ALERT_COOLDOWN_MS) return;
+  alertRateMap.set(key, Date.now());
+  await sendErrorAlertEmail(opts).catch(() => {});
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -65,17 +79,40 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
     console.error("Internal Server Error:", err);
+
+    if (status >= 500) {
+      maybeSendAlert({
+        errorType: "Express 5xx Error",
+        message,
+        stack: err.stack,
+        route: req.path,
+        method: req.method,
+        userId: (req as any).user?.claims?.sub,
+      });
+    }
 
     if (res.headersSent) {
       return next(err);
     }
 
     return res.status(status).json({ message });
+  });
+
+  process.on("unhandledRejection", (reason: any) => {
+    const message = reason?.message || String(reason);
+    const stack = reason?.stack;
+    console.error("[unhandledRejection]", reason);
+    maybeSendAlert({
+      errorType: "Unhandled Promise Rejection",
+      message,
+      stack,
+      route: "process",
+    });
   });
 
   // importantly only setup vite in development and after

@@ -181,6 +181,11 @@ export async function registerRoutes(
 
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
   app.use(sitemapRouter);
+
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
+  });
+
   app.get("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

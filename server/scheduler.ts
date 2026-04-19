@@ -1,7 +1,8 @@
 import cron from "node-cron";
 import { storage } from "./storage";
-import { sendTrialExpiryEmail, sendDay7ReengagementEmail, sendDailyActivityReport, sendTrialLetterFollowupEmail } from "./emails";
+import { sendTrialExpiryEmail, sendDay7ReengagementEmail, sendDailyActivityReport, sendTrialLetterFollowupEmail, sendErrorAlertEmail } from "./emails";
 import { getRankDisplayName } from "@shared/utils";
+import Anthropic from "@anthropic-ai/sdk";
 
 function getDisplayName(profile: any): string {
   const rankDisplay = profile.rank ? getRankDisplayName(profile.rank, profile.branch, profile.lastName, profile.firstName) : "";
@@ -148,6 +149,32 @@ async function checkTrialLetterFollowupEmails(): Promise<void> {
   }
 }
 
+async function checkAIHealth(): Promise<void> {
+  console.log("[scheduler] AI health check starting...");
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 5,
+      messages: [{ role: "user", content: "Say OK" }],
+    });
+    const text = (response.content[0] as any)?.text || "";
+    if (!text) throw new Error("Empty response from Claude");
+    console.log(`[scheduler] AI health check passed — Claude responded: "${text}"`);
+  } catch (error: any) {
+    const message = error?.message || String(error);
+    console.error("[scheduler] AI health check FAILED:", message);
+    if (process.env.NODE_ENV === "production") {
+      await sendErrorAlertEmail({
+        errorType: "AI Health Check Failed",
+        message,
+        stack: error?.stack,
+        route: "scheduler/checkAIHealth",
+      }).catch(() => {});
+    }
+  }
+}
+
 export function startScheduler(): void {
   cron.schedule("0 * * * *", async () => {
     console.log("[scheduler] Hourly check starting...");
@@ -161,5 +188,10 @@ export function startScheduler(): void {
     await sendDailyReport();
   }, { timezone: "America/New_York" });
 
-  console.log("[scheduler] Scheduler started — hourly email checks + daily report at 7 AM ET");
+  cron.schedule("0 9 * * *", async () => {
+    console.log("[scheduler] Daily AI health check starting (9 AM ET)...");
+    await checkAIHealth();
+  }, { timezone: "America/New_York" });
+
+  console.log("[scheduler] Scheduler started — hourly email checks + daily report at 7 AM ET + AI health check at 9 AM ET");
 }

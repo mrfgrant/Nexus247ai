@@ -962,3 +962,42 @@ export async function sendReferralEmail(toEmail: string, referrerName: string, m
     console.error(`[email] Failed to send referral email to ${toEmail}:`, error);
   }
 }
+
+export async function sendErrorAlertEmail(opts: {
+  errorType: string;
+  message: string;
+  stack?: string;
+  route?: string;
+  method?: string;
+  userId?: string;
+}): Promise<void> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const ts = new Date().toLocaleString("en-US", { timeZone: "America/New_York" });
+    const stackLines = (opts.stack || "").split("\n").slice(0, 10).join("\n");
+
+    const html = `<div style="font-family:monospace;max-width:680px;margin:0 auto;padding:20px;background:#0D2137;color:#e5e7eb;border-radius:8px;">
+  <div style="border-bottom:2px solid #D4A43E;padding-bottom:12px;margin-bottom:16px;">
+    <span style="font-size:20px;color:#D4A43E;font-weight:bold;">&#9888; Nexus247 Server Alert</span>
+    <span style="float:right;font-size:12px;color:#9ca3af;">${ts} ET</span>
+  </div>
+  <table style="width:100%;font-size:13px;border-collapse:collapse;">
+    <tr><td style="padding:4px 8px;color:#9ca3af;width:100px;">Type</td><td style="padding:4px 8px;color:#fbbf24;">${opts.errorType}</td></tr>
+    <tr><td style="padding:4px 8px;color:#9ca3af;">Route</td><td style="padding:4px 8px;">${opts.method || ""} ${opts.route || "unknown"}</td></tr>
+    ${opts.userId ? `<tr><td style="padding:4px 8px;color:#9ca3af;">User ID</td><td style="padding:4px 8px;">${opts.userId}</td></tr>` : ""}
+    <tr><td style="padding:4px 8px;color:#9ca3af;vertical-align:top;">Message</td><td style="padding:4px 8px;color:#f87171;">${opts.message}</td></tr>
+  </table>
+  ${stackLines ? `<pre style="margin-top:16px;padding:12px;background:#060d18;border-radius:4px;font-size:11px;color:#d1d5db;overflow-x:auto;white-space:pre-wrap;">${stackLines}</pre>` : ""}
+  <p style="margin-top:12px;font-size:11px;color:#6b7280;">Nexus247.ai — Production Error Alert</p>
+</div>`;
+
+    await client.emails.send({
+      from: FALLBACK_FROM,
+      to: "jamie@mrfgrant.com",
+      subject: `[Nexus247 ALERT] ${opts.errorType} — ${opts.method || ""} ${opts.route || "server"} — ${ts}`,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] Failed to send error alert:", err);
+  }
+}
