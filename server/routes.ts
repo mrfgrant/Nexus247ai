@@ -10,6 +10,7 @@ import { createRequire } from "module";
 import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from "./stripe";
 import { getRankDisplayName } from "@shared/utils";
 import { sendWelcomeEmail, sendAdminSignupNotification, sendReferralEmail } from "./emails";
+import { maybeSendAlert } from "./alert";
 import { randomUUID } from "crypto";
 import { extractRelevantContext, searchContentForTopic } from "./extract";
 import { authStorage } from "./replit_integrations/auth/storage";
@@ -2191,6 +2192,34 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
   app.get("/myscore", (req, res) => {
     res.setHeader("Content-Type", "text/html");
     res.send(getMyscoreHtml());
+  });
+
+  app.post("/api/client-error", async (req, res) => {
+    try {
+      const { type, message, source, lineno, colno, stack, path } = req.body || {};
+      const errorType = String(type || "ClientError").slice(0, 100);
+      const errorMsg = String(message || "Unknown client error").slice(0, 500);
+      const route = path ? String(path).slice(0, 200) : source ? String(source).slice(0, 200) : undefined;
+
+      console.error(
+        `[client-error] ${errorType}: ${errorMsg}` +
+          (source ? ` (${source}:${lineno}:${colno})` : "") +
+          (path ? ` [page: ${path}]` : ""),
+      );
+
+      await maybeSendAlert({
+        errorType: "BrowserError",
+        message: `[${errorType}] ${errorMsg}`,
+        stack: stack ? String(stack).slice(0, 2000) : undefined,
+        route,
+        method: "BROWSER",
+      });
+
+      res.status(204).end();
+    } catch (err) {
+      console.error("[client-error] handler failed:", err);
+      res.status(500).json({ error: "Failed to record client error" });
+    }
   });
 
   return httpServer;

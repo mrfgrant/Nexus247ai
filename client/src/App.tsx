@@ -34,6 +34,7 @@ import { WelcomeOverlay } from "@/components/welcome-overlay";
 import { ExitIntent } from "@/components/exit-intent";
 import { FloatingForumButton } from "@/components/FloatingForumButton";
 import { trackSignUp } from "@/lib/analytics";
+import { ErrorBoundary, GlobalErrorHandlers } from "@/components/error-boundary";
 
 function AuthenticatedLayout() {
   const [location] = useLocation();
@@ -168,12 +169,15 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <GlobalErrorHandlers />
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
