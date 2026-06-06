@@ -89,6 +89,7 @@ export interface IStorage {
   logUsage(userId: string, action: string, metadata?: any): Promise<void>;
 
   getAllProfiles(includeArchived?: boolean): Promise<(VeteranProfile & { firstName?: string | null; lastName?: string | null; email?: string | null })[]>;
+  getUserEmail(userId: string): Promise<{ email: string | null; firstName: string | null; lastName: string | null } | undefined>;
   adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined>;
 
   archiveProfile(userId: string): Promise<VeteranProfile | undefined>;
@@ -357,6 +358,14 @@ export class DatabaseStorage implements IStorage {
       : await query.where(isNull(veteranProfiles.archivedAt)).orderBy(desc(veteranProfiles.createdAt));
 
     return rows.map(r => ({ ...r.profile, firstName: r.firstName, lastName: r.lastName, email: r.email }));
+  }
+
+  async getUserEmail(userId: string): Promise<{ email: string | null; firstName: string | null; lastName: string | null } | undefined> {
+    const [row] = await db
+      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, userId));
+    return row;
   }
 
   async adminUpdateProfile(userId: string, data: Partial<{ subscriptionTier: string; role: string; trialEndsAt: Date | null }>): Promise<VeteranProfile | undefined> {

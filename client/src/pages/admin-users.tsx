@@ -86,6 +86,19 @@ function EditUserDialog({
     },
   });
 
+  const inviteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/admin/users/${profile.userId}/invite-upload`, {});
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Invite sent", description: `Upload-records invite emailed to ${data?.email || "the user"}.` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to send invite email.", variant: "destructive" });
+    },
+  });
+
   function handleSave() {
     const data: any = {};
     if (tier !== (profile.subscriptionTier || "none")) data.subscriptionTier = tier;
@@ -187,6 +200,23 @@ function EditUserDialog({
           </div>
           <p className="text-xs text-muted-foreground">
             Sets a time-limited trial. If tier is "None", it will be set to Starter automatically.
+          </p>
+        </div>
+
+        <div className="space-y-2 pt-1">
+          <Label>Outreach</Label>
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => inviteMutation.mutate()}
+            disabled={inviteMutation.isPending || !profile.email}
+            data-testid="button-invite-upload"
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            {inviteMutation.isPending ? "Sending invite..." : "Invite to Upload Records"}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Emails the veteran a branded invitation to log in and upload their records.
           </p>
         </div>
 

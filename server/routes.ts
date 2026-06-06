@@ -9,7 +9,7 @@ import multer from "multer";
 import { createRequire } from "module";
 import { stripe, PRICE_TO_TIER, TIER_TO_PRICE, getOrCreateStripeCustomer } from "./stripe";
 import { getRankDisplayName } from "@shared/utils";
-import { sendWelcomeEmail, sendAdminSignupNotification, sendReferralEmail } from "./emails";
+import { sendWelcomeEmail, sendAdminSignupNotification, sendReferralEmail, sendUploadRecordsInviteEmail } from "./emails";
 import { maybeSendAlert } from "./alert";
 import { randomUUID } from "crypto";
 import { extractRelevantContext, searchContentForTopic } from "./extract";
@@ -1329,6 +1329,31 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Admin update error:", error);
       res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  app.post("/api/admin/users/:userId/invite-upload", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.userId;
+      const [account, profile] = await Promise.all([
+        storage.getUserEmail(userId),
+        storage.getVeteranProfile(userId),
+      ]);
+      if (!account?.email) {
+        return res.status(404).json({ error: "No email on file for this user" });
+      }
+      const lastName = profile?.lastName || account.lastName || "";
+      const rankTitle = profile?.rank
+        ? getRankDisplayName(profile.rank, profile.branch, null, null)
+        : "";
+      const sent = await sendUploadRecordsInviteEmail(account.email, rankTitle, lastName);
+      if (!sent) {
+        return res.status(502).json({ error: "Failed to send invite email" });
+      }
+      res.json({ success: true, email: account.email });
+    } catch (error) {
+      console.error("Invite upload error:", error);
+      res.status(500).json({ error: "Failed to send invite" });
     }
   });
 

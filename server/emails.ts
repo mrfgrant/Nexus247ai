@@ -648,6 +648,109 @@ export async function sendDay7ReengagementEmail(toEmail: string, rankTitle: stri
   }
 }
 
+export function buildUploadRecordsInviteEmailHtml(rankTitle: string, lastName: string): string {
+  const greeting = rankTitle && lastName ? `${rankTitle} ${lastName}` : lastName || "Veteran";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Your Records — Nexus247</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+<tr><td style="background:#0D2137;padding:32px 40px;text-align:center;">
+  <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;color:#ffffff;letter-spacing:0.5px;">
+    Nexus<span style="color:#D4A43E;">247</span>.ai
+  </h1>
+  <p style="margin:8px 0 0;font-size:13px;color:#ffffff;letter-spacing:1.5px;text-transform:uppercase;">
+    Your AI Battle Buddy for VA Claims
+  </p>
+</td></tr>
+
+<tr><td style="background:#D4A43E;height:3px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+<tr><td style="padding:36px 40px 0;">
+  <p style="margin:0;font-size:16px;color:#333;">Dear <strong>${greeting}</strong>,</p>
+</td></tr>
+
+<tr><td style="padding:20px 40px 0;">
+  <p style="margin:0 0 14px;font-size:15px;color:#444;line-height:1.65;">
+    We've reactivated your Nexus247 access &mdash; and we want to make sure you get the most out of it. The single most important step you can take right now is to <strong>upload your records</strong>.
+  </p>
+  <p style="margin:0 0 14px;font-size:15px;color:#444;line-height:1.65;">
+    Everything in Nexus247 gets sharper and more powerful the moment your files are in the system. Your nexus letters, decision-letter analysis, and AI Claims Advisor all draw directly from your own medical records and service history &mdash; not generic templates.
+  </p>
+  <p style="margin:0;font-size:15px;color:#444;line-height:1.65;">
+    <strong>Tip:</strong> exporting your VA records to plain text (.txt) works best, especially for large files.
+  </p>
+</td></tr>
+
+<tr><td style="padding:24px 40px 0;">
+  <table cellpadding="0" cellspacing="0" width="100%">
+    ${buildStep("Upload your medical records and service history")}
+    ${buildStep("Run your first letter or analyze your decision letter")}
+    ${buildStep("Review your RPA score &mdash; fix anything flagged before submitting")}
+    ${buildStep("Ask the AI Claims Advisor your first question about your case")}
+  </table>
+</td></tr>
+
+<tr><td style="padding:32px 40px 0;text-align:center;">
+  <a href="https://nexus247.ai" style="display:inline-block;background:#D4A43E;color:#0D2137;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:6px;letter-spacing:0.5px;">
+    Log In &amp; Upload Your Records Now &rarr;
+  </a>
+</td></tr>
+
+<tr><td style="padding:32px 40px 0;">
+  <p style="margin:0 0 4px;font-size:15px;color:#444;">We're in your corner.</p>
+  <p style="margin:0;font-size:15px;color:#0D2137;font-weight:bold;">The Nexus247 Team</p>
+  <p style="margin:4px 0 0;font-size:13px;color:#888;">nexus247.ai &nbsp;&middot;&nbsp; Your Battle Buddy. 24/7.</p>
+</td></tr>
+
+<tr><td style="padding:28px 40px 32px;">
+  <table cellpadding="0" cellspacing="0" width="100%"><tr>
+    <td style="border-top:1px solid #e5e5e5;padding-top:16px;text-align:center;">
+      <p style="margin:0 0 6px;font-size:11px;color:#aaa;">
+        Nexus247.ai &nbsp;&middot;&nbsp; Not a law firm &nbsp;&middot;&nbsp; Not affiliated with the VA
+      </p>
+      <p style="margin:0;font-size:11px;color:#aaa;">
+        You received this email because you have an account at Nexus247.ai.
+      </p>
+    </td>
+  </tr></table>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+export async function sendUploadRecordsInviteEmail(toEmail: string, rankTitle: string, lastName: string): Promise<boolean> {
+  try {
+    const { client } = await getUncachableResendClient();
+    const html = buildUploadRecordsInviteEmailHtml(rankTitle, lastName);
+
+    const result = await client.emails.send({
+      from: FALLBACK_FROM,
+      to: toEmail,
+      subject: "Your Nexus247 access is ready — upload your records to get started",
+      html,
+    });
+
+    console.log(`[email] Upload-records invite sent to ${toEmail}:`, result);
+    return true;
+  } catch (error) {
+    console.error(`[email] Failed to send upload-records invite to ${toEmail}:`, error);
+    return false;
+  }
+}
+
 export async function sendDailyActivityReport(data: {
   newSignups: { name: string; email: string; rank: string; branch: string }[];
   usageSummary: { userId: string; name: string; actions: { action: string; count: number }[] }[];
