@@ -1418,6 +1418,33 @@ export async function registerRoutes(
     }
   });
 
+  // Stop "View as user" and return the admin to their own account. This remains
+  // allowed by the read-only guard while impersonation is active. NOTE: this
+  // literal route must be registered BEFORE the "/:userId" route below, otherwise
+  // Express would match "stop" as a :userId value.
+  app.post("/api/admin/impersonate/stop", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const impersonation = req.session?.impersonation;
+      if (impersonation?.userId) {
+        await storage
+          .logUsage(impersonation.userId, "impersonation_stopped", { adminUserId: req.realUserId })
+          .catch(() => {});
+      }
+      if (req.session) delete req.session.impersonation;
+
+      req.session.save((err: any) => {
+        if (err) {
+          console.error("[impersonation] session save failed:", err);
+          return res.status(500).json({ error: "Failed to exit user view" });
+        }
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("Impersonation stop error:", error);
+      res.status(500).json({ error: "Failed to exit user view" });
+    }
+  });
+
   // Start "View as user" — admin-only read-only impersonation. The impersonation
   // state is stored in the admin's server-side session, never as a client value.
   app.post("/api/admin/impersonate/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
@@ -1460,29 +1487,6 @@ export async function registerRoutes(
     }
   });
 
-  // Stop "View as user" and return the admin to their own account. This remains
-  // allowed by the read-only guard while impersonation is active.
-  app.post("/api/admin/impersonate/stop", isAuthenticated, isAdmin, async (req: any, res) => {
-    try {
-      const impersonation = req.session?.impersonation;
-      if (impersonation?.userId) {
-        await storage
-          .logUsage(impersonation.userId, "impersonation_stopped", { adminUserId: req.realUserId })
-          .catch(() => {});
-      }
-      if (req.session) delete req.session.impersonation;
-
-      req.session.save((err: any) => {
-        if (err) {
-          console.error("[impersonation] session save failed:", err);
-          return res.status(500).json({ error: "Failed to exit user view" });
-        }
-        res.json({ success: true });
-      });
-    } catch (error) {
-      console.error("Impersonation stop error:", error);
-      res.status(500).json({ error: "Failed to exit user view" });
-    }
   });
 
   app.get("/api/dashboard", isAuthenticated, async (req: any, res) => {
