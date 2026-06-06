@@ -180,7 +180,27 @@ export async function registerRoutes(
     console.error("[startup] Admin seed error:", e);
   }
 
-  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } });
+
+  // Wraps multer's single-file middleware so size/format errors return a clean
+  // 4xx with a helpful message instead of bubbling up as an Internal Server Error.
+  const uploadSingle = (fieldName: string) => (req: any, res: any, next: any) => {
+    upload.single(fieldName)(req, res, (err: any) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({
+            error: `This file is larger than the ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB upload limit. Please split it into smaller files or compress it, then try again.`,
+          });
+        }
+        return res.status(400).json({ error: `Upload failed: ${err.message}` });
+      }
+      if (err) {
+        return res.status(400).json({ error: "Unable to process the uploaded file. Please try again." });
+      }
+      next();
+    });
+  };
   app.use(sitemapRouter);
 
   app.get("/api/health", (_req, res) => {
@@ -1081,7 +1101,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/supporting-documents", isAuthenticated, upload.single("file"), async (req: any, res) => {
+  app.post("/api/supporting-documents", isAuthenticated, uploadSingle("file"), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { category } = req.body;
@@ -1361,7 +1381,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/analyze-letter", isAuthenticated, upload.single("file"), async (req: any, res) => {
+  app.post("/api/analyze-letter", isAuthenticated, uploadSingle("file"), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const profile = await storage.getVeteranProfile(userId);
