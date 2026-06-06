@@ -25,7 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, Search, Shield, CreditCard, Clock, Crown, Edit, Mail, Archive, ArchiveRestore, Trash2, Download, FileText, MessageSquare, ClipboardCheck, Activity } from "lucide-react";
+import { Users, Search, Shield, CreditCard, Clock, Crown, Edit, Mail, Archive, ArchiveRestore, Trash2, Download, FileText, MessageSquare, ClipboardCheck, Activity, Eye, Upload, UserCog, LogIn, FileSearch } from "lucide-react";
 import type { VeteranProfile } from "@shared/schema";
 import { getRankDisplayName } from "@shared/utils";
 
@@ -289,6 +289,14 @@ const ACTION_LABELS: Record<string, { label: string; icon: typeof FileText }> = 
   generate_document: { label: "Generated Document", icon: FileText },
   chat_message: { label: "AI Chat Message", icon: MessageSquare },
   cnp_prep: { label: "C&P Exam Prep", icon: ClipboardCheck },
+  analyze_letter: { label: "Analyzed Decision Letter", icon: FileSearch },
+  upload_document: { label: "Uploaded Document", icon: Upload },
+  profile_created: { label: "Created Profile", icon: UserCog },
+  profile_updated: { label: "Updated Profile", icon: UserCog },
+  referral_sent: { label: "Sent Referral", icon: Mail },
+  login: { label: "Signed In", icon: LogIn },
+  impersonation_started: { label: "Admin Started Viewing", icon: Eye },
+  impersonation_stopped: { label: "Admin Stopped Viewing", icon: Eye },
 };
 
 function formatActionMeta(action: string, metadata: any): string | null {
@@ -298,6 +306,15 @@ function formatActionMeta(action: string, metadata: any): string | null {
   }
   if (action === "cnp_prep" && metadata.conditionName) {
     return metadata.conditionName;
+  }
+  if (action === "upload_document") {
+    return metadata.fileName || (metadata.category ? String(metadata.category).replace(/_/g, " ") : null);
+  }
+  if (action === "analyze_letter" && metadata.fileName) {
+    return metadata.fileName;
+  }
+  if (action === "referral_sent" && metadata.refereeEmail) {
+    return metadata.refereeEmail;
   }
   return null;
 }
@@ -427,6 +444,20 @@ export default function AdminUsers() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update user.", variant: "destructive" });
+    },
+  });
+
+  const viewAsMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await apiRequest("POST", `/api/admin/impersonate/${userId}`);
+    },
+    onSuccess: async () => {
+      // Full reload so the entire app re-renders against the viewed user's data.
+      await queryClient.invalidateQueries();
+      window.location.href = "/dashboard";
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to start viewing as this user.", variant: "destructive" });
     },
   });
 
@@ -576,6 +607,16 @@ export default function AdminUsers() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => viewAsMutation.mutate(profile.userId)}
+                      disabled={viewAsMutation.isPending}
+                      title="View as this user (read-only)"
+                      data-testid={`button-view-as-${profile.userId}`}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     {isArchived ? (
                       <Button
                         size="icon"

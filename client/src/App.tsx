@@ -33,6 +33,7 @@ import { CookieConsent } from "@/components/cookie-consent";
 import { WelcomeOverlay } from "@/components/welcome-overlay";
 import { ExitIntent } from "@/components/exit-intent";
 import { FloatingForumButton } from "@/components/FloatingForumButton";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { trackSignUp } from "@/lib/analytics";
 import { ErrorBoundary, GlobalErrorHandlers } from "@/components/error-boundary";
 
@@ -126,7 +127,7 @@ function AuthenticatedLayout() {
 }
 
 function Router() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isImpersonating } = useAuth();
 
   if (isLoading) {
     return (
@@ -157,13 +158,18 @@ function Router() {
   }
 
   return (
-    <Switch>
-      <Route path="/faq" component={Faq} />
-      <Route path="/terms" component={Terms} />
-      <Route path="/forum" component={Forum} />
-      <Route path="/documents/:id/print" component={DocumentPrint} />
-      <Route><AuthenticatedLayout /></Route>
-    </Switch>
+    <>
+      <ImpersonationBanner />
+      <div className={isImpersonating ? "pt-10" : ""}>
+        <Switch>
+          <Route path="/faq" component={Faq} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/forum" component={Forum} />
+          <Route path="/documents/:id/print" component={DocumentPrint} />
+          <Route><AuthenticatedLayout /></Route>
+        </Switch>
+      </div>
+    </>
   );
 }
 
