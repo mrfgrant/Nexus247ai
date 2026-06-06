@@ -121,7 +121,9 @@ function getAnthropicClient(): Anthropic {
 
 const isAdmin: RequestHandler = async (req: any, res, next) => {
   try {
-    const userId = req.user.claims.sub;
+    // Admin authorization always uses the REAL session user, never the
+    // effective/impersonated user, so impersonation can never grant admin.
+    const userId = req.realUserId ?? req.user.claims.sub;
     const profile = await storage.getVeteranProfile(userId);
     if (profile?.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
@@ -148,6 +150,55 @@ export async function registerRoutes(
   app: Express,
 ): Promise<Server> {
   await setupAuth(app);
+
+  // Effective-user layer: a single source of truth for "which user this request
+  // is acting as". When an admin has an active impersonation stored in their
+  // server-side session, the effective user is the impersonated user; otherwise
+  // it is the real logged-in user. Critical constraint: admin checks and the
+  // admin's own identity ALWAYS use the real session user (req.realUserId), so
+  // impersonation can never escalate the impersonated session to admin.
+  app.use(async (req: any, _res, next) => {
+    const realUserId = req.user?.claims?.sub;
+    req.realUserId = realUserId;
+    req.effectiveUserId = realUserId;
+    req.isImpersonating = false;
+    req.impersonatedUserId = null;
+    try {
+      const impId = req.session?.impersonation?.userId;
+      if (realUserId && impId && impId !== realUserId) {
+        // Defense in depth: only honor impersonation if the real session user is
+        // currently an admin. Otherwise clear the stale/invalid state so a
+        // demoted account can never keep viewing as another user.
+        const adminProfile = await storage.getVeteranProfile(realUserId);
+        if (adminProfile?.role === "admin") {
+          req.effectiveUserId = impId;
+          req.impersonatedUserId = impId;
+          req.isImpersonating = true;
+        } else if (req.session?.impersonation) {
+          delete req.session.impersonation;
+        }
+      }
+    } catch (e) {
+      console.error("[impersonation] effective-user resolution failed:", e);
+    }
+    next();
+  });
+
+  // Read-only guard: while impersonation is active, reject every state-changing
+  // (non-GET) user-facing API request with a clear read-only error so an admin
+  // can observe a user's view but never create, edit, or delete on their
+  // behalf. Stopping impersonation itself remains allowed for the admin.
+  app.use((req: any, res, next) => {
+    if (!req.isImpersonating) return next();
+    if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
+    if (!req.path.startsWith("/api/")) return next();
+    if (req.path === "/api/admin/impersonate/stop") return next();
+    return res.status(403).json({
+      error: "You are viewing as a user — this view is read-only. Exit the user view to make changes.",
+      readOnly: true,
+    });
+  });
+
   registerAuthRoutes(app);
 
   app.use((req: any, _res, next) => {
@@ -209,7 +260,7 @@ export async function registerRoutes(
 
   app.get("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const profile = await storage.getVeteranProfile(userId);
       res.json(profile || null);
     } catch (error) {
@@ -219,7 +270,7 @@ export async function registerRoutes(
 
   app.post("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const safeData = pick(req.body, PROFILE_ALLOWED_FIELDS);
       if (safeData.serviceStartDate === "") safeData.serviceStartDate = null;
       if (safeData.serviceEndDate === "") safeData.serviceEndDate = null;
@@ -237,6 +288,12 @@ export async function registerRoutes(
       }
 
       const profile = await storage.upsertVeteranProfile(profileData);
+
+      await storage
+        .logUsage(userId, isNewProfile ? "profile_created" : "profile_updated", {
+          fields: Object.keys(safeData),
+        })
+        .catch(() => {});
 
       if (isNewProfile) {
         const email = req.user?.claims?.email;
@@ -280,7 +337,7 @@ export async function registerRoutes(
 
   app.post("/api/re-extract-records", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.realUserId ?? req.user.claims.sub;
       if (userId !== "49807206") {
         return res.status(403).json({ error: "Admin only" });
       }
@@ -305,7 +362,7 @@ export async function registerRoutes(
 
   app.post("/api/test-welcome-email", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.realUserId ?? req.user.claims.sub;
       if (userId !== "49807206") {
         return res.status(403).json({ error: "Admin only" });
       }
@@ -322,7 +379,7 @@ export async function registerRoutes(
 
   app.get("/api/conditions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const result = await storage.getConditions(userId);
       res.json(result);
     } catch (error) {
@@ -332,7 +389,7 @@ export async function registerRoutes(
 
   app.post("/api/conditions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { conditionName, icd10Code, diagnosticCode, currentRating, claimedRating, serviceConnected, dateOfDiagnosis, treatingPhysician, notes } = req.body;
       if (!conditionName?.trim()) {
         return res.status(400).json({ error: "Condition name required" });
@@ -360,7 +417,7 @@ export async function registerRoutes(
 
   app.patch("/api/conditions/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const existing = await storage.getCondition(req.params.id);
       if (!existing || existing.userId !== userId) {
         return res.status(404).json({ error: "Condition not found" });
@@ -388,7 +445,7 @@ export async function registerRoutes(
 
   app.delete("/api/conditions/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const existing = await storage.getCondition(req.params.id);
       if (!existing || existing.userId !== userId) {
         return res.status(404).json({ error: "Condition not found" });
@@ -403,7 +460,7 @@ export async function registerRoutes(
 
   app.get("/api/incidents", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const result = await storage.getIncidents(userId);
       res.json(result);
     } catch (error) {
@@ -413,7 +470,7 @@ export async function registerRoutes(
 
   app.get("/api/incidents/condition/:conditionId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const condition = await storage.getCondition(req.params.conditionId);
       if (!condition || condition.userId !== userId) {
         return res.status(404).json({ error: "Condition not found" });
@@ -427,7 +484,7 @@ export async function registerRoutes(
 
   app.post("/api/incidents", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { conditionId, incidentDate, location, description, documented } = req.body;
       if (conditionId) {
         const condition = await storage.getCondition(conditionId);
@@ -451,7 +508,7 @@ export async function registerRoutes(
 
   app.patch("/api/incidents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const incidents = await storage.getIncidents(userId);
       const existing = incidents.find((i) => i.id === req.params.id);
       if (!existing) {
@@ -472,7 +529,7 @@ export async function registerRoutes(
 
   app.delete("/api/incidents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const incidents = await storage.getIncidents(userId);
       const existing = incidents.find((i) => i.id === req.params.id);
       if (!existing) {
@@ -487,7 +544,7 @@ export async function registerRoutes(
 
   app.get("/api/documents", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const docs = await storage.getDocuments(userId);
       const profile = await storage.getVeteranProfile(userId);
       const trial = isTrialUser(profile);
@@ -510,7 +567,7 @@ export async function registerRoutes(
 
   app.get("/api/documents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const doc = await storage.getDocument(req.params.id);
       if (!doc || doc.userId !== userId) {
         return res.status(404).json({ error: "Document not found" });
@@ -533,7 +590,7 @@ export async function registerRoutes(
 
   app.delete("/api/documents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const doc = await storage.getDocument(req.params.id);
       if (!doc || doc.userId !== userId) {
         return res.status(404).json({ error: "Document not found" });
@@ -547,7 +604,7 @@ export async function registerRoutes(
 
   app.get("/api/documents/count/month", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const count = await storage.getDocumentCountThisMonth(userId);
       res.json({ count });
     } catch (error) {
@@ -557,7 +614,7 @@ export async function registerRoutes(
 
   app.post("/api/generate", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { documentType, conditionId, additionalContext } = req.body;
 
       const profile = await storage.getVeteranProfile(userId);
@@ -790,7 +847,7 @@ export async function registerRoutes(
 
   app.post("/api/rating/estimate", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { conditions: conditionsList } = req.body;
 
       if (!conditionsList?.length) {
@@ -845,7 +902,7 @@ export async function registerRoutes(
 
   app.get("/api/chat/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const messages = await storage.getChatMessages(userId);
       res.json(messages);
     } catch (error) {
@@ -855,7 +912,7 @@ export async function registerRoutes(
 
   app.post("/api/chat/send", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { message } = req.body;
 
       if (!message?.trim()) {
@@ -993,7 +1050,7 @@ export async function registerRoutes(
 
   app.get("/api/support", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const profile = await storage.getVeteranProfile(userId);
       const requests =
         profile?.role === "admin"
@@ -1007,7 +1064,7 @@ export async function registerRoutes(
 
   app.post("/api/support", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { subject, description } = req.body;
       if (!subject?.trim() || !description?.trim()) {
         return res.status(400).json({ error: "Subject and description required" });
@@ -1093,7 +1150,7 @@ export async function registerRoutes(
 
   app.get("/api/supporting-documents", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const docs = await storage.getSupportingDocuments(userId);
       res.json(docs);
     } catch (error) {
@@ -1103,7 +1160,7 @@ export async function registerRoutes(
 
   app.post("/api/supporting-documents", isAuthenticated, uploadSingle("file"), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { category } = req.body;
 
       if (!req.file) {
@@ -1164,6 +1221,10 @@ export async function registerRoutes(
         fileSize: req.file.size,
       });
 
+      await storage
+        .logUsage(userId, "upload_document", { category, fileName: req.file.originalname })
+        .catch(() => {});
+
       if (category === "medical_records" && content) {
         try {
           const conditions = await storage.getConditions(userId);
@@ -1188,7 +1249,7 @@ export async function registerRoutes(
 
   app.delete("/api/supporting-documents/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       await storage.deleteSupportingDocument(req.params.id, userId);
       res.json({ success: true });
     } catch (error) {
@@ -1357,9 +1418,76 @@ export async function registerRoutes(
     }
   });
 
+  // Start "View as user" — admin-only read-only impersonation. The impersonation
+  // state is stored in the admin's server-side session, never as a client value.
+  app.post("/api/admin/impersonate/:userId", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const adminUserId = req.realUserId;
+      const targetUserId = req.params.userId;
+
+      if (targetUserId === adminUserId) {
+        return res.status(400).json({ error: "You cannot view as yourself." });
+      }
+
+      const [targetProfile, targetAccount] = await Promise.all([
+        storage.getVeteranProfile(targetUserId),
+        storage.getUserEmail(targetUserId),
+      ]);
+      if (!targetProfile && !targetAccount) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      req.session.impersonation = {
+        userId: targetUserId,
+        adminUserId,
+        startedAt: new Date().toISOString(),
+      };
+
+      // Record the start of impersonation against the target user's activity
+      // trail for auditability.
+      await storage.logUsage(targetUserId, "impersonation_started", { adminUserId }).catch(() => {});
+
+      req.session.save((err: any) => {
+        if (err) {
+          console.error("[impersonation] session save failed:", err);
+          return res.status(500).json({ error: "Failed to start viewing as user" });
+        }
+        res.json({ success: true, userId: targetUserId });
+      });
+    } catch (error) {
+      console.error("Impersonation start error:", error);
+      res.status(500).json({ error: "Failed to start viewing as user" });
+    }
+  });
+
+  // Stop "View as user" and return the admin to their own account. This remains
+  // allowed by the read-only guard while impersonation is active.
+  app.post("/api/admin/impersonate/stop", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const impersonation = req.session?.impersonation;
+      if (impersonation?.userId) {
+        await storage
+          .logUsage(impersonation.userId, "impersonation_stopped", { adminUserId: req.realUserId })
+          .catch(() => {});
+      }
+      if (req.session) delete req.session.impersonation;
+
+      req.session.save((err: any) => {
+        if (err) {
+          console.error("[impersonation] session save failed:", err);
+          return res.status(500).json({ error: "Failed to exit user view" });
+        }
+        res.json({ success: true });
+      });
+    } catch (error) {
+      console.error("Impersonation stop error:", error);
+      res.status(500).json({ error: "Failed to exit user view" });
+    }
+  });
+
   app.get("/api/dashboard", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const [profile, conditionsList, docs, monthCount] = await Promise.all([
         storage.getVeteranProfile(userId),
         storage.getConditions(userId),
@@ -1395,7 +1523,7 @@ export async function registerRoutes(
 
   app.get("/api/analysis-limits", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const profile = await storage.getVeteranProfile(userId);
       const tier = getEffectiveTier(profile);
       const limit = ANALYSIS_LIMITS[tier] || 0;
@@ -1408,7 +1536,7 @@ export async function registerRoutes(
 
   app.post("/api/analyze-letter", isAuthenticated, uploadSingle("file"), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const profile = await storage.getVeteranProfile(userId);
       const tier = getEffectiveTier(profile);
 
@@ -1496,6 +1624,8 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
         analysisData: analysis,
       });
 
+      await storage.logUsage(userId, "analyze_letter", { fileName }).catch(() => {});
+
       const remaining = Math.max(0, analysisLimit - analysisCount - 1);
       res.json({ analysis, letterLength: letterText.length, id: saved.id, remaining, hasMedicalRecords: medicalRecords.length > 0 });
     } catch (error: any) {
@@ -1509,7 +1639,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.get("/api/letter-analyses", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const analyses = await storage.getLetterAnalyses(userId);
       res.json(analyses);
     } catch (error) {
@@ -1520,7 +1650,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.get("/api/letter-analyses/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const analysis = await storage.getLetterAnalysis(req.params.id, userId);
       if (!analysis) {
         return res.status(404).json({ error: "Analysis not found." });
@@ -1534,7 +1664,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.delete("/api/letter-analyses/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       await storage.deleteLetterAnalysis(req.params.id, userId);
       res.json({ success: true });
     } catch (error) {
@@ -1545,7 +1675,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.post("/api/analyze-letter/:id/cross-reference", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const analysisId = req.params.id;
 
       const analysis = await storage.getLetterAnalysis(analysisId, userId);
@@ -1619,7 +1749,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.post("/api/cnp-prep", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { conditionId } = req.body;
 
       if (!conditionId) {
@@ -1780,7 +1910,9 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.post("/api/create-checkout-session", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      // Billing always acts on the real logged-in account, never an
+      // impersonated user.
+      const userId = req.realUserId ?? req.user.claims.sub;
       const { tier, billing } = req.body;
 
       if (!tier || !TIER_TO_PRICE[tier]) {
@@ -1828,7 +1960,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.get("/api/verify-checkout", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.realUserId ?? req.user.claims.sub;
       const sessionId = req.query.session_id as string;
 
       if (!sessionId) {
@@ -1874,7 +2006,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.post("/api/create-portal-session", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.realUserId ?? req.user.claims.sub;
       const profile = await storage.getVeteranProfile(userId);
 
       if (!profile?.stripeCustomerId) {
@@ -2204,7 +2336,7 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
   app.post("/api/referrals", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.effectiveUserId;
       const { refereeEmail, message } = req.body;
       if (!refereeEmail || typeof refereeEmail !== "string" || !refereeEmail.includes("@")) {
         return res.status(400).json({ error: "Valid email address required" });
@@ -2226,6 +2358,8 @@ Known conditions: ${conditions.map((c) => c.conditionName).join(", ") || "None o
 
       sendReferralEmail(refereeEmail.trim().toLowerCase(), referrerName, message || null)
         .catch(err => console.error("[email] Referral email failed:", err));
+
+      await storage.logUsage(userId, "referral_sent", { refereeEmail: refereeEmail.trim().toLowerCase() }).catch(() => {});
 
       res.json({ success: true, referral });
     } catch (error) {
